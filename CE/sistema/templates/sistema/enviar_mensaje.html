@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Enviar Mensaje</title>
+    <script>
+        var ws_scheme = window.location.protocol === "https:" ? "wss" : "ws";
+        var chatSocket = new WebSocket(ws_scheme + '://' + window.location.host + '/ws/mensajes/');
+    
+        chatSocket.onmessage = function(e) {
+            var data = JSON.parse(e.data);
+            var message = data['message'];
+    
+            // Mostrar el mensaje en el DOM
+            var messageList = document.querySelector('.message-list ul');
+            var newMessage = document.createElement('li');
+            newMessage.className = "message-item";
+            newMessage.innerHTML = '<strong>Nuevo mensaje</strong>: ' + message;
+            messageList.appendChild(newMessage);
+        };
+    
+        chatSocket.onclose = function(e) {
+            console.error('WebSocket cerrado inesperadamente');
+        };
+    
+        // Enviar mensaje
+        document.querySelector('form').onsubmit = function(e) {
+            e.preventDefault();
+            var messageInput = document.querySelector('#id_contenido');
+            chatSocket.send(JSON.stringify({
+                'message': messageInput.value
+            }));
+            messageInput.value = '';
+        };
+    </script>
+    
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+        }
+        form {
+            margin-top: 20px;
+        }
+        input, textarea, select {
+            width: 100%;
+            padding: 10px;
+            margin: 5px 0;
+        }
+        button {
+            padding: 10px 20px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        .message-list {
+            margin-top: 30px;
+        }
+        .message-item {
+            border-bottom: 1px solid #ddd;
+            padding: 10px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Enviar Mensaje</h1>
+    <form method="post">
+        {% csrf_token %}
+        {{ form.as_p }}
+        <button type="submit">Enviar Mensaje</button>
+    </form>
+
+    <div class="message-list">
+        <h2>Mensajes Recientes</h2>
+        {% if messages %}
+            <ul>
+                {% for message in messages %}
+                    <li class="message-item">
+                        <strong>De: {{ message.emisor.username }}</strong><br>
+                        {{ message.contenido }}<br>
+                        <small>{{ message.fecha_enviado }}</small>
+                    </li>
+                {% endfor %}
+            </ul>
+        {% else %}
+            <p>No hay mensajes recientes.</p>
+        {% endif %}
+    </div>
+</body>
+</html>

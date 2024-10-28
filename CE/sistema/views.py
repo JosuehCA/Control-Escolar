@@ -5,6 +5,9 @@ from django.contrib.auth.decorators import login_required
 from django.urls import reverse
 from django.db import IntegrityError
 from django.http import HttpResponseRedirect
+from .forms_msj import MensajeDirectoForm
+from .mensaje import MensajeDirecto
+from django.shortcuts import redirect
 
 from .models import UsuarioEscolar
 
@@ -67,8 +70,25 @@ def servicioReportes(request):
 def cocina(request):
     pass
 
-def mensajeria(request):
-    pass
+# Vista para enviar mensajes directos y mostrar mensajes recientes
+def enviar_mensaje(request):
+    if request.method == 'POST':
+        form = MensajeDirectoForm(request.POST)
+        if form.is_valid():
+            mensaje = form.save(commit=False)
+            mensaje.emisor = request.user
+            mensaje.save()
+            return redirect('sistema/enviar_mensaje.html')
+    else:
+        form = MensajeDirectoForm()
+
+    # Mensajes enviados y recibidos por el usuario actual
+    mensajes = MensajeDirecto.objects.filter(receptor=request.user).order_by('-fechaEnviado')
+
+    return render(request, 'sistema/enviar_mensaje.html', {
+        'form': form,
+        'messages': mensajes,
+    })
 
 def plantel(request):
     pass
