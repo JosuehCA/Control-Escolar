@@ -8,7 +8,6 @@ from django.http import HttpResponseRedirect
 
 from .models import UsuarioEscolar
 
-# Create your views here.
 
 def index(request):
     return render(request, "sistema/index.html")
@@ -36,7 +35,6 @@ def logout_view(request):
     logout(request)
     return HttpResponseRedirect(reverse("index"))
 
-
 def register(request):
     if request.method == "POST":
         username = request.POST["username"]
@@ -62,3 +60,15 @@ def register(request):
         return HttpResponseRedirect(reverse("index"))
     else:
         return render(request, "sistema/register.html")
+    
+def servicioReportes(request):
+    pass
+
+def cocina(request):
+    pass
+
+def mensajeria(request):
+    pass
+
+def plantel(request):
+    pass
