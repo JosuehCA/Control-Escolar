@@ -112,10 +112,14 @@ class Administrador(UsuarioEscolar):
 
 
     def crearGrupo(self, nombre: str, alumnos: List['Alumno']) -> None:
-        nuevo_grupo = Grupo(nombre=nombre)
-        nuevo_grupo.save()  # Guardamos primero para poder asignar M2M
-        nuevo_grupo.alumnos.set(alumnos)  # Añadimos los alumnos seleccionados al grupo
-        nuevo_grupo.save()
+        if not Grupo.objects.filter(nombre=nombre).exists():
+            nuevo_grupo = Grupo(nombre=nombre)
+            nuevo_grupo.save()  # Guardamos primero para poder asignar M2M
+            nuevo_grupo.alumnos.set(alumnos)  # Añadimos los alumnos seleccionados al grupo
+            nuevo_grupo.save()
+        else:
+            print("El grupo ya existe.")
+
 
     def eliminarGrupo(self, grupo_id: int) -> None:
         try:

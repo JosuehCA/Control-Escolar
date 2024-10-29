@@ -8,6 +8,7 @@ from django.http import HttpResponseRedirect
 
 from .models import UsuarioEscolar
 from .models import Alumno, Grupo, Administrador, Profesor
+from django.shortcuts import get_object_or_404
 
 # Create your views here.
 
@@ -67,21 +68,23 @@ def register(request):
 def administrar(request):
     return render(request, "sistema/administrar.html")
     
+from django.shortcuts import redirect
+
 def crearGrupo(request):
     if request.method == 'POST':
         nombre = request.POST['nombre']
         alumnosIds = request.POST.getlist('alumnos')
         alumnos = Alumno.objects.filter(id__in=alumnosIds)
         
-        # Crear el grupo sin restricción de rol
-        nuevo_grupo = Grupo(nombre=nombre)
-        nuevo_grupo.save()
-        nuevo_grupo.alumnos.set(alumnos)
-        nuevo_grupo.save()
+        if not Grupo.objects.filter(nombre=nombre).exists():
+            # Crear el grupo solo si no existe uno con el mismo nombre
+            nuevo_grupo = Grupo(nombre=nombre)
+            nuevo_grupo.save()
+            nuevo_grupo.alumnos.set(alumnos)
+            nuevo_grupo.save()
 
         # Redirige para evitar que se reenvíe el formulario al refrescar la página
-        return render(request, "sistema/crearGrupo.html")
-      # Asegúrate de tener el nombre de la URL correcta
+        return redirect("crearGrupo")  # Asegúrate de tener el nombre de la URL correcta
 
     # Obtener todos los grupos para mostrarlos en la plantilla
     grupos = Grupo.objects.all()
@@ -91,13 +94,25 @@ def crearGrupo(request):
         'grupos': grupos
     })
     
-    
-def eliminarGrupo(request, grupo_id):
-    administrador = request.user
 
-    # Eliminar el grupo usando el método del administrador
-    administrador.eliminarGrupo(grupo_id)
+def eliminarGrupos(request):
+    if request.method == 'POST':
+        # Verificar que el usuario actual es un Administrador
+        administrador = request.user
+        if not isinstance(administrador, Administrador):
+            return HttpResponseRedirect(reverse("index"))
 
-    return render(request, "sistema/crearGrupo.html")
+        # Obtener los IDs de los grupos seleccionados
+        gruposIds = request.POST.getlist('grupos')
+
+        # Eliminar cada grupo llamando al método `eliminarGrupo`
+        for grupo_id in gruposIds:
+            administrador.eliminarGrupo(int(grupo_id))
+
+        # Redirige para evitar la duplicación al refrescar la página
+        return HttpResponseRedirect(reverse("crearGrupo"))
+
+    # Si el método no es POST, redirige a la página principal o muestra un mensaje
+    return HttpResponseRedirect(reverse("crearGrupo"))
 
 
