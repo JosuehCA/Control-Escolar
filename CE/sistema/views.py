@@ -78,7 +78,7 @@ def enviar_mensaje(request):
             mensaje = form.save(commit=False)
             mensaje.emisor = request.user
             mensaje.save()
-            return redirect('sistema/enviar_mensaje.html')
+            return redirect('mensajes')
     else:
         form = MensajeDirectoForm()
 
