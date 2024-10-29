@@ -7,6 +7,7 @@ from django.db import IntegrityError
 from django.http import HttpResponseRedirect
 
 from .models import UsuarioEscolar
+from .models import Alumno, Grupo, Administrador, Profesor
 
 # Create your views here.
 
@@ -62,3 +63,41 @@ def register(request):
         return HttpResponseRedirect(reverse("index"))
     else:
         return render(request, "sistema/register.html")
+    
+def administrar(request):
+    return render(request, "sistema/administrar.html")
+    
+def crearGrupo(request):
+    if request.method == 'POST':
+        nombre = request.POST['nombre']
+        alumnosIds = request.POST.getlist('alumnos')
+        alumnos = Alumno.objects.filter(id__in=alumnosIds)
+        
+        # Crear el grupo sin restricción de rol
+        nuevo_grupo = Grupo(nombre=nombre)
+        nuevo_grupo.save()
+        nuevo_grupo.alumnos.set(alumnos)
+        nuevo_grupo.save()
+
+        # Redirige para evitar que se reenvíe el formulario al refrescar la página
+        return render(request, "sistema/crearGrupo.html")
+      # Asegúrate de tener el nombre de la URL correcta
+
+    # Obtener todos los grupos para mostrarlos en la plantilla
+    grupos = Grupo.objects.all()
+    alumnos = Alumno.objects.all()
+    return render(request, "sistema/crearGrupo.html", {
+        'alumnos': alumnos,
+        'grupos': grupos
+    })
+    
+    
+def eliminarGrupo(request, grupo_id):
+    administrador = request.user
+
+    # Eliminar el grupo usando el método del administrador
+    administrador.eliminarGrupo(grupo_id)
+
+    return render(request, "sistema/crearGrupo.html")
+
+
