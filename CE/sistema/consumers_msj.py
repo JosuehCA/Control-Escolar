@@ -1,43 +1,45 @@
 import json
 from channels.generic.websocket import AsyncWebsocketConsumer
+from typing import Any
 
 # Consumidor de WebSocket para la mensajería
 class MensajeConsumidor(AsyncWebsocketConsumer):
-    async def ConectarUsuario(self):
-        # Identificador único para cada usuario en WebSocket
-        self.NombreGrupoUsuario = 'chat_%s' % self.scope['user'].id
+    async def conectarUsuario(self) -> None:
+        """Conecta al usuario al grupo WebSocket."""
+        self.nombreGrupoUsuario = f'chat_{self.scope["user"].id}'
 
         # Unir al grupo WebSocket del usuario
         await self.channel_layer.group_add(
-            self.NombreGrupoUsuario,
+            self.nombreGrupoUsuario,
             self.channel_name
         )
         await self.accept()
 
-    async def DesconectarUsuario(self, CodigoCerrar):
-        # Remueve al usuario del grupo WebSocket al desconectarse
+    async def desconectarUsuario(self, codigoCerrar: int) -> None:
+        """Desconecta al usuario del grupo WebSocket."""
         await self.channel_layer.group_discard(
-            self.NombreGrupoUsuario,
+            self.nombreGrupoUsuario,
             self.channel_name
         )
 
-    async def RecibirMensajeWebSocket(self, TextoDatos):
+    async def recibirMensajeWebSocket(self, textoDatos: str) -> None:
+        """Recibe un mensaje en formato JSON a través de WebSocket."""
         # Deserializa el mensaje en JSON
-        DatosJson = json.loads(TextoDatos)
-        ContenidoMensaje = DatosJson['mensaje']
+        datosJson: dict = json.loads(textoDatos)
+        contenidoMensaje: str = datosJson['mensaje']
 
         # Envía el mensaje al grupo WebSocket
         await self.channel_layer.group_send(
-            self.NombreGrupoUsuario,
+            self.nombreGrupoUsuario,
             {
-                'type': 'EventoMensajeGrupo',
-                'mensaje': ContenidoMensaje
+                'type': 'eventoMensajeGrupo',
+                'mensaje': contenidoMensaje
             }
         )
 
-    async def EventoMensajeGrupo(self, EventoDatos):
-        # Extrae el mensaje y lo envía al WebSocket
-        ContenidoMensaje = EventoDatos['mensaje']
+    async def eventoMensajeGrupo(self, eventoDatos: dict) -> None:
+        """Envía el mensaje recibido a través de WebSocket."""
+        contenidoMensaje: str = eventoDatos['mensaje']
         await self.send(text_data=json.dumps({
-            'mensaje': ContenidoMensaje
+            'mensaje': contenidoMensaje
         }))
