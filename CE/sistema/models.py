@@ -1,14 +1,53 @@
 from django.contrib.auth.models import AbstractUser
 from django.db import models as m
 from django.conf import settings
+from django.utils import timezone
+from django.shortcuts import get_object_or_404, redirect
 
 
+
+
+<<<<<<< Updated upstream
 class Menu(m.Model):
     """TDA Menu. Define un Menú de comidas personalizable de acuerdo al administrador, y tomando en cuenta
+=======
+class Platillo(m.Model):
+    """TDA Platillo. Modela un platillo disponible en el menú, incluyendo el nombre, descripción del mismo y 
+    consideraciones."""
+
+    nombre = m.CharField(max_length=200)
+    descripcion = m.CharField(max_length=300)
+    consideraciones = m.TextField(blank=True, null=True)
+
+
+    def __str__(self):
+        return self.nombre
+    
+
+class MenuPlatillo(m.Model):
+    """Tabla Menu Platillo. Auxiliar en la relación muchos a muchos entre varios Platillos y Varios Menús
+    Semanales. Incluye atributo de Fecha para su filtrado."""
+    
+    menu = m.ForeignKey("MenuSemanal", on_delete=m.CASCADE, related_name="opcionesMenu")
+    platillo = m.ForeignKey(Platillo, on_delete=m.SET_NULL, null=True)
+    fecha = m.DateField()
+
+
+    class Meta: 
+        unique_together = ('menu', 'platillo', 'fecha')
+
+
+    def __str__(self):
+        return f"{self.menu.nombre} - {self.platillo.nombre} el {self.fecha}"
+
+
+
+class MenuSemanal(m.Model):
+    """TDA Menu Semanal.. Define un Menú de comidas personalizable de acuerdo al nutricionista, y tomando en cuenta
+>>>>>>> Stashed changes
     ciertas indicaciones que los tutores manifiesten."""
 
     pass
-
 
 class Grupo(m.Model):
     """TDA Salón. Define aquellos grupos a los que pertenece un conjunto de estudiantes bajo la dirección 
@@ -24,6 +63,7 @@ class Grupo(m.Model):
         verbose_name_plural = "Grupos"
 
 
+<<<<<<< Updated upstream
 class Plato(m.Model):
     """TDA Plato. Modela un platillo disponible en el menú, incluyendo el nombre, descripción del mismo y 
     consideraciones."""
@@ -31,20 +71,99 @@ class Plato(m.Model):
     nombre = m.CharField(max_length=200)
     descripcion = m.CharField(max_length=300)
     #consideraciones
+=======
+    def __str__(self):
+        return f'Grupo: {self.nombre}'
+    
+
+class HorarioDeActividades(m.Model):
+    fecha = m.DateField(unique=True)  
+    horaEntrada = m.TimeField()
+    horaSalida = m.TimeField()
+
+    @classmethod
+    def obtenerHorarioPorDefecto(cls) -> int:
+        """Obtiene o crea un horario por defecto y devuelve su ID."""
+        horarioPorDefecto, created = cls.objects.get_or_create(
+            fecha=timezone.now().date(),  
+            defaults={'horaEntrada': '06:00', 'horaSalida': '12:00'}
+        )
+        return horarioPorDefecto.id 
+
+    def definirHorarioEscolar(self, horaEntrada: m.TimeField, horaSalida: m.TimeField) -> None:
+        self.horaEntrada = horaEntrada
+        self.horaSalida = horaSalida
+        self.save()
+
+    def eliminarHorario(self, horarioId: int) -> None:
+        """Elimina un horario específico por su ID."""
+        horario = get_object_or_404(HorarioDeActividades, id=horarioId)
+        horario.delete()
+
+    def agregarActividad(self, actividad: 'Actividad') -> None:
+        """Agrega una actividad si está dentro del horario y no choca con otras."""
+        if not actividad.estaEnRangoDeHorario(self):
+            raise ValueError("La actividad está fuera del horario permitido")
+        if self.actividad_set.filter(
+                horaInicio__lt=actividad.horaFinal,
+                horaFinal__gt=actividad.horaInicio
+        ).exists():
+            raise ValueError("No se puede agregar actividad. Existe conflicto de horarios con otra ya existente")
+
+        actividad.horario = self
+        actividad.save()
+
+    def eliminarActividad(self, request, actividadId: int) -> None:
+        """Elimina una actividad específica."""
+        if request.method == "POST":
+            actividad = get_object_or_404(Actividad, id=actividadId)
+            actividad.delete()
+            return redirect('actividades')  
+        
+    def filtarActividadesPorFecha(self, fecha: m.DateField) -> m.QuerySet:
+        """Devuelve las actividades para una fecha específica."""
+        return self.actividades.filter(horario__fecha=fecha)
+
+    def __str__(self) -> str:
+        return f"Horario de {self.fecha}: {self.horaEntrada} - {self.horaSalida}"
+    
+    class Meta:
+        verbose_name_plural = "Horarios De Actividades"
+>>>>>>> Stashed changes
 
 
 class Actividad(m.Model):
-    """TDA Actividad. Representa una actividad específica que los alumnos pueden realizar en un
-    periodo de tiempo."""
+    """Representa una actividad específica que los alumnos pueden realizar en un periodo de tiempo."""
 
-    nombre = m.CharField(max_length=100)
+    nombre = m.CharField(max_length=200, default="Actividad Sin Nombre")
     horaInicio = m.TimeField()
     horaFinal = m.TimeField()
+    horario = m.ForeignKey(HorarioDeActividades, related_name='actividades', on_delete=m.CASCADE, default=HorarioDeActividades.obtenerHorarioPorDefecto)
 
+<<<<<<< Updated upstream
     class Meta:
         verbose_name_plural = "Actividades"
 
 
+=======
+    def crearActividad(self, nombre: str, horaInicio: m.TimeField, horaFinal: m.TimeField) -> None:
+        """Crea una actividad estableciendo su nombre y rango de tiempo."""
+        self.nombre = nombre
+        self.horaInicio = horaInicio
+        self.horaFinal = horaFinal
+        self.save()
+
+    def estaEnRangoDeHorario(self, horario: HorarioDeActividades) -> bool:
+        """Verifica si la actividad está dentro del horario permitido."""
+        return horario.horaEntrada <= self.horaInicio and self.horaFinal <= horario.horaSalida
+
+    def __str__(self) -> str:
+        return f"{self.nombre} ({self.horaInicio} - {self.horaFinal})"
+
+    class Meta:
+        verbose_name_plural = "Actividades"
+
+>>>>>>> Stashed changes
 # Reportes -------------------------------------------------------------------------------------
 
 class Reporte(m.Model):

@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Listar Actividades</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #f4f4f4;
+        }
+        h1 {
+            color: #333;
+            text-align: center;
+        }
+        form {
+            display: flex;
+            justify-content: center;
+            margin-bottom: 20px;
+        }
+        label {
+            margin-right: 10px;
+            font-weight: bold;
+        }
+        input[type="date"] {
+            padding: 5px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            margin-right: 10px;
+        }
+        button {
+            padding: 6px 12px;
+            background-color: #28a745;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+        button:hover {
+            background-color: #218838;
+        }
+        ul {
+            list-style-type: none;
+            padding: 0;
+        }
+        li {
+            background: #fff;
+            margin: 10px 0;
+            padding: 10px;
+            border-radius: 5px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .no-actividades {
+            color: #888;
+            text-align: center;
+        }
+        .delete-button {
+            background-color: #dc3545;
+        }
+        .delete-button:hover {
+            background-color: #c82333;
+        }
+        .add-activity-button {
+            display: block;
+            margin: 20px auto;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+    <h1>Lista de Actividades</h1>
+    <form method="POST" action="{% url 'lista_actividades' %}">
+        {% csrf_token %}
+        <label for="fecha">Selecciona una fecha:</label>
+        <input type="date" name="fecha" required>
+        <button type="submit">Filtrar Actividades</button>
+    </form>
+
+    {% if fecha %}
+        <h2>Actividades para {{ fecha }}</h2>
+    {% endif %}
+
+    <ul>
+        {% if actividades %}
+            {% for actividad in actividades %}
+                <li>
+                    <span>{{ actividad.nombre }} ({{ actividad.horaInicio }} - {{ actividad.horaFinal }})</span>
+                    <form action="{% url 'eliminar_actividad' actividad.id %}" method="POST" style="display:inline;">
+                        {% csrf_token %}
+                        <button type="submit" class="delete-button">Eliminar</button>
+                    </form>
+                </li>
+            {% endfor %}
+        {% else %}
+            <li class="no-actividades">No hay actividades programadas para esta fecha.</li>
+        {% endif %}
+    </ul>
+
+    <div class="add-activity-button">
+        <a href="{% url 'actividades' %}">
+            <button type="button">Agregar Actividad</button>
+        </a>
+    </div>
+</body>
+</html>
