@@ -7,6 +7,8 @@ from django.db import IntegrityError
 from django.http import HttpResponseRedirect
 
 from .models import UsuarioEscolar
+from .models import Alumno, Grupo, Administrador, Profesor
+from django.shortcuts import get_object_or_404
 
 # Create your views here.
 
@@ -62,3 +64,55 @@ def register(request):
         return HttpResponseRedirect(reverse("index"))
     else:
         return render(request, "sistema/register.html")
+    
+def administrar(request):
+    return render(request, "sistema/administrar.html")
+    
+from django.shortcuts import redirect
+
+def crearGrupo(request):
+    if request.method == 'POST':
+        nombre = request.POST['nombre']
+        alumnosIds = request.POST.getlist('alumnos')
+        alumnos = Alumno.objects.filter(id__in=alumnosIds)
+        
+        if not Grupo.objects.filter(nombre=nombre).exists():
+            # Crear el grupo solo si no existe uno con el mismo nombre
+            nuevo_grupo = Grupo(nombre=nombre)
+            nuevo_grupo.save()
+            nuevo_grupo.alumnos.set(alumnos)
+            nuevo_grupo.save()
+
+        # Redirige para evitar que se reenvíe el formulario al refrescar la página
+        return redirect("crearGrupo")  # Asegúrate de tener el nombre de la URL correcta
+
+    # Obtener todos los grupos para mostrarlos en la plantilla
+    grupos = Grupo.objects.all()
+    alumnos = Alumno.objects.all()
+    return render(request, "sistema/crearGrupo.html", {
+        'alumnos': alumnos,
+        'grupos': grupos
+    })
+    
+
+def eliminarGrupos(request):
+    if request.method == 'POST':
+        # Verificar que el usuario actual es un Administrador
+        administrador = request.user
+        if not isinstance(administrador, Administrador):
+            return HttpResponseRedirect(reverse("index"))
+
+        # Obtener los IDs de los grupos seleccionados
+        gruposIds = request.POST.getlist('grupos')
+
+        # Eliminar cada grupo llamando al método `eliminarGrupo`
+        for grupo_id in gruposIds:
+            administrador.eliminarGrupo(int(grupo_id))
+
+        # Redirige para evitar la duplicación al refrescar la página
+        return HttpResponseRedirect(reverse("crearGrupo"))
+
+    # Si el método no es POST, redirige a la página principal o muestra un mensaje
+    return HttpResponseRedirect(reverse("crearGrupo"))
+
+

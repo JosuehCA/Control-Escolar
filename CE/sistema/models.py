@@ -1,7 +1,7 @@
+from typing import List
 from django.contrib.auth.models import AbstractUser
 from django.db import models as m
 from django.conf import settings
-
 
 class Menu(m.Model):
     """TDA Menu. Define un Menú de comidas personalizable de acuerdo al administrador, y tomando en cuenta
@@ -15,6 +15,7 @@ class Grupo(m.Model):
     de un profesor."""
 
     nombre = m.CharField(max_length=2000)
+    alumnos = m.ManyToManyField('Alumno', related_name="alumnosGrupo")
 
     def __str__(self):
         return f'Grupo: {self.nombre}'
@@ -107,7 +108,26 @@ class UsuarioEscolar(AbstractUser):
 
 class Administrador(UsuarioEscolar):
     """TDA Administrador. Rol especial dentro del plantel cuyos permisos permiten controlar todo cuanto
-    sea necesario. Tiene acceso a todos los apartados."""
+    sea necesario. Tiene acceso a todos los apartados."""    
+
+
+    def crearGrupo(self, nombre: str, alumnos: List['Alumno']) -> None:
+        if not Grupo.objects.filter(nombre=nombre).exists():
+            nuevo_grupo = Grupo(nombre=nombre)
+            nuevo_grupo.save()  # Guardamos primero para poder asignar M2M
+            nuevo_grupo.alumnos.set(alumnos)  # Añadimos los alumnos seleccionados al grupo
+            nuevo_grupo.save()
+        else:
+            print("El grupo ya existe.")
+
+
+    def eliminarGrupo(self, grupo_id: int) -> None:
+        try:
+            grupo = Grupo.objects.get(id=grupo_id)
+            grupo.delete()
+        except Grupo.DoesNotExist:
+            print("El grupo no existe.")
+
 
     class Meta:
         verbose_name = "Administrador"

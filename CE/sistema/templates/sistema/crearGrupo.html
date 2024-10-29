@@ -1,0 +1,33 @@
+<h1>Crear Grupo</h1>
+
+<form method="POST" action="">
+    {% csrf_token %}
+    
+    <label for="nombre">Nombre del Grupo:</label>
+    <input type="text" id="nombre" name="nombre" required>
+
+    <h2>Seleccionar Alumnos:</h2>
+    <ul>
+        {% for alumno in alumnos %}
+            <li>
+                <input type="checkbox" name="alumnos" value="{{ alumno.id }}">
+                {{ alumno.username }}
+            </li>
+        {% endfor %}
+    </ul>
+    
+    <button type="submit">Crear Grupo</button>
+</form>
+
+<h2>Grupos Existentes</h2>
+<ul>
+    {% for grupo in grupos %}
+        <li>{{ grupo.nombre }} - Alumnos: 
+            <ul>
+                {% for alumno in grupo.alumnos.all %}
+                    <li>{{ alumno.username }}</li>
+                {% endfor %}
+            </ul>
+        </li>
+    {% endfor %}
+</ul>
