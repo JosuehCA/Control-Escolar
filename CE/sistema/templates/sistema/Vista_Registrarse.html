@@ -4,27 +4,27 @@
 
     <h2>Registro</h2>
 
-    {% if message %}
-        <div>{{ message }}</div>
+    {% if mensaje %}
+        <div>{{ mensaje }}</div>
     {% endif %}
 
     <form action="{% url 'register' %}" method="post">
         {% csrf_token %}
         <div class="form-group">
-            <input class="form-control" autofocus type="text" name="username" placeholder="Usuario">
+            <input class="form-control" autofocus type="text" name="nombre_usuario" placeholder="Usuario">
         </div>
         <div class="form-group">
             <input class="form-control" type="email" name="email" placeholder="Correo electrónico">
         </div>
         <div class="form-group">
-            <input class="form-control" type="password" name="password" placeholder="Contraseña">
+            <input class="form-control" type="password" name="contrasena" placeholder="Contraseña">
         </div>
         <div class="form-group">
-            <input class="form-control" type="password" name="confirmation" placeholder="Confirmar contraseña">
+            <input class="form-control" type="password" name="confirmacion" placeholder="Confirmar contraseña">
         </div>
         <input class="btn btn-primary" type="submit" value="Registrarse">
     </form>
 
-    Ya tienes una cuenta? <a href="{% url 'login' %}">Inicia sesión.</a>
+    Ya tienes una cuenta? <a href="{% url 'iniciar_sesion' %}">Inicia sesión.</a>
 
 {% endblock %}
