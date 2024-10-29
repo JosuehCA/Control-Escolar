@@ -83,7 +83,7 @@ def enviarMensajeDirecto(request: HttpRequest) -> HttpResponse:
             receptorUsuario = mensajeDirectoForm.cleaned_data.get('receptorUsuario')
             
             if mensajeDirectoInstancia.enviar(request.user, receptorUsuario):
-                return redirect('servicioMensajeria')
+                return redirect('mensaje_directo')
             else:
                 mensajeDirectoForm.add_error(None, "No puedes enviarte mensajes a ti mismo.")
     
