@@ -6,8 +6,9 @@ from django.urls import reverse
 from django.db import IntegrityError
 from django.http import HttpResponseRedirect
 from .forms_msj import MensajeDirectoForm
-from .mensaje import MensajeDirecto
+from .models_msj import MensajeDirecto
 from django.shortcuts import redirect
+from django.http import HttpRequest, HttpResponse
 
 from .models import UsuarioEscolar
 
@@ -70,24 +71,30 @@ def servicioReportes(request):
 def cocina(request):
     pass
 
-# Vista para enviar mensajes directos y mostrar mensajes recientes
-def enviar_mensaje(request):
+@login_required
+def enviarMensajeDirecto(request: HttpRequest) -> HttpResponse:
+    """Vista para enviar un mensaje directo."""
+
     if request.method == 'POST':
-        form = MensajeDirectoForm(request.POST)
-        if form.is_valid():
-            mensaje = form.save(commit=False)
-            mensaje.emisor = request.user
-            mensaje.save()
-            return redirect('mensajes')
+        mensajeDirectoForm = MensajeDirectoForm(request.POST)
+        
+        if mensajeDirectoForm.is_valid():
+            mensajeDirectoInstancia = mensajeDirectoForm.save(commit=False)
+            receptorUsuario = mensajeDirectoForm.cleaned_data.get('receptorUsuario')
+            
+            if mensajeDirectoInstancia.enviar(request.user, receptorUsuario):
+                return redirect('servicioMensajeria')
+            else:
+                mensajeDirectoForm.add_error(None, "No puedes enviarte mensajes a ti mismo.")
+    
     else:
-        form = MensajeDirectoForm()
+        mensajeDirectoForm = MensajeDirectoForm()
 
-    # Mensajes enviados y recibidos por el usuario actual
-    mensajes = MensajeDirecto.objects.filter(receptor=request.user).order_by('-fechaEnviado')
+    mensajesUsuario = MensajeDirecto.obtenerMensajesFiltrados(request.user)
 
-    return render(request, 'sistema/enviar_mensaje.html', {
-        'form': form,
-        'messages': mensajes,
+    return render(request, 'sistema/testMensajeria.html', {
+        'form': mensajeDirectoForm,
+        'mensajes': mensajesUsuario,
     })
 
 def plantel(request):

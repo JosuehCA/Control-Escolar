@@ -8,16 +8,16 @@
         var ws_scheme = window.location.protocol === "https:" ? "wss" : "ws";
         var chatSocket = new WebSocket(ws_scheme + '://' + window.location.host + '/ws/mensajes/');
     
-        chatSocket.onmessage = function(e) {
+        chatSocket.onmensaje = function(e) {
             var data = JSON.parse(e.data);
-            var message = data['message'];
+            var mensaje = data['mensaje'];
     
             // Mostrar el mensaje en el DOM
-            var messageList = document.querySelector('.message-list ul');
-            var newMessage = document.createElement('li');
-            newMessage.className = "message-item";
-            newMessage.innerHTML = '<strong>Nuevo mensaje</strong>: ' + message;
-            messageList.appendChild(newMessage);
+            var mensajeList = document.querySelector('.mensaje-list ul');
+            var newmensaje = document.createElement('li');
+            newmensaje.className = "mensaje-item";
+            newmensaje.innerHTML = '<strong>Nuevo mensaje</strong>: ' + mensaje;
+            mensajeList.appendChild(newmensaje);
         };
     
         chatSocket.onclose = function(e) {
@@ -27,11 +27,11 @@
         // Enviar mensaje
         document.querySelector('form').onsubmit = function(e) {
             e.preventDefault();
-            var messageInput = document.querySelector('#id_contenido');
+            var mensajeInput = document.querySelector('#id_contenido');
             chatSocket.send(JSON.stringify({
-                'message': messageInput.value
+                'mensaje': mensajeInput.value
             }));
-            messageInput.value = '';
+            mensajeInput.value = '';
         };
     </script>
     
@@ -58,10 +58,10 @@
         button:hover {
             background-color: #0056b3;
         }
-        .message-list {
+        .mensaje-list {
             margin-top: 30px;
         }
-        .message-item {
+        .mensaje-item {
             border-bottom: 1px solid #ddd;
             padding: 10px;
         }
@@ -75,15 +75,15 @@
         <button type="submit">Enviar Mensaje</button>
     </form>
 
-    <div class="message-list">
+    <div class="mensaje-list">
         <h2>Mensajes Recientes</h2>
-        {% if messages %}
+        {% if mensajes %}
             <ul>
-                {% for message in messages %}
-                    <li class="message-item">
-                        <strong>De: {{ message.emisor.username }}</strong><br>
-                        {{ message.contenido }}<br>
-                        <small>{{ message.fecha_enviado }}</small>
+                {% for mensaje in mensajes %}
+                    <li class="mensaje-item">
+                        <strong>De: {{ mensaje.emisorUsuario.username }}</strong><br>
+                        {{ mensaje.contenidoMensaje }}<br>
+                        <small>{{ mensaje.fechaEnviado }}</small>
                     </li>
                 {% endfor %}
             </ul>
