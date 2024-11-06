@@ -1,6 +1,5 @@
 from typing import List
-from django.contrib.auth.models import AbstractUser
-from django.db import models as m
+|from django.db import models as m
 from django.conf import settings
 
 class Menu(m.Model):
@@ -241,4 +240,3 @@ class Notificacion(m.Model):
 
     class Meta:
         verbose_name = "Notificacion"
-        verbose_name_plural = "Notificaciones"

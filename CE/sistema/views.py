@@ -114,5 +114,3 @@ def eliminarGrupos(request):
 
     # Si el método no es POST, redirige a la página principal o muestra un mensaje
     return HttpResponseRedirect(reverse("crearGrupo"))
-
-
