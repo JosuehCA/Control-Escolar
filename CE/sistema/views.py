@@ -5,6 +5,10 @@ from django.contrib.auth.decorators import login_required
 from django.urls import reverse
 from django.db import IntegrityError
 from django.http import HttpResponseRedirect
+from .forms_msj import MensajeDirectoForm
+from .models_msj import MensajeDirecto
+from django.shortcuts import redirect
+from django.http import HttpRequest, HttpResponse
 
 from .models import UsuarioEscolar
 
@@ -67,8 +71,31 @@ def servicioReportes(request):
 def cocina(request):
     pass
 
-def mensajeria(request):
-    pass
+@login_required
+def enviarMensajeDirecto(request: HttpRequest) -> HttpResponse:
+    """Vista para enviar un mensaje directo."""
+
+    if request.method == 'POST':
+        mensajeDirectoForm = MensajeDirectoForm(request.POST)
+        
+        if mensajeDirectoForm.is_valid():
+            mensajeDirectoInstancia = mensajeDirectoForm.save(commit=False)
+            receptorUsuario = mensajeDirectoForm.cleaned_data.get('receptorUsuario')
+            
+            if mensajeDirectoInstancia.enviar(request.user, receptorUsuario):
+                return redirect('mensaje_directo')
+            else:
+                mensajeDirectoForm.add_error(None, "No puedes enviarte mensajes a ti mismo.")
+    
+    else:
+        mensajeDirectoForm = MensajeDirectoForm()
+
+    mensajesUsuario = MensajeDirecto.obtenerMensajesFiltrados(request.user)
+
+    return render(request, 'sistema/testMensajeria.html', {
+        'form': mensajeDirectoForm,
+        'mensajes': mensajesUsuario,
+    })
 
 def plantel(request):
     pass
