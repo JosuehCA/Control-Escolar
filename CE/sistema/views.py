@@ -3,12 +3,17 @@ from django import forms
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.decorators import login_required
 from django.urls import reverse
+from django.http import HttpResponse
 from django.db import IntegrityError
 from django.http import HttpResponseRedirect
+<<<<<<< HEAD
 from .forms_msj import MensajeDirectoForm
 from .models_msj import MensajeDirecto
 from django.shortcuts import redirect
 from django.http import HttpRequest, HttpResponse
+=======
+from weasyprint import HTML
+>>>>>>> a0b7ab7 (Se añadió archivo de dependencias necesarias. Ir agregando a medida que se necesiten más)
 
 from .models import UsuarioEscolar
 
@@ -65,8 +70,19 @@ def registrarse(request):
     else:
         return render(request, "sistema/Vista_Registrarse.html")
     
-def servicioReportes(request):
-    pass
+
+def generarReporte(request):
+
+    datos = {"nombre": "Sample Report", "contenido": "Test de creación de PDF's"}
+    
+    # Render the HTML template with data
+    cadena_html = render(request, "sistema/Vista_Reporte.html", {"datos": datos}).content.decode()
+    archivo_pdf = HTML(string=cadena_html).write_pdf()
+
+    respuesta = HttpResponse(archivo_pdf, content_type="application/pdf")
+    respuesta["Content-Disposition"] = "inline; filename=report.pdf"
+
+    return respuesta
 
 def cocina(request):
     pass

@@ -8,7 +8,7 @@
         <div>{{ mensaje }}</div>
     {% endif %}
 
-    <form action="{% url 'register' %}" method="post">
+    <form action="{% url 'registrarse' %}" method="post">
         {% csrf_token %}
         <div class="form-group">
             <input class="form-control" autofocus type="text" name="nombre_usuario" placeholder="Usuario">
