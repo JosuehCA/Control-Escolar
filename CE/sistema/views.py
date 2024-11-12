@@ -6,14 +6,23 @@ from django.urls import reverse
 from django.http import HttpResponse
 from django.db import IntegrityError
 from django.http import HttpResponseRedirect
-<<<<<<< HEAD
 from .forms_msj import MensajeDirectoForm
 from .models_msj import MensajeDirecto
 from django.shortcuts import redirect
 from django.http import HttpRequest, HttpResponse
-=======
+
+
+
+# Weasyprint
 from weasyprint import HTML
->>>>>>> a0b7ab7 (Se añadió archivo de dependencias necesarias. Ir agregando a medida que se necesiten más)
+import matplotlib
+matplotlib.use('Agg')
+import matplotlib.pyplot as plt
+import numpy as np
+import base64
+from django.template.loader import render_to_string
+from io import BytesIO
+
 
 from .models import UsuarioEscolar
 
@@ -70,8 +79,38 @@ def registrarse(request):
     else:
         return render(request, "sistema/Vista_Registrarse.html")
     
+def crearDiagramaPastel() -> base64:
+    # Crear gráfico de pastel Matplotlib
+    figura, eje = plt.subplots()
+    eje.pie([10, 20, 30, 40], labels=["Category A", "Category B", "Category C", "Category D"],
+           autopct='%1.1f%%', startangle=90, colors=["#FF0000", "#00FF00", "#0000FF", "#FFFF00"])
+    plt.axis('equal')  # Mantener relación de aspecto del gráfico
 
-def generarReporte(request):
+    # Guardar gráfico a objeto BytesIO y codificarlo como base 64
+    image_io = BytesIO()
+    plt.savefig(image_io, format='png')
+    image_io.seek(0)
+    plt.close()
+    imagen = base64.b64encode(image_io.getvalue()).decode('utf-8')
+
+    return imagen
+
+def generarDiagramaPastel(request) -> HttpResponse:
+
+    diagramaBase64: base64 = crearDiagramaPastel()
+
+    # Renderizar contenido HTML con texto base 64 del gráfico
+    contenidoHTML = render_to_string("sistema/Vista_DiagramaPastel.html", {"imagenDiagramaPastelPNG": f"data:image/png;base64, {diagramaBase64}"})
+
+    # Generar PDF con Weasyprint
+    archivoPDFBinario = BytesIO()
+    HTML(string=contenidoHTML).write_pdf(archivoPDFBinario)
+    archivoPDFBinario.seek(0)
+
+    return HttpResponse(archivoPDFBinario, content_type='application/pdf')
+
+
+def generarReporte(request) -> HttpResponse:
 
     datos = {"nombre": "Sample Report", "contenido": "Test de creación de PDF's"}
     
