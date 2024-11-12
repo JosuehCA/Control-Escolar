@@ -128,6 +128,20 @@ class Migration(migrations.Migration):
             ],
         ),
         migrations.CreateModel(
+            name='Alumno',
+            fields=[
+                ('usuarioescolar_ptr', models.OneToOneField(auto_created=True, on_delete=django.db.models.deletion.CASCADE, parent_link=True, primary_key=True, serialize=False, to=settings.AUTH_USER_MODEL)),
+            ],
+            options={
+                'verbose_name': 'Alumno',
+                'verbose_name_plural': 'Alumnos',
+            },
+            bases=('sistema.usuarioescolar',),
+            managers=[
+                ('objects', django.contrib.auth.models.UserManager()),
+            ],
+        ),
+        migrations.CreateModel(
             name='Nutricionista',
             fields=[
                 ('usuarioescolar_ptr', models.OneToOneField(auto_created=True, on_delete=django.db.models.deletion.CASCADE, parent_link=True, primary_key=True, serialize=False, to=settings.AUTH_USER_MODEL)),
@@ -157,6 +171,79 @@ class Migration(migrations.Migration):
         ),
         migrations.CreateModel(
             name='Conversacion',
+<<<<<<< HEAD
+=======
+            fields=[
+                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
+                ('usuarioPrimario', models.ForeignKey(on_delete=django.db.models.deletion.DO_NOTHING, related_name='usuarioPrimario_convo', to=settings.AUTH_USER_MODEL)),
+                ('usuarioSecundario', models.ForeignKey(on_delete=django.db.models.deletion.DO_NOTHING, related_name='usuarioSecundario_convo', to=settings.AUTH_USER_MODEL)),
+            ],
+            options={
+                'verbose_name': 'Conversacion',
+                'verbose_name_plural': 'Conversaciones',
+            },
+        ),
+        migrations.CreateModel(
+            name='MensajeDirecto',
+            fields=[
+                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
+                ('contenidoMensaje', models.CharField(max_length=2000)),
+                ('fechaEnviado', models.DateTimeField(auto_now_add=True)),
+                ('emisorUsuario', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to=settings.AUTH_USER_MODEL)),
+                ('receptorUsuario', models.ForeignKey(on_delete=django.db.models.deletion.DO_NOTHING, related_name='receptor', to=settings.AUTH_USER_MODEL)),
+            ],
+            options={
+                'verbose_name': 'Mensaje Directo',
+                'verbose_name_plural': 'Mensajes: Directos',
+            },
+        ),
+        migrations.CreateModel(
+            name='MensajeGrupo',
+            fields=[
+                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
+                ('contenidoMensaje', models.CharField(max_length=2000)),
+                ('fechaEnviado', models.DateTimeField(auto_now_add=True)),
+                ('emisorUsuario', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to=settings.AUTH_USER_MODEL)),
+                ('gruposRelacionados', models.ManyToManyField(related_name='mensajes', to='sistema.grupo')),
+            ],
+            options={
+                'verbose_name': 'Mensaje Grupo',
+                'verbose_name_plural': 'Mensajes: Grupos',
+            },
+        ),
+        migrations.CreateModel(
+            name='MensajePlantel',
+            fields=[
+                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
+                ('contenidoMensaje', models.CharField(max_length=2000)),
+                ('fechaEnviado', models.DateTimeField(auto_now_add=True)),
+                ('emisorUsuario', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to=settings.AUTH_USER_MODEL)),
+            ],
+            options={
+                'verbose_name': 'Mensaje Plantel',
+                'verbose_name_plural': 'Mensajes: Plantel',
+            },
+        ),
+        migrations.CreateModel(
+            name='MenuPlatillo',
+            fields=[
+                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
+                ('fecha', models.DateField()),
+                ('menu', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='opcionesMenu', to='sistema.menusemanal')),
+                ('platillo', models.ForeignKey(null=True, on_delete=django.db.models.deletion.SET_NULL, to='sistema.platillo')),
+            ],
+            options={
+                'unique_together': {('menu', 'platillo', 'fecha')},
+            },
+        ),
+        migrations.AddField(
+            model_name='menusemanal',
+            name='opcionesDePlatillo',
+            field=models.ManyToManyField(related_name='menús', through='sistema.MenuPlatillo', to='sistema.platillo'),
+        ),
+        migrations.CreateModel(
+            name='ReporteGrupo',
+>>>>>>> cf0f290ae15df4c92ccdcec679b50e6613fcb658
             fields=[
                 ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
                 ('usuarioPrimario', models.ForeignKey(on_delete=django.db.models.deletion.DO_NOTHING, related_name='usuarioPrimario_convo', to=settings.AUTH_USER_MODEL)),
@@ -231,7 +318,7 @@ class Migration(migrations.Migration):
                 ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
                 ('fecha', models.DateTimeField(auto_now_add=True)),
                 ('contenido', models.TextField()),
-                ('alumno', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='alumno_reporte', to=settings.AUTH_USER_MODEL)),
+                ('alumno', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='alumno_reporte', to='sistema.alumno')),
             ],
             options={
                 'verbose_name': 'Reporte Alumno',
@@ -239,6 +326,7 @@ class Migration(migrations.Migration):
             },
         ),
         migrations.CreateModel(
+<<<<<<< HEAD
             name='ReporteGrupo',
             fields=[
                 ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
@@ -252,6 +340,8 @@ class Migration(migrations.Migration):
             },
         ),
         migrations.CreateModel(
+=======
+>>>>>>> cf0f290ae15df4c92ccdcec679b50e6613fcb658
             name='Profesor',
             fields=[
                 ('usuarioescolar_ptr', models.OneToOneField(auto_created=True, on_delete=django.db.models.deletion.CASCADE, parent_link=True, primary_key=True, serialize=False, to=settings.AUTH_USER_MODEL)),
@@ -266,6 +356,7 @@ class Migration(migrations.Migration):
                 ('objects', django.contrib.auth.models.UserManager()),
             ],
         ),
+<<<<<<< HEAD
         migrations.CreateModel(
             name='Alumno',
             fields=[
@@ -280,5 +371,11 @@ class Migration(migrations.Migration):
             managers=[
                 ('objects', django.contrib.auth.models.UserManager()),
             ],
+=======
+        migrations.AddField(
+            model_name='alumno',
+            name='tutoralumno',
+            field=models.ForeignKey(on_delete=django.db.models.deletion.RESTRICT, related_name='tutor_alumno', to='sistema.tutor'),
+>>>>>>> cf0f290ae15df4c92ccdcec679b50e6613fcb658
         ),
     ]
