@@ -2,6 +2,7 @@ from django.contrib import admin
 
 from .models import *
 from .models_msj import *
+from .models_reportes import *
 
 admin.site.register(Platillo)
 admin.site.register(MenuPlatillo)

@@ -3,7 +3,7 @@ from django import forms
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.decorators import login_required
 from django.urls import reverse
-from django.http import HttpResponse
+from django.http import HttpRequest, HttpResponse
 from django.db import IntegrityError
 from django.http import HttpResponseRedirect
 from .forms_msj import MensajeDirectoForm
@@ -25,18 +25,19 @@ from io import BytesIO
 
 
 from .models import UsuarioEscolar
+from .models_reportes import *
 
 
-def indice(request):
+def indice(request: HttpRequest):
     return render(request, "sistema/Vista_Indice.html")
 
-def iniciarSesion(request):
+def iniciarSesion(request: HttpRequest):
     if request.method == "POST":
 
         # Intentar iniciar sesión
-        nombre_usuario = request.POST["nombre_usuario"]
+        nombreUsuario = request.POST["nombre_usuario"]
         contrasena = request.POST["contrasena"]
-        usuario = authenticate(request, username=nombre_usuario, password=contrasena)
+        usuario = authenticate(request, username=nombreUsuario, password=contrasena)
 
         # Validar usuario existente
         if usuario is not None:
@@ -49,13 +50,13 @@ def iniciarSesion(request):
     else:
         return render(request, "sistema/Vista_IniciarSesion.html")
     
-def cerrarSesion(request):
+def cerrarSesion(request: HttpRequest):
     logout(request)
     return HttpResponseRedirect(reverse("indice"))
 
-def registrarse(request):
+def registrarse(request: HttpRequest):
     if request.method == "POST":
-        nombre_usuario = request.POST["nombre_usuario"]
+        nombreUsuario = request.POST["nombre_usuario"]
         email = request.POST["email"]
 
         # Comparando contraseña confirmada
@@ -68,7 +69,7 @@ def registrarse(request):
 
         # Intentar crear usuario nuevo
         try:
-            usuario = UsuarioEscolar.objects.create_user(nombre_usuario, email, contrasena)
+            usuario = UsuarioEscolar.objects.create_user(nombreUsuario, email, contrasena)
             usuario.save()
         except IntegrityError:
             return render(request, "sistema/Vista_Registrarse.html", {
@@ -87,15 +88,15 @@ def crearDiagramaPastel() -> base64:
     plt.axis('equal')  # Mantener relación de aspecto del gráfico
 
     # Guardar gráfico a objeto BytesIO y codificarlo como base 64
-    image_io = BytesIO()
-    plt.savefig(image_io, format='png')
-    image_io.seek(0)
+    imagenBinaria = BytesIO()
+    plt.savefig(imagenBinaria, format='png')
+    imagenBinaria.seek(0)
     plt.close()
-    imagen = base64.b64encode(image_io.getvalue()).decode('utf-8')
+    imagen = base64.b64encode(imagenBinaria.getvalue()).decode('utf-8')
 
     return imagen
 
-def generarDiagramaPastel(request) -> HttpResponse:
+def generarDiagramaPastel(request: HttpRequest) -> HttpResponse:
 
     diagramaBase64: base64 = crearDiagramaPastel()
 
@@ -110,7 +111,7 @@ def generarDiagramaPastel(request) -> HttpResponse:
     return HttpResponse(archivoPDFBinario, content_type='application/pdf')
 
 
-def generarReporte(request) -> HttpResponse:
+def generarReporte(request: HttpRequest) -> HttpResponse:
 
     datos = {"nombre": "Sample Report", "contenido": "Test de creación de PDF's"}
     
@@ -123,7 +124,7 @@ def generarReporte(request) -> HttpResponse:
 
     return respuesta
 
-def cocina(request):
+def cocina(request: HttpRequest):
     pass
 
 @login_required
@@ -152,5 +153,5 @@ def enviarMensajeDirecto(request: HttpRequest) -> HttpResponse:
         'mensajes': mensajesUsuario,
     })
 
-def plantel(request):
+def plantel(request: HttpRequest):
     pass
