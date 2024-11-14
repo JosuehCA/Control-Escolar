@@ -1,11 +1,19 @@
 # Byte-compiled / optimized / DLL files
 __pycache__/
+<<<<<<< HEAD
+*.pyc
+*.pyo
+*.pyd
+=======
 *.py[cod]
+>>>>>>> main
 
 # C extensions
 *.so
 
 # Distribution / packaging
+<<<<<<< HEAD
+=======
 bin/
 build/
 develop-eggs/
@@ -16,6 +24,7 @@ lib64/
 parts/
 sdist/
 var/
+>>>>>>> main
 *.egg-info/
 .installed.cfg
 *.egg
