@@ -80,7 +80,7 @@ def registrarse(request: HttpRequest):
     else:
         return render(request, "sistema/Vista_Registrarse.html")
     
-def crearDiagramaPastel() -> base64:
+def crearDiagramaPastelCalificaciones() -> base64:
     # Crear gráfico de pastel Matplotlib
     figura, eje = plt.subplots()
     eje.pie([10, 20, 30, 40], labels=["Category A", "Category B", "Category C", "Category D"],
@@ -98,7 +98,7 @@ def crearDiagramaPastel() -> base64:
 
 def generarDiagramaPastel(request: HttpRequest) -> HttpResponse:
 
-    diagramaBase64: base64 = crearDiagramaPastel()
+    diagramaBase64: base64 = crearDiagramaPastelCalificaciones()
 
     # Renderizar contenido HTML con texto base 64 del gráfico
     contenidoHTML = render_to_string("sistema/Vista_DiagramaPastel.html", {"imagenDiagramaPastelPNG": f"data:image/png;base64, {diagramaBase64}"})
