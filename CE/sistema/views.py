@@ -1,7 +1,6 @@
 from django.shortcuts import render
 from django import forms
 from django.contrib.auth import authenticate, login, logout
-from django.contrib.auth.decorators import login_required
 from django.urls import reverse
 from django.http import HttpRequest, HttpResponse
 from django.db import IntegrityError
@@ -127,13 +126,8 @@ def generarReporte(request: HttpRequest) -> HttpResponse:
 def cocina(request: HttpRequest):
     pass
 
-@login_required
-def enviarMensajeDirecto(request: HttpRequest) -> HttpResponse:
-    """Vista para enviar un mensaje directo."""
-
-@login_required
-def enviarMensajeDirecto(request: HttpRequest) -> HttpResponse:
-    """Vista para enviar un mensaje directo."""
+def mostrarVistaConversacion(request: HttpRequest) -> HttpResponse:
+    """Vista dinamica para conversaciones individuales, grupales o generales."""
 
     if request.method == 'POST':
         mensajeDirectoForm = MensajeDirectoForm(request.POST)

@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Conversación grupal</title>
+</head>
+<body>
+    <h1>Conversación en el grupo {{ grupo }}</h1>
+    <div id="chat-messages">
+        {% for message in messages %}
+            <div class="message">
+                {{ message.user }}: {{ message.content }}
+            </div>
+        {% endfor %}
+    </div>
+    <form id="chat-form">
+        <input type="text" name="message">
+        <button type="submit">Enviar</button>
+    </form>
+
+    <script>
+        // Aquí irá el código JavaScript para manejar la conexión WebSocket y enviar/recibir mensajes
+    </script>
+</body>
+</html>

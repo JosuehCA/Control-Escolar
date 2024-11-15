@@ -171,8 +171,6 @@ class Migration(migrations.Migration):
         ),
         migrations.CreateModel(
             name='Conversacion',
-<<<<<<< HEAD
-=======
             fields=[
                 ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
                 ('usuarioPrimario', models.ForeignKey(on_delete=django.db.models.deletion.DO_NOTHING, related_name='usuarioPrimario_convo', to=settings.AUTH_USER_MODEL)),
@@ -243,7 +241,6 @@ class Migration(migrations.Migration):
         ),
         migrations.CreateModel(
             name='ReporteGrupo',
->>>>>>> cf0f290ae15df4c92ccdcec679b50e6613fcb658
             fields=[
                 ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
                 ('usuarioPrimario', models.ForeignKey(on_delete=django.db.models.deletion.DO_NOTHING, related_name='usuarioPrimario_convo', to=settings.AUTH_USER_MODEL)),
@@ -326,7 +323,6 @@ class Migration(migrations.Migration):
             },
         ),
         migrations.CreateModel(
-<<<<<<< HEAD
             name='ReporteGrupo',
             fields=[
                 ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
@@ -340,8 +336,6 @@ class Migration(migrations.Migration):
             },
         ),
         migrations.CreateModel(
-=======
->>>>>>> cf0f290ae15df4c92ccdcec679b50e6613fcb658
             name='Profesor',
             fields=[
                 ('usuarioescolar_ptr', models.OneToOneField(auto_created=True, on_delete=django.db.models.deletion.CASCADE, parent_link=True, primary_key=True, serialize=False, to=settings.AUTH_USER_MODEL)),
@@ -356,7 +350,6 @@ class Migration(migrations.Migration):
                 ('objects', django.contrib.auth.models.UserManager()),
             ],
         ),
-<<<<<<< HEAD
         migrations.CreateModel(
             name='Alumno',
             fields=[
@@ -371,11 +364,10 @@ class Migration(migrations.Migration):
             managers=[
                 ('objects', django.contrib.auth.models.UserManager()),
             ],
-=======
+        ),
         migrations.AddField(
             model_name='alumno',
             name='tutoralumno',
             field=models.ForeignKey(on_delete=django.db.models.deletion.RESTRICT, related_name='tutor_alumno', to='sistema.tutor'),
->>>>>>> cf0f290ae15df4c92ccdcec679b50e6613fcb658
         ),
     ]
