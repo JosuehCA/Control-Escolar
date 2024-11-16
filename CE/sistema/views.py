@@ -70,47 +70,43 @@ def administrar(request):
     
 from django.shortcuts import redirect
 
-def crearGrupo(request):
+def administrarGrupos(request):
     if request.method == 'POST':
-        nombre = request.POST['nombre']
-        alumnosIds = request.POST.getlist('alumnos')
-        alumnos = Alumno.objects.filter(id__in=alumnosIds)
-        
-        if not Grupo.objects.filter(nombre=nombre).exists():
-            # Crear el grupo solo si no existe uno con el mismo nombre
-            nuevo_grupo = Grupo(nombre=nombre)
-            nuevo_grupo.save()
-            nuevo_grupo.alumnos.set(alumnos)
-            nuevo_grupo.save()
+        action = request.POST.get('action', 'create')  # Obtén la acción del formulario
+
+        if action == 'create':  # Crear un nuevo grupo
+            nombre = request.POST.get('nombre')
+            alumnosIds = request.POST.getlist('alumnos')
+            alumnos = Alumno.objects.filter(id__in=alumnosIds)
+
+            Administrador.crearGrupo(nombre, list(alumnos))
+
+        elif action == 'delete':  # Eliminar grupos seleccionados
+            gruposIds = request.POST.getlist('grupos')
+            for grupo_id in gruposIds:
+                try:
+                    grupo = Grupo.objects.get(id=grupo_id)
+                    grupo.delete()
+                except Grupo.DoesNotExist:
+                    print(f"Grupo con ID {grupo_id} no existe.")
+                    
+        elif action == 'edit':
+            grupo_id = request.POST.get('grupo_id')
+            nombre = request.POST.get('nombre')
+            alumnosIds = request.POST.getlist('alumnos')
+            alumnos = Alumno.objects.filter(id__in=alumnosIds)
+            try:
+                Administrador.editarGrupo(grupo_id, nombre, list(alumnos))
+            except Grupo.DoesNotExist:
+                print(f"Grupo con ID {grupo_id} no existe.")
 
         # Redirige para evitar que se reenvíe el formulario al refrescar la página
-        return redirect("crearGrupo")  # Asegúrate de tener el nombre de la URL correcta
+        return redirect("administrarGrupos")
 
-    # Obtener todos los grupos para mostrarlos en la plantilla
+    # Obtener todos los grupos y alumnos para mostrarlos en la plantilla
     grupos = Grupo.objects.all()
     alumnos = Alumno.objects.all()
-    return render(request, "sistema/crearGrupo.html", {
+    return render(request, "sistema/administrarGrupos.html", {
         'alumnos': alumnos,
         'grupos': grupos
     })
-    
-
-def eliminarGrupos(request):
-    if request.method == 'POST':
-        # Verificar que el usuario actual es un Administrador
-        administrador = request.user
-        if not isinstance(administrador, Administrador):
-            return HttpResponseRedirect(reverse("index"))
-
-        # Obtener los IDs de los grupos seleccionados
-        gruposIds = request.POST.getlist('grupos')
-
-        # Eliminar cada grupo llamando al método `eliminarGrupo`
-        for grupo_id in gruposIds:
-            administrador.eliminarGrupo(int(grupo_id))
-
-        # Redirige para evitar la duplicación al refrescar la página
-        return HttpResponseRedirect(reverse("crearGrupo"))
-
-    # Si el método no es POST, redirige a la página principal o muestra un mensaje
-    return HttpResponseRedirect(reverse("crearGrupo"))

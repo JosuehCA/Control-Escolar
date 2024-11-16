@@ -8,5 +8,5 @@ urlpatterns = [
     path("logout", views.logout_view, name="logout"),
     path("register", views.register, name="register"),
     path("administrar", views.administrar, name="administrar"),
-    path('crearGrupo/', views.crearGrupo, name='crearGrupo'),
+    path('grupos', views.administrarGrupos, name='administrarGrupos'),
 ]

@@ -1,6 +1,8 @@
 from typing import List
-|from django.db import models as m
+from django.db import models as m
 from django.conf import settings
+from django.contrib.auth.models import AbstractUser
+
 
 class Menu(m.Model):
     """TDA Menu. Define un Menú de comidas personalizable de acuerdo al administrador, y tomando en cuenta
@@ -109,8 +111,8 @@ class Administrador(UsuarioEscolar):
     """TDA Administrador. Rol especial dentro del plantel cuyos permisos permiten controlar todo cuanto
     sea necesario. Tiene acceso a todos los apartados."""    
 
-
-    def crearGrupo(self, nombre: str, alumnos: List['Alumno']) -> None:
+    @classmethod
+    def crearGrupo(cls, nombre: str, alumnos: List['Alumno']) -> None:
         if not Grupo.objects.filter(nombre=nombre).exists():
             nuevo_grupo = Grupo(nombre=nombre)
             nuevo_grupo.save()  # Guardamos primero para poder asignar M2M
@@ -119,7 +121,6 @@ class Administrador(UsuarioEscolar):
         else:
             print("El grupo ya existe.")
 
-
     def eliminarGrupo(self, grupo_id: int) -> None:
         try:
             grupo = Grupo.objects.get(id=grupo_id)
@@ -127,7 +128,17 @@ class Administrador(UsuarioEscolar):
         except Grupo.DoesNotExist:
             print("El grupo no existe.")
 
-
+    @classmethod
+    def editarGrupo(cls, grupo_id: int, nombre: str, alumnos: List['Alumno']) -> None:
+        try:
+            grupo = Grupo.objects.get(id=grupo_id)
+            grupo.nombre = nombre
+            grupo.alumnos.set(alumnos)
+            grupo.save()
+        except Grupo.DoesNotExist:
+            print("El grupo no existe.")
+            
+            
     class Meta:
         verbose_name = "Administrador"
         verbose_name_plural = "Administradores"
