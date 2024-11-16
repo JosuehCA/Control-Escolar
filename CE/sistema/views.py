@@ -78,27 +78,39 @@ def administrarGrupos(request):
             nombre = request.POST.get('nombre')
             alumnosIds = request.POST.getlist('alumnos')
             alumnos = Alumno.objects.filter(id__in=alumnosIds)
-
-            Administrador.crearGrupo(nombre, list(alumnos))
+            
+            if not Administrador.alumnosNoTienenGrupo(alumnos):
+                print("Alguno de los alumnos ya pertenece a un grupo.")
+            else:
+                Administrador.crearGrupo(nombre, list(alumnos))
 
         elif action == 'delete':  # Eliminar grupos seleccionados
             gruposIds = request.POST.getlist('grupos')
-            for grupo_id in gruposIds:
+            for grupoId in gruposIds:
                 try:
-                    grupo = Grupo.objects.get(id=grupo_id)
+                    grupo = Grupo.objects.get(id=grupoId)
                     grupo.delete()
                 except Grupo.DoesNotExist:
-                    print(f"Grupo con ID {grupo_id} no existe.")
+                    print(f"Grupo con ID {grupoId} no existe.")
                     
         elif action == 'edit':
-            grupo_id = request.POST.get('grupo_id')
+            grupoId = request.POST.get('grupo_id')
             nombre = request.POST.get('nombre')
             alumnosIds = request.POST.getlist('alumnos')
             alumnos = Alumno.objects.filter(id__in=alumnosIds)
+            
             try:
-                Administrador.editarGrupo(grupo_id, nombre, list(alumnos))
+                
+                gruposActuales = Grupo.objects.filter(alumnos__in=alumnos)
+                for grupo in gruposActuales:
+                    grupo.alumnos.remove(*alumnos)
+                
+                if not Administrador.alumnosNoTienenGrupo(alumnos):
+                    print("Alguno de los alumnos ya pertenece a un grupo.")
+                else:
+                    Administrador.editarGrupo(grupoId, nombre, list(alumnos))
             except Grupo.DoesNotExist:
-                print(f"Grupo con ID {grupo_id} no existe.")
+                print(f"Grupo con ID {grupoId} no existe.")
 
         # Redirige para evitar que se reenvíe el formulario al refrescar la página
         return redirect("administrarGrupos")

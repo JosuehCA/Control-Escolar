@@ -120,6 +120,12 @@ class Administrador(UsuarioEscolar):
             nuevo_grupo.save()
         else:
             print("El grupo ya existe.")
+            
+    def alumnosNoTienenGrupo(alumnos: List['Alumno']) -> bool:
+        for alumno in alumnos:
+            if Grupo.objects.filter(alumnos=alumno).exists():
+                return False  # El alumno ya pertenece a un grupo
+        return True
 
     def eliminarGrupo(self, grupo_id: int) -> None:
         try:
