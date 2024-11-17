@@ -104,7 +104,11 @@ class UsuarioEscolar(AbstractUser):
     u otra manera (profesores, admnistrador, tutores, alumnos y nutricionista). Proporciona actividades 
     comunes dentro de estos roles."""
 
-    pass
+    def getNombreUsuario(self) -> str:
+        return self.username
+
+    def getNombre(self) -> str:
+        return f"{self.first_name} {self.last_name}"
 
     class Meta:
         verbose_name = "Usuario Escolar"
@@ -141,9 +145,6 @@ class Tutor(UsuarioEscolar):
     """TDA Tutor. Tutor legal del alumno inscrito. Cuenta con acceso al sistema y puede visualizar toda la 
     información pertinente a sus tutorados."""
 
-    pass
-
-
     class Meta:
         verbose_name = "Tutor"
         verbose_name_plural = "Tutores"
@@ -172,15 +173,22 @@ class Alumno(UsuarioEscolar):
         self.actividadActual = nuevaActividad
         self.save()
 
-    
     def getTutor(self) -> Tutor:
         return self.tutoralumno
+
+    def getAsistencias(self) -> int:
+        return self.asistencias
     
+    def getActividadActual(self) -> Actividad:
+        return self.actividadActual
+
+    def getFaltas(self) -> int:
+        return self.faltas
     
     def getConsideracionesMenu(self) -> m.JSONField:
         return self.consideracionesMenu
-
-
+    
+    
     class Meta:
         verbose_name = "Alumno"
         verbose_name_plural = "Alumnos"

@@ -124,6 +124,38 @@ def generarReporte(request: HttpRequest) -> HttpResponse:
 
     return respuesta
 
+def crearReporteAsistencia(alumno: Alumno) -> base64:
+    # Datos de asistencia
+    asistencias = alumno.getAsistencias()
+    faltas = alumno.getFaltas()
+    total_clases = asistencias + faltas
+    porcentaje_asistencia = (asistencias / total_clases) * 100 if total_clases > 0 else 0
+
+    # Crear gráfico de barras para asistencia vs faltas
+    figura, eje = plt.subplots()
+    eje.bar(["Asistencias", "Faltas"], [asistencias, faltas], color=["#00FF00", "#FF0000"])
+
+    # Añadir texto para el porcentaje de asistencia
+    eje.text(0, asistencias + 1, f'{asistencias}', ha='center', color='black')
+    eje.text(1, faltas + 1, f'{faltas}', ha='center', color='black')
+
+    # Configurar título y etiquetas
+    eje.set_title(f"Reporte de Asistencia de {alumno.getTutor().getNombre()})")
+    eje.set_ylabel('Cantidad de Clases')
+
+    # Opcional: Incluir porcentaje de asistencia en el gráfico
+    eje.text(0.5, -max(asistencias, faltas) - 2, f'Asistencia: {porcentaje_asistencia:.2f}%', ha='center', color='black')
+
+    # Guardar gráfico a objeto BytesIO y codificarlo como base 64
+    imagenBinaria = BytesIO()
+    plt.savefig(imagenBinaria, format='png')
+    imagenBinaria.seek(0)
+    plt.close()
+    imagen = base64.b64encode(imagenBinaria.getvalue()).decode('utf-8')
+
+    return imagen
+
+
 def cocina(request: HttpRequest):
     pass
 
