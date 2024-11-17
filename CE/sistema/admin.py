@@ -1,7 +1,7 @@
 from django.contrib import admin
 
 from .models import *
-from .models_msj import *
+from .models_mensajeria import *
 from .models_reportes import *
 
 admin.site.register(Platillo)
@@ -27,6 +27,5 @@ admin.site.register(Nutricionista)
 admin.site.register(MensajeDirecto)
 admin.site.register(MensajeGrupo)
 admin.site.register(MensajePlantel)
-admin.site.register(Mensajero)
 admin.site.register(Conversacion)
 admin.site.register(Notificacion)

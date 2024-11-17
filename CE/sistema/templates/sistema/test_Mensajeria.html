@@ -1,9 +1,4 @@
 <!DOCTYPE html>
-<html lang="es">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Enviar Mensaje</title>
     <script>
         var ws_scheme = window.location.protocol === "https:" ? "wss" : "ws";
         var chatSocket = new WebSocket(ws_scheme + '://' + window.location.host + '/ws/mensajes/');

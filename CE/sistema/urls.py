@@ -7,7 +7,7 @@ urlpatterns = [
     path("iniciarSesion", views.iniciarSesion, name="iniciar_sesion"),
     path("cerrarSesion", views.cerrarSesion, name="cerrar_sesion"),
     path("registrarse", views.registrarse, name="registrarse"),
-    path("mensajeria/<str: tipoDeConversacion>", views.mostrarVistaConversacion, name="conversacion"),
+    path("mensajeria/<str:servicioDeMensajeriaURL>", views.mostrarVistaConversacion, name="conversacion"),
     path("generarReporte", views.generarReporte, name="generar_reporte"),
     path("generarDiagramaPastel", views.generarDiagramaPastel, name="generar_diagrama_pastel")
 ]

@@ -1,24 +1,63 @@
 <!DOCTYPE html>
-<html>
+<html lang="es">
 <head>
-    <title>{{ titulo }}</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Enviar Mensaje</title>
+<style>
+    body {
+        font-family: Arial, sans-serif;
+        margin: 20px;
+    }
+    form {
+        margin-top: 20px;
+    }
+    input, textarea, select {
+        width: 100%;
+        padding: 10px;
+        margin: 5px 0;
+    }
+    button {
+        padding: 10px 20px;
+        background-color: #007bff;
+        color: white;
+        border: none;
+        cursor: pointer;
+    }
+    button:hover {
+        background-color: #0056b3;
+    }
+    .mensaje-list {
+        margin-top: 30px;
+    }
+    .mensaje-item {
+        border-bottom: 1px solid #ddd;
+        padding: 10px;
+    }
+</style>
 </head>
 <body>
-    <h1>{{ titulo }}</h1>
-    <div id="div-conversacion">
-        {% for mensaje in mensajes %}
-            <div class="mensaje">
-                {{ mensaje.usuarioEscolar }}: {{ mensaje.contenido }}
-            </div>
-        {% endfor %}
-    </div>
-    <form id="form-conversacion">
-        <input type="text" name="message">
-        <button type="submit">Enviar</button>
-    </form>
-
-    <script>
-        // Aquí irá el código JavaScript para manejar la conexión WebSocket y enviar/recibir mensajes
-    </script>
+<h1>Enviar Mensaje</h1>
+<div class="mensaje-list">
+    <h2>Mensajes Recientes</h2>
+    {% if mensajes %}
+        <ul>
+            {% for mensaje in mensajes %}
+                <li class="mensaje-item">
+                    <strong>De: {{ mensaje.emisorUsuario.username }}</strong><br>
+                    {{ mensaje.contenidoMensaje }}<br>
+                    <small>{{ mensaje.fechaEnviado }}</small>
+                </li>
+            {% endfor %}
+        </ul>
+    {% else %}
+        <p>No hay mensajes recientes.</p>
+    {% endif %}
+</div>
+<form method="post">
+    {% csrf_token %}
+    {{ form.as_p }}
+    <button type="submit">Enviar Mensaje</button>
+</form>
 </body>
 </html>

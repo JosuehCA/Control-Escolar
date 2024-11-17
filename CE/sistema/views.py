@@ -6,14 +6,14 @@ from django.http import HttpRequest, HttpResponse
 from django.db import IntegrityError
 from django.http import HttpResponseRedirect
 from .forms_msj import MensajeDirectoForm
-from .models_msj import MensajeDirecto
+from .models_mensajeria import MensajeDirecto
 from django.shortcuts import redirect
 from django.http import HttpRequest, HttpResponse
 
 
 
 # Weasyprint
-from weasyprint import HTML
+#from weasyprint import HTML
 import matplotlib
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
@@ -25,6 +25,7 @@ from io import BytesIO
 
 from .models import UsuarioEscolar
 from .models_reportes import *
+from .models_mensajeria import *
 
 
 def indice(request: HttpRequest):
@@ -126,37 +127,46 @@ def generarReporte(request: HttpRequest) -> HttpResponse:
 def cocina(request: HttpRequest):
     pass
 
-def mostrarVistaConversacion(request: HttpRequest) -> HttpResponse:
+def mostrarVistaConversacion(request: HttpRequest, servicioDeMensajeriaURL: str) -> HttpResponse:
     """Vista dinamica para conversaciones individuales, grupales o generales."""
-
+    manejador = ManejadorVistaMensajeria()
+    tipoDeConversacion = manejador.obtenerTipoDeConversacion(servicioDeMensajeriaURL)
     if request.method == 'POST':
         mensajeDirectoForm = MensajeDirectoForm(request.POST)
+        mensajesUsuario = MensajeDirecto.obtenerMensajesFiltrados(request.user)
         
         if mensajeDirectoForm.is_valid():
             mensajeDirectoInstancia = mensajeDirectoForm.save(commit=False)
             receptorUsuario = mensajeDirectoForm.cleaned_data.get('receptorUsuario')
             
             if mensajeDirectoInstancia.enviar(request.user, receptorUsuario):
-                return redirect('mensaje_directo')
+                return render(request, "sistema/Vista_Conversacion.html", {
+                "titulo": "Conversación Privada",
+                "mensajes": mensajesUsuario,
+                "form": mensajeDirectoForm,})
             else:
                 mensajeDirectoForm.add_error(None, "No puedes enviarte mensajes a ti mismo.")
-    
     else:
-        mensajeDirectoForm = MensajeDirectoForm()
+        if(tipoDeConversacion == "privado"):
+            mensajeDirectoForm = MensajeDirectoForm()
+            mensajesUsuario = MensajeDirecto.obtenerMensajesFiltrados(request.user)
 
-    mensajesUsuario = MensajeDirecto.obtenerMensajesFiltrados(request.user)
+            return render(request, "sistema/Vista_Conversacion.html", {
+                "titulo": "Conversación Privada",
+                "mensajes": mensajesUsuario,
+                "form": mensajeDirectoForm,})
+        
+        elif(tipoDeConversacion == "grupo"):
+            mensajesUsuario = MensajeDirecto.obtenerMensajesFiltrados(request.user)
 
-    return render(request, 'sistema/testMensajeria.html', {
-        'form': mensajeDirectoForm,
-        'mensajes': mensajesUsuario,
-    })
-
-    mensajesUsuario = MensajeDirecto.obtenerMensajesFiltrados(request.user)
-
-    return render(request, 'sistema/testMensajeria.html', {
-        'form': mensajeDirectoForm,
-        'mensajes': mensajesUsuario,
-    })
+            return render(request, "sistema/Vista_Conversacion.html", {
+                "titulo": "Conversación Grupal",
+                "mensajes": mensajesUsuario,})
+        
+        else:
+            return render(request, "sistema/Vista_Conversacion.html", {
+                "titulo": "Conversación General",
+                "mensajes": MensajeDirecto.obtenerMensajesFiltrados(request.user),})
 
 def plantel(request: HttpRequest):
     pass
