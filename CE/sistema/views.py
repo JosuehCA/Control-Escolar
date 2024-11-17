@@ -110,20 +110,6 @@ def generarDiagramaPastel(request: HttpRequest) -> HttpResponse:
 
     return HttpResponse(archivoPDFBinario, content_type='application/pdf')
 
-
-def generarReporte(request: HttpRequest) -> HttpResponse:
-
-    datos = {"nombre": "Sample Report", "contenido": "Test de creación de PDF's"}
-    
-    # Render the HTML template with data
-    cadena_html = render(request, "sistema/Vista_Reporte.html", {"datos": datos}).content.decode()
-    archivo_pdf = HTML(string=cadena_html).write_pdf()
-
-    respuesta = HttpResponse(archivo_pdf, content_type="application/pdf")
-    respuesta["Content-Disposition"] = "inline; filename=report.pdf"
-
-    return respuesta
-
 def crearReporteAsistencia(alumno: Alumno) -> base64:
     # Datos de asistencia
     asistencias = alumno.getAsistencias()
@@ -133,14 +119,15 @@ def crearReporteAsistencia(alumno: Alumno) -> base64:
 
     # Crear gráfico de barras para asistencia vs faltas
     figura, eje = plt.subplots()
-    eje.bar(["Asistencias", "Faltas"], [asistencias, faltas], color=["#00FF00", "#FF0000"])
+    barras = eje.bar(["Asistencias", "Faltas"], [asistencias, faltas], color=["#00FF00", "#FF0000"])
 
-    # Añadir texto para el porcentaje de asistencia
-    eje.text(0, asistencias + 1, f'{asistencias}', ha='center', color='black')
-    eje.text(1, faltas + 1, f'{faltas}', ha='center', color='black')
+    for barra in barras:
+        altura = barra.get_height() 
+        posicion_y = barra.get_y() + altura / 2 
+        eje.text(barra.get_x() + barra.get_width() / 2, posicion_y, f'{int(altura)}', ha='center', va='center', color='black')
 
     # Configurar título y etiquetas
-    eje.set_title(f"Reporte de Asistencia de {alumno.getTutor().getNombre()})")
+    eje.set_title(f"Reporte de Asistencia de {alumno.getNombre()}")
     eje.set_ylabel('Cantidad de Clases')
 
     # Opcional: Incluir porcentaje de asistencia en el gráfico
@@ -154,6 +141,32 @@ def crearReporteAsistencia(alumno: Alumno) -> base64:
     imagen = base64.b64encode(imagenBinaria.getvalue()).decode('utf-8')
 
     return imagen
+
+def generarReporteAsistencia(request: HttpRequest) -> HttpResponse:
+    alumno = Alumno.objects.get(username="Alumno1")
+    diagramaBase64 = crearReporteAsistencia(alumno)
+
+    cantidadAsistencias: int = alumno.getAsistencias()
+    cantidadFaltas: int = alumno.getFaltas()
+
+    if cantidadAsistencias + cantidadFaltas > 0:
+        porcentajeAsistencia = (cantidadAsistencias / (cantidadAsistencias + cantidadFaltas) * 100)
+    else:
+        porcentajeAsistencia = 0
+
+    contenidoHTML = render_to_string("sistema/Vista_ReporteAsistencia.html", {
+        "imagenAsistenciaPNG": f"data:image/png;base64, {diagramaBase64}",
+        "nombre_alumno": f"{alumno.getNombre()}",
+        "asistencias": cantidadAsistencias,
+        "faltas": cantidadFaltas,
+        "porcentaje_asistencia": f"{porcentajeAsistencia:.2f}"
+    })
+
+    archivoPDFBinario = BytesIO()
+    HTML(string=contenidoHTML).write_pdf(archivoPDFBinario)
+    archivoPDFBinario.seek(0)
+
+    return HttpResponse(archivoPDFBinario, content_type='application/pdf')
 
 
 def cocina(request: HttpRequest):

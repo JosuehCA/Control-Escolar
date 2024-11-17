@@ -174,7 +174,7 @@ class Alumno(UsuarioEscolar):
         self.save()
 
     def getTutor(self) -> Tutor:
-        return self.tutoralumno
+        return self.tutorAlumno
 
     def getAsistencias(self) -> int:
         return self.asistencias
@@ -188,12 +188,13 @@ class Alumno(UsuarioEscolar):
     def getConsideracionesMenu(self) -> m.JSONField:
         return self.consideracionesMenu
     
-    
+
     class Meta:
         verbose_name = "Alumno"
         verbose_name_plural = "Alumnos"
 
-
+    def __str__(self):
+        return f"{self.getNombreUsuario()}: {self.getNombre()}"
 
 class Nutricionista(UsuarioEscolar):
     """TDA Nutricionista. Responsable de la administración correcta de las comidas y ajustes al menú."""
