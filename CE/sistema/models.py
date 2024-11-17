@@ -90,6 +90,9 @@ class Actividad(m.Model):
     class Meta:
         verbose_name_plural = "Actividades"
 
+    def __str__(self):
+        return self.nombre
+
 
 
 
@@ -102,7 +105,6 @@ class UsuarioEscolar(AbstractUser):
     comunes dentro de estos roles."""
 
     pass
-
 
     class Meta:
         verbose_name = "Usuario Escolar"
@@ -151,8 +153,32 @@ class Tutor(UsuarioEscolar):
 class Alumno(UsuarioEscolar):
     """TDA Alumno. Registrado solo para fines logísticos. Representa a cada alumno inscrito en el sistema y
     contiene un registro de su información académica."""
+    tutorAlumno = m.ForeignKey(Tutor, on_delete=m.RESTRICT, related_name="tutor_alumno")
+    asistencias = m.IntegerField(default=0)
+    faltas = m.IntegerField(default=0)
+    actividadActual = m.ForeignKey(Actividad, on_delete=m.SET_NULL, related_name="actividadActual", null=True, blank=True)
+    consideracionesMenu = m.JSONField(default=list, blank=True)
 
-    tutoralumno = m.ForeignKey(Tutor, on_delete=m.RESTRICT, related_name="tutor_alumno")
+
+    def asistirAClase(self) -> None:
+        self.asistencias += 1
+        self.save()
+    
+    def faltarAClase(self) -> None:
+        self.faltas += 1
+        self.save()
+
+    def cambiarDeActividad(self, nuevaActividad: Actividad) -> None:
+        self.actividadActual = nuevaActividad
+        self.save()
+
+    
+    def getTutor(self) -> Tutor:
+        return self.tutoralumno
+    
+    
+    def getConsideracionesMenu(self) -> m.JSONField:
+        return self.consideracionesMenu
 
 
     class Meta:
