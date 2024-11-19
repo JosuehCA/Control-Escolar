@@ -1,14 +1,15 @@
 from django.contrib import admin
 
 from .models import *
+from .models_msj import *
+from .models_reportes import *
 
+admin.site.register(Platillo)
 admin.site.register(MenuSemanal)
 admin.site.register(Grupo)
-admin.site.register(Platillo)
 admin.site.register(Actividad)
 
 
-admin.site.register(Reporte)
 admin.site.register(ReporteAlumno)
 admin.site.register(ReporteGrupo)
 admin.site.register(ReporteGlobal)
@@ -24,7 +25,7 @@ admin.site.register(Nutricionista)
 
 admin.site.register(MensajeDirecto)
 admin.site.register(MensajeGrupo)
-admin.site.register(MensajeAnuncio)
+admin.site.register(MensajePlantel)
 admin.site.register(Mensajero)
 admin.site.register(Conversacion)
 admin.site.register(Notificacion)

@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ menu.nombre }} - Menú Semanal</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f9;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            margin: 0;
+        }
+        h1 {
+            margin-bottom: 40px;
+            font-size: 3rem;
+            color: #333;
+        }
+        table {
+            width: 80%;
+            margin-top: 20px;
+            border-collapse: collapse;
+        }
+        table, th, td {
+            border: 1px solid #ddd;
+            text-align: center;
+        }
+        th, td {
+            padding: 10px;
+        }
+        th {
+            background-color: #f7f7f7;
+            font-weight: bold;
+        }
+        td {
+            background-color: #fff;
+        }
+        .platillo {
+            color: #007BFF;
+        }
+        .no-platillo {
+            color: #d9534f;
+        }
+    </style>
+</head>
+<body>
+
+    <h1>{{ menu.nombre }} - Menú Semanal</h1>
+
+    {% if platillos_por_dia %}
+        <table>
+            <tr>
+                <th>Día</th>
+                <th>Platillos</th>
+            </tr>
+            {% for dia, platillos in platillos_por_dia.items %}
+                <tr>
+                    <td>{{ dia }}</td>
+                    <td>
+                        {% if platillos %}
+                            <ul>
+                                {% for platillo in platillos %}
+                                    <li class="platillo">{{ platillo.nombre }}</li>
+                                {% endfor %}
+                            </ul>
+                        {% else %}
+                            <span class="no-platillo">No asignado</span>
+                        {% endif %}
+                    </td>
+                </tr>
+            {% endfor %}
+        </table>
+    {% else %}
+        <p>No hay platillos asignados a este menú semanal.</p>
+    {% endif %}
+
+</body>
+</html>

@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Opciones Menú</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            margin: 0;
+            background-color: #f0f0f0;
+        }
+        h1 {
+            margin-bottom: 40px;
+            font-size: 3rem; 
+            color: #333;
+        }
+        .botones {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+        button {
+            width: 300px; 
+            padding: 15px; 
+            font-size: 1.5rem; 
+            background-color: #007BFF;
+            color: white;
+            border: none;
+            border-radius: 10px; 
+            cursor: pointer;
+            transition: background-color 0.3s ease, transform 0.2s ease;
+        }
+        button:hover {
+            background-color: #0056b3;
+            transform: scale(1.05); 
+        }
+        button:active {
+            transform: scale(0.95); 
+        }
+    </style>
+</head>
+<body>
+    <h1>Menú</h1>
+    <div class="botones">
+        <form method="get" action="{% url 'crearPlatillo' %}">
+            <button type="submit">Crear Platillos</button>
+        </form>
+        <form method="get" action="{% url 'crearMenuSemanal' %}">
+            <button type="submit">Crear Menú</button>
+        </form>
+        <form method="get" action="{% url 'seleccionarMenuSemanal' %}">
+            <button type="submit">Seleccionar Menú</button>
+        </form>
+    </div>
+
+</body>
+</html>

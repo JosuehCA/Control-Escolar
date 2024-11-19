@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Gestionar Menú Semanal</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        h1 { text-align: center; color: #333; }
+        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+        th, td { border: 1px solid #ddd; padding: 10px; text-align: left; }
+        th { background-color: #f4f4f4; }
+        td { vertical-align: top; }
+        a, button {
+            text-decoration: none;
+            padding: 8px 12px;
+            color: white;
+            background-color: #007bff;
+            border-radius: 5px;
+            margin-right: 10px;
+        }
+        button {
+            background-color: #dc3545;
+            border: none;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #c82333;
+        }
+        a:hover, button:hover {
+            background-color: #0056b3;
+        }
+    </style>
+</head>
+<body>
+    <h1>Gestionar Menú: {{ menu.nombre }}</h1>
+    <table>
+        <thead>
+            <tr>
+                <th>Día</th>
+                <th>Platillos</th>
+                <th>Acciones</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for dia, platillos in platillos_por_dia %}
+            <tr>
+                <td>{{ dia }}</td>
+                <td>
+                    <ul>
+                        {% if platillos %}
+                            {% for platillo in platillos %}
+                                <li>{{ platillo.nombre }}</li>
+                            {% endfor %}
+                        {% else %}
+                            <li>No hay platillos asignados para este día.</li>
+                        {% endif %}
+                    </ul>
+                </td>
+                <td>
+                    <!-- Mostrar solo el botón de "Agregar" si no hay platillos -->
+                    <a href="{% url 'agregarPlatillo' menu_id=menu.id %}?dia={{ dia }}">Agregar Platillo</a>
+                    
+                    <!-- Mostrar los botones "Editar" y "Eliminar" solo si hay platillos -->
+                    {% if platillos %}
+                        <a href="{% url 'editarPlatillo' menu_id=menu.id %}?dia={{ dia }}">Editar Platillo</a>
+                        <a href="{% url 'eliminarPlatillo' menu_id=menu.id %}?dia={{ dia }}">Eliminar Platillo</a>
+                    {% endif %}
+                </td>
+            </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+
+    <!-- Botón para eliminar el menú -->
+    <div style="margin-top: 20px; text-align: center;">
+        <form method="POST" action="{% url 'eliminarMenu' menu_id=menu.id %}">
+            {% csrf_token %}
+            <button type="submit" onclick="return confirm('¿Estás seguro de que quieres eliminar este menú?');">
+                Eliminar Menú
+            </button>
+        </form>
+    </div>
+</body>
+</html>
