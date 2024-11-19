@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>
+        {% if accion == "add" %}Agregar Platillo{% elif accion == "edit" %}Editar Platillo{% elif accion == "delete" %}Eliminar Platillo{% endif %}
+    </title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        h1 { text-align: center; color: #333; }
+        label, select, input, textarea, button { display: block; margin: 10px 0; }
+        select, input, textarea { width: 100%; padding: 8px; }
+        button {
+            padding: 10px 20px;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        button.add { background-color: #28a745; }
+        button.edit { background-color: #ffc107; }
+        button.delete { background-color: #dc3545; }
+        button:hover { opacity: 0.9; }
+        a { display: block; margin: 20px 0; text-align: center; text-decoration: none; color: white; background: #007bff; padding: 10px; border-radius: 5px; }
+        a:hover { background: #0056b3; }
+    </style>
+</head>
+<body>
+    <h1>
+        {% if accion == "add" %}Agregar Platillo al Menú{% elif accion == "edit" %}Editar Platillo del Menú{% elif accion == "delete" %}Eliminar Platillo del Menú{% endif %}
+    </h1>
+    <form method="POST">
+        {% csrf_token %}
+        
+        <!-- Selección de platillo -->
+        <label for="platillo_id">Seleccionar Platillo:</label>
+        <select name="platillo_id" id="platillo_id" required>
+            <option value="" disabled selected>-- Seleccionar Platillo --</option>
+            {% for platillo in platillos %}
+                <option value="{{ platillo.id }}">{{ platillo.nombre }}</option>
+            {% endfor %}
+        </select>
+        
+        <!-- Campos específicos por acción -->
+        {% if accion == "edit" %}
+            <label for="nombre">Nombre:</label>
+            <input type="text" name="nombre" id="nombre" value="{{ platillo.nombre }}" required>
+            
+            <label for="descripcion">Descripción:</label>
+            <textarea name="descripcion" id="descripcion" rows="3" required>{{ platillo.descripcion }}</textarea>
+            
+            <label for="consideraciones">Consideraciones:</label>
+            <textarea name="consideraciones" id="consideraciones" rows="2">{{ platillo.consideraciones }}</textarea>
+        {% endif %}
+        
+        <!-- Botón dinámico -->
+        <button type="submit" class="{% if accion == 'add' %}add{% elif accion == 'edit' %}edit{% elif accion == 'delete' %}delete{% endif %}">
+            {% if accion == "add" %}Agregar{% elif accion == "edit" %}Guardar Cambios{% elif accion == "delete" %}Eliminar{% endif %}
+        </button>
+    </form>
+    <a href="{% url 'gestionarMenuSemanal' menu_id=menu.id %}?dia={{ dia }}">Regresar</a>
+</body>
+</html>
