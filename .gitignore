@@ -1,39 +1,13 @@
 # Byte-compiled / optimized / DLL files
 __pycache__/
-<<<<<<< HEAD
 *.pyc
 *.pyo
 *.pyd
-=======
-<<<<<<< HEAD
-*.pyc
-*.pyo
-*.pyd
-=======
-*.py[cod]
->>>>>>> main
 
->>>>>>> origin/Mauro
 # C extensions
 *.so
 
 # Distribution / packaging
-<<<<<<< HEAD
-=======
-<<<<<<< HEAD
-=======
-bin/
-build/
-develop-eggs/
-dist/
-eggs/
-lib/
-lib64/
-parts/
-sdist/
-var/
->>>>>>> main
->>>>>>> origin/Mauro
 *.egg-info/
 .installed.cfg
 *.egg
