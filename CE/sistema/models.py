@@ -4,12 +4,16 @@ from django.conf import settings
 from django.contrib.auth.models import AbstractUser
 
 
-class Menu(m.Model):
+class MenuSemanal(m.Model):
     """TDA Menu. Define un Menú de comidas personalizable de acuerdo al administrador, y tomando en cuenta
     ciertas indicaciones que los tutores manifiesten."""
 
-    pass
+    nombre = m.CharField(max_length=100)
+    fecha_inicio = m.DateField()
+    fecha_fin = m.DateField()
 
+    def __str__(self):
+        return self.nombre
 
 class Grupo(m.Model):
     """TDA Salón. Define aquellos grupos a los que pertenece un conjunto de estudiantes bajo la dirección 
@@ -26,13 +30,36 @@ class Grupo(m.Model):
         verbose_name_plural = "Grupos"
 
 
-class Plato(m.Model):
-    """TDA Plato. Modela un platillo disponible en el menú, incluyendo el nombre, descripción del mismo y 
-    consideraciones."""
-
+class Platillo(m.Model):
+    DIAS_SEMANA = [
+        ('Lunes', 'Lunes'),
+        ('Martes', 'Martes'),
+        ('Miércoles', 'Miércoles'),
+        ('Jueves', 'Jueves'),
+        ('Viernes', 'Viernes'),
+    ]
+    
     nombre = m.CharField(max_length=200)
-    descripcion = m.CharField(max_length=300)
-    #consideraciones
+    descripcion = m.TextField()
+    consideraciones = m.TextField(blank=True, null=True)
+    dia = m.CharField(
+        max_length=10,
+        choices=DIAS_SEMANA,
+        blank=True,  
+        null=True,
+        help_text="Día de la semana al que pertenece este platillo."
+    )
+    menu = m.ForeignKey(
+        'MenuSemanal',
+        on_delete=m.CASCADE,
+        related_name='platillos',
+        null=True,
+        blank=True,
+        help_text="Menú al que pertenece este platillo."
+    )
+
+    def __str__(self):
+        return f"{self.nombre} ({self.dia or 'Sin Día'})"
 
 
 class Actividad(m.Model):
@@ -184,6 +211,14 @@ class Alumno(UsuarioEscolar):
 
 class Nutricionista(UsuarioEscolar):
     """TDA Nutricionista. Responsable de la administración correcta de las comidas y ajustes al menú."""
+
+    def crearPlatillo(nombre: str, descripcion: str, consideraciones: str):
+        Platillo.objects.create(
+            nombre=nombre, 
+            descripcion=descripcion, 
+            consideraciones=consideraciones)
+        
+    
 
     class Meta:
         verbose_name = "Nutricionista"

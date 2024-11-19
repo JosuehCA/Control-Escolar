@@ -2,9 +2,9 @@ from django.contrib import admin
 
 from .models import *
 
-admin.site.register(Menu)
+admin.site.register(MenuSemanal)
 admin.site.register(Grupo)
-admin.site.register(Plato)
+admin.site.register(Platillo)
 admin.site.register(Actividad)
 
 
