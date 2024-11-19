@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Creación de Platillos</title>
+    <style>
+        /* Estilos generales */
+        body {
+            font-family: 'Segoe UI', Tahoma, Verdana, sans-serif;
+            background-color: #f3f4f6;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+        }
+
+        .form-container {
+            background-color: #ffffff;
+            padding: 40px;
+            border-radius: 15px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            width: 100%;
+            max-width: 450px;
+            box-sizing: border-box;
+        }
+
+        h1 {
+            font-size: 2rem;
+            text-align: center;
+            color: #333;
+            margin-bottom: 20px;
+            font-weight: 600;
+        }
+
+        /* Estilo de los labels */
+        label {
+            font-size: 1.1rem;
+            color: #333;
+            margin-bottom: 8px;
+            display: block;
+        }
+
+        /* Estilo de los inputs y textarea */
+        input, textarea {
+            width: 100%;
+            padding: 12px;
+            margin-bottom: 20px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            font-size: 1rem;
+            color: #333;
+            background-color: #fafafa;
+            transition: border-color 0.3s ease, background-color 0.3s ease;
+        }
+
+        input:focus, textarea:focus {
+            border-color: #007BFF;
+            background-color: #fff;
+            outline: none;
+        }
+
+        textarea {
+            resize: vertical;
+            min-height: 120px;
+        }
+
+        /* Estilo de los botones */
+        button {
+            padding: 12px 20px;
+            font-size: 1.1rem;
+            background-color: #007BFF;
+            color: #fff;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: background-color 0.3s ease, transform 0.2s ease;
+            width: 48%;
+        }
+
+        button:hover {
+            background-color: #0056b3;
+        }
+
+        button:active {
+            transform: scale(0.98);
+        }
+
+        /* Contenedor de botones */
+        .button-container {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="form-container">
+        <h1>Crear Platillo</h1>
+        <!-- Formulario de Django -->
+        <form action="{% url 'crearPlatillo' %}" method="POST">
+            {% csrf_token %}
+            <label for="nombre">Nombre:</label>
+            <input type="text" id="nombre" name="nombre" required placeholder="Escribe el nombre del platillo">
+        
+            <label for="descripcion">Descripción:</label>
+            <textarea id="descripcion" name="descripcion" required placeholder="Escribe la descripción del platillo"></textarea>
+        
+            <label for="comentarios">Consideraciones:</label>
+            <textarea id="comentarios" name="consideraciones" required placeholder="Escribe Consideraciones adicionales"></textarea>
+        
+            <div class="button-container">
+                <button type="submit">Guardar</button>
+                <button type="reset">Cancelar</button>
+            </div>
+        </form>               
+    </div>
+
+</body>
+</html>

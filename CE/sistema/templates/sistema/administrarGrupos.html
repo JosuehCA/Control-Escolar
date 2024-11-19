@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Administrar Grupos</title>
+    <script>
+        let grupos = {}; // Objeto para almacenar datos de los grupos
+
+        // Precargar información de los grupos
+        function cargarDatosGrupos(grupoData) {
+            grupos = grupoData; // Guardamos la información recibida en el objeto `grupos`
+        }
+
+        function actualizarFormularioEdicion() {
+            const grupoId = document.getElementById('grupo_id').value;
+            const nombreField = document.getElementById('nombre');
+            
+            // Actualiza el campo "nombre" con el nombre del grupo seleccionado
+            if (grupos[grupoId]) {
+                nombreField.value = grupos[grupoId].nombre;
+            }
+        }
+
+        function toggleForm(formId) {
+            const form = document.getElementById(formId);
+            // Alterna la visibilidad del formulario
+            if (form.style.display === 'block') {
+                form.style.display = 'none';
+            } else {
+                // Oculta todos los formularios primero
+                document.querySelectorAll('.formulario').forEach(f => f.style.display = 'none');
+                form.style.display = 'block';
+            }
+        }
+
+        function resetCheckboxes() {
+            // Resetea los checkboxes
+            document.querySelectorAll('input[type="checkbox"]').forEach(checkbox => {
+                checkbox.checked = false;
+            });
+        }
+    </script>
+</head>
+<body>
+    <h1>Administrar Grupos</h1>
+
+    <!-- Botones para alternar entre las acciones -->
+    <button onclick="toggleForm('crearGrupoForm')">Crear Grupo</button>
+    <button onclick="toggleForm('eliminarGrupoForm'); resetCheckboxes();">Eliminar Grupos</button>
+    <button onclick="toggleForm('editarGrupoForm'); resetCheckboxes(); actualizarFormularioEdicion();">Editar Grupo</button>
+
+    <!-- Formulario para crear un nuevo grupo -->
+    <div id="crearGrupoForm" class="formulario" style="display: none;">
+        <form method="POST" action="">
+            {% csrf_token %}
+            <input type="hidden" name="action" value="create"> <!-- Indica acción de crear grupo -->
+
+            <label for="nombre">Nombre del Grupo:</label>
+            <input type="text" id="nombre" name="nombre" required>
+
+            <h2>Seleccionar Alumnos:</h2>
+            <ul>
+                {% for alumno in alumnos %}
+                    <li>
+                        <input type="checkbox" name="alumnos" value="{{ alumno.id }}">
+                        {{ alumno.username }}
+                    </li>
+                {% endfor %}
+            </ul>
+            
+            <button type="submit">Crear Grupo</button>
+        </form>
+    </div>
+
+    <!-- Formulario para eliminar grupos existentes -->
+    <div id="eliminarGrupoForm" class="formulario" style="display: none;">
+        <form method="POST" action="">
+            {% csrf_token %}
+            <input type="hidden" name="action" value="delete"> <!-- Indica acción de eliminar grupos -->
+
+            <h2>Seleccionar Grupos a Eliminar:</h2>
+            <ul>
+                {% for grupo in grupos %}
+                    <li>
+                        <input type="checkbox" name="grupos" value="{{ grupo.id }}">
+                        {{ grupo.nombre }} - Alumnos: 
+                        <ul>
+                            {% for alumno in grupo.alumnos.all %}
+                                <li>{{ alumno.username }}</li>
+                            {% endfor %}
+                        </ul>
+                    </li>
+                {% endfor %}
+            </ul>
+
+            <button type="submit">Eliminar Grupos Seleccionados</button>
+        </form>
+    </div>
+
+    <!-- Formulario para editar un grupo existente -->
+    <div id="editarGrupoForm" class="formulario" style="display: none;">
+        <form method="POST" action="">
+            {% csrf_token %}
+            <input type="hidden" name="action" value="edit"> <!-- Indica acción de editar grupo -->
+
+            <label for="grupo_id">Seleccionar Grupo:</label>
+            <select id="grupo_id" name="grupo_id" required onchange="actualizarFormularioEdicion()">
+                {% for grupo in grupos %}
+                    <option value="{{ grupo.id }}">{{ grupo.nombre }}</option>
+                {% endfor %}
+            </select>
+
+            <label for="nombre">Nuevo Nombre del Grupo (Opcional):</label>
+            <input type="text" id="nombre" name="nombre">
+
+            <h2>Seleccionar Alumnos:</h2>
+            <ul>
+                {% for alumno in alumnos %}
+                    <li>
+                        <input type="checkbox" name="alumnos" value="{{ alumno.id }}">
+                        {{ alumno.username }}
+                    </li>
+                {% endfor %}
+            </ul>
+            
+            <button type="submit">Guardar Cambios</button>
+        </form>
+    </div>
+
+    <!-- Lista de grupos existentes -->
+    <h2>Grupos Existentes</h2>
+    <ul>
+        {% for grupo in grupos %}
+            <li>
+                <strong>{{ grupo.nombre }}</strong> - Alumnos:
+                <ul>
+                    {% for alumno in grupo.alumnos.all %}
+                        <li>{{ alumno.username }}</li>
+                    {% endfor %}
+                </ul>
+            </li>
+        {% endfor %}
+    </ul>
+
+    <!-- Script para inicializar datos de los grupos -->
+    <script>
+        // Precarga la información de los grupos desde Django
+        cargarDatosGrupos({
+            {% for grupo in grupos %}
+                "{{ grupo.id }}": {
+                    "nombre": "{{ grupo.nombre|escapejs }}"
+                },
+            {% endfor %}
+        });
+    </script>
+</body>
+</html>
