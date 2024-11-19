@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Seleccionar Menú</title>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            background-color: #f9f9f9;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+        }
+
+        .container {
+            background: #ffffff;
+            border-radius: 10px;
+            padding: 40px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+            width: 90%;
+            max-width: 600px;
+            text-align: center;
+        }
+
+        h1 {
+            font-size: 2.5rem;
+            margin-bottom: 20px;
+            color: #333;
+            font-weight: 600;
+        }
+
+        label {
+            font-size: 1.2rem;
+            color: #555;
+            margin-bottom: 10px;
+            display: block;
+        }
+
+        select, button {
+            width: 100%;
+            padding: 12px;
+            font-size: 1.1rem;
+            margin-bottom: 20px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            outline: none;
+            transition: all 0.3s ease;
+        }
+
+        select:focus, button:focus {
+            border-color: #007BFF;
+            box-shadow: 0 0 5px rgba(0, 123, 255, 0.6);
+        }
+
+        select {
+            background-color: #f8f8f8;
+        }
+
+        button {
+            background-color: #007BFF;
+            color: white;
+            cursor: pointer;
+            border: none;
+        }
+
+        button:hover {
+            background-color: #0056b3;
+        }
+
+        button:active {
+            transform: scale(0.98);
+        }
+
+        .button-container {
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .button-container button {
+            width: 48%;
+            font-size: 1rem;
+        }
+
+        .button-container button:first-child {
+            background-color: #28a745;
+        }
+
+        .button-container button:first-child:hover {
+            background-color: #218838;
+        }
+
+        .button-container button:last-child {
+            background-color: #ffc107;
+        }
+
+        .button-container button:last-child:hover {
+            background-color: #e0a800;
+        }
+
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <h1>Selecciona un Menú</h1>
+        <form method="GET" action="{% url 'seleccionarMenuSemanal' %}">
+            <label for="menu_id">Menú a Seleccionar:</label>
+            <select name="menu_id" id="menu_id">
+                <option value="">Elige un menú</option>
+                {% for menu in menus %}
+                    <option value="{{ menu.id }}">{{ menu.nombre }}</option>
+                {% endfor %}
+            </select>
+
+            <div class="button-container">
+                <button type="submit" name="ver" value="true">Ver Menú</button>
+                <button type="submit" name="gestionar" value="true">Gestionar Menú</button>
+            </div>
+        </form>
+    </div>
+
+</body>
+</html>

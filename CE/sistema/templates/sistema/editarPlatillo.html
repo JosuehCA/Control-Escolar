@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Editar Platillo</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f9;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+
+        .container {
+            background: #fff;
+            padding: 20px 30px;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            width: 400px;
+        }
+
+        h1 {
+            text-align: center;
+            color: #333;
+            font-size: 1.8rem;
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+            color: #555;
+        }
+
+        input[type="text"],
+        textarea {
+            width: 100%;
+            padding: 10px;
+            margin-bottom: 15px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 1rem;
+        }
+
+        textarea {
+            resize: none;
+            height: 100px;
+        }
+
+        button {
+            width: 100%;
+            padding: 10px;
+            background-color: #007BFF;
+            border: none;
+            color: white;
+            font-size: 1rem;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background-color: #0056b3;
+        }
+
+        .cancel {
+            text-align: center;
+            margin-top: 15px;
+        }
+
+        .cancel a {
+            color: #007BFF;
+            text-decoration: none;
+            font-size: 0.9rem;
+        }
+
+        .cancel a:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Editar Platillo</h1>
+        <form method="POST">
+            {% csrf_token %}
+            <label for="nombre">Nombre:</label>
+            <input type="text" id="nombre" name="nombre" value="{{ platillo.nombre }}" required>
+            
+            <label for="descripcion">Descripción:</label>
+            <textarea id="descripcion" name="descripcion">{{ platillo.descripcion }}</textarea>
+            
+            <label for="consideraciones">Consideraciones:</label>
+            <textarea id="consideraciones" name="consideraciones">{{ platillo.consideraciones }}</textarea>
+            
+            <button type="submit">Guardar Cambios</button>
+        </form>
+        <div class="cancel">
+            <a href="{% url 'gestionarMenuSemanal' platillo.menu.id %}">Cancelar</a>
+        </div>
+    </div>
+</body>
+</html>

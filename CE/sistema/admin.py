@@ -5,7 +5,6 @@ from .models_msj import *
 from .models_reportes import *
 
 admin.site.register(Platillo)
-admin.site.register(MenuPlatillo)
 admin.site.register(MenuSemanal)
 admin.site.register(Grupo)
 admin.site.register(Actividad)
