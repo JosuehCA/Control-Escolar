@@ -4,6 +4,39 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Enviar Mensaje</title>
+
+<script>
+    const ws = new WebSocket('ws://' + window.location.host + '/ws/mensajeria/{{ servicioDeMensajeriaURL }}');
+
+    ws.onopen = function() {
+        console.log('Connected to WebSocket');
+    };
+
+    ws.onmessage = function(event) {
+        const message = JSON.parse(event.data);
+        const messageList = document.querySelector('.mensaje-list');
+        const li = document.createElement('li');
+        li.textContent = message.mensaje;
+        messageList.appendChild(li);
+        // Scroll to the bottom of the message list
+        messageList.scrollTop = messageList.scrollHeight;
+    };
+
+    ws.onclose = function() {
+        console.log('WebSocket connection closed');
+    };
+
+    const form = document.querySelector('form');
+    form.addEventListener('submit', (event) => {
+        event.preventDefault();
+        const messageInput = document.querySelector('textarea[name="mensaje"]');   
+
+        const message = messageInput.value;
+        ws.send(JSON.stringify({ 'mensaje': message }));
+        messageInput.value = '';
+    });
+
+</script>
 <style>
     body {
         font-family: Arial, sans-serif;

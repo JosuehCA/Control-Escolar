@@ -154,7 +154,8 @@ def mostrarVistaConversacion(request: HttpRequest, servicioDeMensajeriaURL: str)
             return render(request, "sistema/Vista_Conversacion.html", {
                 "titulo": "Conversación Privada",
                 "mensajes": mensajesUsuario,
-                "form": mensajeDirectoForm,})
+                "form": mensajeDirectoForm,
+                "servicioDeMensajeriaURL": servicioDeMensajeriaURL,})
         
         elif(tipoDeConversacion == "grupo"):
             mensajesUsuario = MensajeDirecto.obtenerMensajesFiltrados(request.user)
