@@ -1,8 +1,8 @@
 from django.contrib import admin
 
-from .models import *
-from .models_msj import *
-from .models_reportes import *
+from .models.models import *
+from .models.models_msj import *
+from .models.models_reportes import *
 
 admin.site.register(Platillo)
 admin.site.register(MenuSemanal)
