@@ -2,7 +2,7 @@ from django.shortcuts import render
 from django.shortcuts import redirect
 from django.shortcuts import get_object_or_404
 
-from sistema.models import Platillo, MenuSemanal
+from sistema.models.models import Platillo, MenuSemanal
 
 def opcionesMenu(request):
     return render(request, "sistema/opcionesMenu.html")

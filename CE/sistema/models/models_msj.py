@@ -1,6 +1,6 @@
 from django.db import models as m
 from django.conf import settings
-from sistema.models import UsuarioEscolar, Grupo
+from sistema.models.models import UsuarioEscolar, Grupo
 
 class Mensaje(m.Model):
     """TDA Mensaje. Define la estructura de un mensaje dentro del mensajero virtual."""

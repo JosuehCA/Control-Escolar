@@ -1,7 +1,7 @@
 from django.shortcuts import render
 from django.shortcuts import redirect
 
-from sistema.models import Alumno, Grupo, Administrador
+from sistema.models.models import Alumno, Grupo, Administrador
 
 def administrar(request):
     return render(request, "sistema/administrar.html")
