@@ -6,8 +6,11 @@ import matplotlib.pyplot as plt
 import numpy as np
 import base64
 from django.template.loader import render_to_string
+from django.shortcuts import get_object_or_404
 from io import BytesIO
 from django.utils.timezone import localtime, now
+from django.shortcuts import render, redirect
+from sistema.models.forms_lista import *
 
 
 from sistema.models.models import Alumno
@@ -76,7 +79,20 @@ def crearReporteAsistencia(alumno: Alumno) -> base64:
     return imagen
 
 def generarReporteAsistencia(request: HttpRequest) -> HttpResponse:
-    alumno = Alumno.objects.get(username="Alumno1")
+    alumno_id = request.GET.get('alumno_id')
+
+    if not alumno_id:
+        return render(request, "sistema/Vista_Error.html", {
+            "mensaje_error": "No se proporcionó un ID de alumno. Por favor, seleccione un alumno válido."
+        })
+
+    try:
+        alumno = Alumno.objects.get(id=alumno_id)
+    except Alumno.DoesNotExist:
+        return render(request, "sistema/Vista_Error.html", {
+            "mensaje_error": f"No se encontró un alumno con el ID {alumno_id}. Por favor, seleccione un alumno válido."
+        })
+    
     diagramaBase64 = crearReporteAsistencia(alumno)
 
     cantidadAsistencias: int = alumno.getAsistencias()
@@ -100,3 +116,26 @@ def generarReporteAsistencia(request: HttpRequest) -> HttpResponse:
     archivoPDFBinario.seek(0)
 
     return HttpResponse(archivoPDFBinario, content_type='application/pdf')
+
+def actualizarAsistencias(request: HttpRequest) -> HttpResponse:
+    if request.method == "POST":
+        form = (request.POST)
+        if form.is_valid():
+            alumno = form.cleaned_data['alumno']
+            asistencias = form.cleaned_data['asistencias']
+            faltas = form.cleaned_data['faltas']
+
+            alumno.setAsistencias(asistencias) 
+            alumno.setFaltas(faltas)         
+            alumno.save()
+
+            return redirect('generar_reporte')  # Redirigir a la página de reportes
+
+    else:
+        form = AsistenciaForm()
+
+    return render(request, "sistema/Vista_ActualizarAsistencias.html", {"form": form})
+
+def reportesDisponibles(request: HttpRequest) -> HttpResponse:
+    alumnos = Alumno.objects.all()
+    return render(request, "sistema/Vista_ReportesDisponibles.html", {"alumnos": alumnos})

@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Generar Reportes</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f9f9f9;
+        }
+        .container {
+            max-width: 600px;
+            margin: 50px auto;
+            background: #fff;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        h1 {
+            text-align: center;
+            color: #333;
+        }
+        .form-group {
+            margin-bottom: 20px;
+        }
+        label {
+            font-weight: bold;
+            display: block;
+            margin-bottom: 8px;
+            color: #555;
+        }
+        select, button {
+            width: 100%;
+            padding: 10px;
+            margin-top: 5px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 16px;
+            background: #f3f3f3;
+        }
+        button {
+            background-color: #007BFF;
+            color: #fff;
+            cursor: pointer;
+            font-weight: bold;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        #message {
+            margin-top: 20px;
+            text-align: center;
+            font-size: 16px;
+            color: green;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Generar Reportes</h1>
+        <form id="reporteForm">
+            <div class="form-group">
+                <label for="alumno">Selecciona un alumno:</label>
+                <select id="alumno" required>
+                    <option value="" disabled selected>Elige un alumno</option>
+                    {% for alumno in alumnos %}
+                    <option value="{{ alumno.id }}">{{ alumno.getNombre }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="tipo_reporte">Selecciona el tipo de reporte:</label>
+                <select id="tipo_reporte" required>
+                    <option value="" disabled selected>Elige un tipo de reporte</option>
+                    <option value="asistencia">Reporte de Asistencia</option>
+                    <option value="calificaciones">Diagrama de Calificaciones</option>
+                </select>
+            </div>
+            <button type="submit">Generar Reporte</button>
+        </form>
+        <div id="message"></div>
+    </div>
+
+    <script>
+        document.getElementById('reporteForm').addEventListener('submit', function(event) {
+            event.preventDefault();
+
+            const alumnoId = document.getElementById('alumno').value;
+            const tipoReporte = document.getElementById('tipo_reporte').value;
+
+            if (!alumnoId || !tipoReporte) {
+                alert("Por favor, selecciona un alumno y un tipo de reporte.");
+                return;
+            }
+
+            const messageElement = document.getElementById('message');
+            messageElement.textContent = "Generando reporte...";
+
+            // Redirigir a la URL de generación de reporte
+            let url = "";
+            if (tipoReporte === "asistencia") {
+                url = `{% url 'generar_reporte' %}?alumno_id=${alumnoId}`;
+            } else if (tipoReporte === "calificaciones") {
+                url = `{% url 'generar_diagrama_pastel' %}`;
+            }
+
+            // Navegar a la URL para generar el reporte
+            window.location.href = url;
+        });
+    </script>
+</body>
+</html>

@@ -42,6 +42,9 @@ class ReporteGrupo(Reporte):
         verbose_name = "Reporte Grupo"
         verbose_name_plural = "Reportes: Grupos"
 
+    def __str__(self):
+        return f"Reporte de {self.grupo.nombre}, {self.fecha.strftime('%d-%m-%Y %I:%M:%S %p')}"
+
 
 
 class ReporteGlobal(Reporte):
