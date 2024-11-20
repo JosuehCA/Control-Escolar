@@ -293,17 +293,6 @@ class Profesor(UsuarioEscolar):
         verbose_name_plural = "Profesores"
 
 
-
-class Tutor(UsuarioEscolar):
-    """TDA Tutor. Tutor legal del alumno inscrito. Cuenta con acceso al sistema y puede visualizar toda la 
-    información pertinente a sus tutorados."""
-
-    class Meta:
-        verbose_name = "Tutor"
-        verbose_name_plural = "Tutores"
-
-
-
 class Alumno(UsuarioEscolar):
     """TDA Alumno. Registrado solo para fines logísticos. Representa a cada alumno inscrito en el sistema y
     contiene un registro de su información académica."""
@@ -348,6 +337,39 @@ class Alumno(UsuarioEscolar):
 
     def __str__(self):
         return f"{self.getNombreUsuario()}: {self.getNombre()}"
+    
+class Tutor(UsuarioEscolar):
+    """TDA Tutor. Tutor legal del alumno inscrito. Cuenta con acceso al sistema y puede visualizar toda la 
+    información pertinente a sus tutorados."""
+
+    def solicitarAltaTutorado(self, alumno: Alumno) -> None:
+        if alumno.tutorAlumno:
+            raise ValueError("El alumno ya tiene un tutor asignado")
+        alumno.tutorAlumno = self
+        alumno.save()
+
+    def darDeBajaTutorado(self, alumno: Alumno) -> None:
+        if alumno.tutorAlumno == self:
+            alumno.tutorAlumno = None
+            alumno.save()
+        else:
+            raise ValueError("El tutor no está asignado a este alumno")
+        
+    def agregarConsideracionMenu(self, alumno: Alumno, consideracion: dict) -> None:
+        alumno.consideracionesMenu.append(consideracion)
+        alumno.save()
+
+    def verActividadActualTutorado(self, alumno: Alumno) -> Actividad:
+        return alumno.actividadActual
+    
+    def generarReporteTutorado(self, alumno: Alumno):
+        pass
+
+    
+    class Meta:
+        verbose_name = "Tutor"
+        verbose_name_plural = "Tutores"
+
 
 class Nutricionista(UsuarioEscolar):
     """TDA Nutricionista. Responsable de la administración correcta de las comidas y ajustes al menú."""
