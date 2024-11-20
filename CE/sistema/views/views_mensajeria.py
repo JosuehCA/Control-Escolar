@@ -1,11 +1,9 @@
 from django.shortcuts import redirect
 from django.http import HttpRequest, HttpResponse
-from django.contrib.auth.decorators import login_required
 from django.shortcuts import render
 
-from CE.sistema.forms_mensajeria import MensajeDirectoForm
-from CE.sistema.models.models_mensajeria import MensajeDirecto
-from CE.sistema.views.views_mensajeria import ManejadorVistaMensajeria
+from sistema.forms_mensajeria import MensajeDirectoForm
+from sistema.models.models_mensajeria import MensajeDirecto, ManejadorVistaMensajeria
 
 def mostrarVistaConversacion(request: HttpRequest, servicioDeMensajeriaURL: str) -> HttpResponse:
     """Vista dinamica para conversaciones individuales, grupales o generales."""

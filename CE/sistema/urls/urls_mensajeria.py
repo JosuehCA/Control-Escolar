@@ -1,7 +1,7 @@
 from django.urls import path
 
-from sistema.views import views_mensajeria
+from sistema.views.views_mensajeria import mostrarVistaConversacion
 
 urlpatterns = [
-    path("/<str:servicioDeMensajeriaURL>", views.mostrarVistaConversacion, name="conversacion"),
+    path("<str:servicioDeMensajeriaURL>", mostrarVistaConversacion, name="conversacion"),
 ]
