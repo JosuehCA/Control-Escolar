@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Crear Horario</title>
+    <style>
+        body {
+            font-family: 'Poppins', sans-serif; 
+            background-color: #f4f6f9;
+            margin: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+
+        .contenedor {
+            width: 90%;
+            max-width: 750px;
+            background-color: #ffffff;
+            padding: 50px;
+            border-radius: 12px;
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
+            text-align: center;
+        }
+
+        h1 {
+            font-size: 32px;
+            color: #333;
+            margin-bottom: 30px;
+            font-weight: bold;
+        }
+
+        .mensajes {
+            margin-bottom: 20px;
+            text-align: left;
+        }
+
+        .mensajes li {
+            padding: 12px;
+            border-radius: 6px;
+            margin-bottom: 10px;
+            font-size: 14px;
+        }
+
+        .mensajes .error {
+            background-color: #fdecea;
+            color: #c0392b;
+            border: 1px solid #f5b7b1;
+        }
+
+        .mensajes .exito {
+            background-color: #eafaf1;
+            color: #27ae60;
+            border: 1px solid #a3e4d7;
+        }
+
+        form {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        form label {
+            font-weight: 500;
+            text-align: left;
+            margin-bottom: 5px;
+            font-size: 16px;
+            color: #555;
+        }
+
+        form input, form select {
+            padding: 15px;
+            font-size: 16px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            transition: border-color 0.3s ease-in-out, box-shadow 0.3s ease-in-out;
+        }
+
+        form input:focus, form select:focus {
+            border-color: #007BFF;
+            outline: none;
+            box-shadow: 0 0 5px rgba(0, 123, 255, 0.5);
+        }
+
+        form button {
+            padding: 15px;
+            background-color: #3498db;
+            color: #ffffff;
+            border: none;
+            border-radius: 8px;
+            font-size: 18px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: background-color 0.3s ease-in-out, transform 0.2s ease-in-out;
+        }
+
+        form button:hover {
+            background-color: #2980b9;
+        }
+
+        .enlace {
+            background-color: #16a085;
+        }
+
+        .enlace a {
+            color: #ffffff;
+            text-decoration: none;
+        }
+
+        .enlace:hover {
+            background-color: #12816e;
+        }
+    </style>
+</head>
+<body>
+    <div class="contenedor">
+        <h1>Crear Nuevo Horario</h1>
+
+        <!-- Mensajes -->
+        <ul class="mensajes" id="mensajes">
+            {% for message in messages %}
+                <li class="mensaje {% if message.level == DEFAULT_MESSAGE_LEVELS.SUCCESS %}exito{% elif message.level == DEFAULT_MESSAGE_LEVELS.ERROR %}error{% endif %}">
+                    {{ message }}
+                </li>
+            {% endfor %}
+        </ul>
+
+        <form method="POST" action="{% url 'crear_horario' %}">
+            {% csrf_token %}
+            {% for field in form %}
+                <div>
+                    <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+                    {{ field }}
+                </div>
+            {% endfor %}
+            <button type="submit">Guardar Horario</button>
+
+            <button class="enlace">
+                <a href="{% url 'lista_horarios' %}">Ver Lista de Horarios</a>
+            </button>
+        </form>
+    </div>
+
+    <script>
+        // Desaparecer mensajes después de 2 segundos
+        document.addEventListener('DOMContentLoaded', () => {
+            setTimeout(() => {
+                const mensajes = document.getElementById('mensajes');
+                if (mensajes) {
+                    mensajes.style.transition = 'opacity 0.5s ease-in-out';
+                    mensajes.style.opacity = '0';
+
+                    setTimeout(() => {
+                        mensajes.remove();
+                    }, 500); 
+                }
+            }, 2000);
+        });
+    </script>
+</body>
+</html>

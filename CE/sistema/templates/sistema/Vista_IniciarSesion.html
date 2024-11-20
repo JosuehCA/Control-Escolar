@@ -1,24 +1,37 @@
 {% extends "sistema/layout.html" %}
 
 {% block body %}
+    <div class="container mt-5">
+        <h2 class="text-center mb-4">Iniciar sesión</h2>
 
-    <h2>Iniciar sesión</h2>
+        <!-- Mensajes de error o éxito -->
+        {% if message %}
+            <div class="alert alert-warning">
+                {{ message }}
+            </div>
+        {% endif %}
 
-    {% if mensaje %}
-        <div>{{ mensaje }}</div>
-    {% endif %}
+        <div class="row justify-content-center">
+            <div class="col-md-6">
+                <form action="{% url 'iniciar_sesion' %}" method="post">
+                    {% csrf_token %}
+                    <div class="form-group">
+                        <label for="nombre_usuario">Usuario</label>
+                        <input autofocus class="form-control" type="text" name="nombre_usuario" id="nombre_usuario" placeholder="Ingresa tu usuario" required>
+                    </div>
 
-    <form action="{% url 'iniciar_sesion' %}" method="post">
-        {% csrf_token %}
-        <div class="form-group">
-            <input autofocus class="form-control" type="text" name="nombre_usuario" placeholder="Usuario">
+                    <div class="form-group">
+                        <label for="contrasena">Contraseña</label>
+                        <input class="form-control" type="contrasena" name="contrasena" id="contrasena" placeholder="Ingresa tu contraseña" required>
+                    </div>
+
+                    <button type="submit" class="btn btn-primary btn-block mt-4">Iniciar sesión</button>
+                </form>
+
+                <div class="mt-3 text-center">
+                    ¿No eres parte del sistema? <a href="{% url 'registrarse' %}">Regístrate aquí.</a>
+                </div>
+            </div>
         </div>
-        <div class="form-group">
-            <input class="form-control" type="password" name="contrasena" placeholder="Contraseña">
-        </div>
-        <input class="btn btn-primary" type="submit" value="Inicia sesión">
-    </form>
-
-    No eres parte del sistema? <a href="{% url 'registrarse' %}">Regístrate aquí.</a>
-
+    </div>
 {% endblock %}
