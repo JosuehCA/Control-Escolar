@@ -7,6 +7,7 @@ import numpy as np
 import base64
 from django.template.loader import render_to_string
 from io import BytesIO
+from django.utils.timezone import localtime, now
 
 
 from sistema.models.models import Alumno
@@ -50,28 +51,27 @@ def crearReporteAsistencia(alumno: Alumno) -> base64:
     total_clases = asistencias + faltas
     porcentaje_asistencia = (asistencias / total_clases) * 100 if total_clases > 0 else 0
 
-    # Crear gráfico de barras para asistencia vs faltas
+    # Crear gráfico de barras
     figura, eje = plt.subplots()
     barras = eje.bar(["Asistencias", "Faltas"], [asistencias, faltas], color=["#00FF00", "#FF0000"])
-
     for barra in barras:
-        altura = barra.get_height() 
-        posicion_y = barra.get_y() + altura / 2 
-        eje.text(barra.get_x() + barra.get_width() / 2, posicion_y, f'{int(altura)}', ha='center', va='center', color='black')
+        eje.text(barra.get_x() + barra.get_width() / 2, barra.get_height() / 2, f'{int(barra.get_height())}', ha='center')
 
-    # Configurar título y etiquetas
     eje.set_title(f"Reporte de Asistencia de {alumno.getNombre()}")
-    eje.set_ylabel('Cantidad de Clases')
+    eje.set_ylabel('Clases')
 
-    # Opcional: Incluir porcentaje de asistencia en el gráfico
-    eje.text(0.5, -max(asistencias, faltas) - 2, f'Asistencia: {porcentaje_asistencia:.2f}%', ha='center', color='black')
-
-    # Guardar gráfico a objeto BytesIO y codificarlo como base 64
+    # Guardar gráfico como imagen base64
     imagenBinaria = BytesIO()
     plt.savefig(imagenBinaria, format='png')
     imagenBinaria.seek(0)
     plt.close()
     imagen = base64.b64encode(imagenBinaria.getvalue()).decode('utf-8')
+    time = localtime(now())
+    print(time)
+
+    # Guardar reporte en la base de datos
+    contenido = f"Asistencias: {asistencias}, Faltas: {faltas}, Porcentaje: {porcentaje_asistencia:.2f}%"
+    ReporteAlumno.objects.create(alumno=alumno, contenido=contenido, fecha=time)
 
     return imagen
 
