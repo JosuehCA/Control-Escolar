@@ -5,8 +5,6 @@ from typing import Any, Dict
 from datetime import date, time
 
 
-
-
 class CrearActividadForm(forms.ModelForm):
     class Meta:
         model = Actividad
