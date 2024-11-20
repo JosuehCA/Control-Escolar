@@ -18,12 +18,15 @@ class MenuSemanal(m.Model):
         return self.nombre
 
 class Grupo(m.Model):
-    """TDA Grupo. Define aquellos grupos a los que pertenece un conjunto de estudiantes bajo la dirección 
+    """TDA Salón. Define aquellos grupos a los que pertenece un conjunto de estudiantes bajo la dirección 
     de un profesor."""
 
     nombre = m.CharField(max_length=2000)
-    
+    alumnos = m.ManyToManyField('Alumno', related_name="alumnosGrupo")
 
+    def __str__(self):
+        return f'Grupo: {self.nombre}'
+    
     class Meta:
         verbose_name = "Grupo"
         verbose_name_plural = "Grupos"
@@ -161,7 +164,7 @@ class Administrador(UsuarioEscolar):
                     password=contrasena
                 )
             elif rol == 'Alumno':
-                tutorId = kwargs.get('tutor')  # Obtener el ID del grupo
+                tutorId = kwargs.get('tutor') 
                 try:
                     tutor = Tutor.objects.get(id=tutorId)  # Buscar la instancia de Grupo
                     Alumno.objects.create(
@@ -169,7 +172,7 @@ class Administrador(UsuarioEscolar):
                         first_name=nombre,
                         last_name=apellido,
                         password=contrasena,
-                        tutoralumno = tutor  # Asignar la instancia de Grupo
+                        tutorAlumno = tutor  
                     )
                 except Grupo.DoesNotExist:
                     print(f"Error: No se encontró el tutor con ID {grupo_id}")
@@ -209,14 +212,14 @@ class Administrador(UsuarioEscolar):
             elif rol == 'Alumno':
                 tutorId = kwargs.get('tutor')
                 try:
-                    tutor = Tutor.objects.get(id=tutorId)
-                    alumno = Alumno.objects.get(id=usuario_id)
-                    alumno.username = username
-                    alumno.first_name = nombre
-                    alumno.last_name = apellido
-                    alumno.password = contrasena
-                    alumno.tutoralumno = tutor
-                    alumno.save()
+                    tutor = Tutor.objects.get(id=tutorId) 
+                    Alumno.objects.create(
+                    username=username,
+                    first_name=nombre,
+                    last_name=apellido,
+                    password=contrasena,
+                    tutorAlumno=tutor  
+                    )
                 except Grupo.DoesNotExist:
                     print(f"Error: No se encontró el tutor con ID {grupo_id}")
             else:

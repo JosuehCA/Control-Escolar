@@ -1,4 +1,4 @@
-from pyexpat.errors import messages
+from django.contrib import messages
 from django.shortcuts import render
 from django.shortcuts import redirect
 
@@ -106,8 +106,14 @@ def crearUsuario(request):
                 )
                 messages.success(request, "Usuario creado con éxito.")
                 return redirect('crearUsuario')  # Redirige al mismo formulario para más usuarios
+            except Grupo.DoesNotExist:
+                messages.error(request, "El grupo seleccionado no existe.")
+            except Tutor.DoesNotExist:
+                messages.error(request, "El tutor seleccionado no existe.")
+            except ValueError as ve:
+                messages.error(request, f"Error: {ve}")
             except Exception as e:
-                messages.error(request, f"Error al crear usuario: {e}")
+                messages.error(request, f"Error inesperado: {e}")
         else:
             messages.error(request, "Por favor corrige los errores en el formulario.")
     else:
