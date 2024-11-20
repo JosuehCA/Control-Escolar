@@ -1,5 +1,5 @@
 from django import forms
-from .models.models_mensajeria import MensajeDirecto, MensajeGrupo
+from .models_mensajeria import MensajeDirecto, MensajeGrupo
 
 # Formulario para enviar un mensaje directo
 class MensajeDirectoForm(forms.ModelForm):

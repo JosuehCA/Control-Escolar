@@ -2,7 +2,7 @@ from django.shortcuts import redirect
 from django.http import HttpRequest, HttpResponse
 from django.shortcuts import render
 
-from sistema.forms_mensajeria import MensajeDirectoForm
+from CE.sistema.models.forms_mensajeria import MensajeDirectoForm
 from sistema.models.models_mensajeria import MensajeDirecto, ManejadorVistaMensajeria
 
 def mostrarVistaConversacion(request: HttpRequest, servicioDeMensajeriaURL: str) -> HttpResponse:
