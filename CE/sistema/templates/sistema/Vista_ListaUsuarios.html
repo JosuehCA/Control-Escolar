@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lista de Usuarios</title>
+    <style>
+        /* Reutilizamos el estilo existente */
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f0f4f8;
+        }
+        h1 {
+            background-color: #3a7bd5;
+            color: white;
+            text-align: center;
+            padding: 20px 0;
+            margin: 0;
+            font-size: 2em;
+        }
+        ul {
+            list-style: none;
+            padding: 0;
+            margin: 20px auto;
+            max-width: 700px;
+        }
+        li {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px;
+            margin-bottom: 10px;
+            background-color: white;
+            border-left: 5px solid #3a7bd5;
+            border-radius: 5px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+        li a {
+            color: #3a7bd5;
+            font-weight: bold;
+            text-decoration: none;
+            font-size: 1.1rem;
+        }
+        li a:hover {
+            text-decoration: underline;
+        }
+        .acciones-grupo {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+        .boton-eliminar {
+            background-color: #e74c3c;
+            color: white;
+            padding: 8px 12px;
+            border: none;
+            border-radius: 5px;
+            font-size: 0.9rem;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+        .boton-eliminar:hover {
+            background-color: #c0392b;
+        }
+        .boton-agregar-grupo {
+            margin: 20px auto;
+            display: block;
+            text-align: center;
+        }
+        .boton-agregar-grupo a {
+            padding: 12px 20px;
+            background-color: #3a7bd5;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: bold;
+            text-decoration: none;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+        .boton-agregar-grupo a:hover {
+            background-color: #2f6aba;
+        }
+        .no-grupos {
+            text-align: center;
+            color: #777;
+            font-style: italic;
+            padding: 15px;
+            background-color: #f4f4f4;
+            border-radius: 5px;
+        }
+
+        .alumnos h3{
+            color: blue;
+        }
+    </style>
+</head>
+<body>
+    <h1>Lista de Usuarios</h1>
+
+    <div class="boton-agregar-grupo">
+        <a href="{% url 'crearUsuario' %}">Agregar Usuario</a>
+    </div>
+
+    <ul>
+        <h2>Alumnos<h2>
+        {% if alumnos %}
+            {% for alumno in alumnos %}
+            <li>
+                <a href="#">
+                    {{ alumno.first_name }} {{ alumno.last_name }}
+                </a>
+            </li>
+            {% endfor %}
+        {% else %}
+            <li class="no-grupos">No hay grupos registrados.</li>
+        {% endif %}
+        
+    </ul>
+
+    <ul>
+        <h2>Tutores<h2>
+        {% if tutores %}
+            {% for tutor in tutores %}
+            <li>
+                <a href="#">
+                    {{ tutor.first_name }} {{ tutor.last_name }}
+                </a>
+            </li>
+            {% endfor %}
+        {% else %}
+            <li class="no-grupos">No hay grupos registrados.</li>
+        {% endif %}
+    </ul>
+
+
+    <ul>
+        <h2>Profesores<h2>
+        {% if profesores %}
+            {% for profesor in profesores %}
+            <li>
+                <a href="#">
+                    {{ profesor.first_name }} {{ profesor.last_name }}
+                </a>
+            </li>
+            {% endfor %}
+        {% else %}
+            <li class="no-grupos">No hay grupos registrados.</li>
+        {% endif %}
+    </ul>
+</body>
+
+
+</html>
