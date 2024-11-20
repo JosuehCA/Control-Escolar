@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Registro de Actividades</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #eef2f7;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+        .contenedor {
+            background-color: #ffffff;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+            max-width: 400px;
+            width: 100%;
+        }
+        h1 {
+            color: #333;
+            font-size: 24px;
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        form {
+            display: flex;
+            flex-direction: column;
+        }
+        button, .btn-secundario {
+            padding: 12px;
+            border: none;
+            border-radius: 5px;
+            font-size: 16px;
+            cursor: pointer;
+            text-align: center;
+            transition: background-color 0.3s ease;
+        }
+        button {
+            background-color: #28a745;
+            color: #ffffff;
+            margin-top: 10px;
+        }
+        button:hover {
+            background-color: #218838;
+        }
+        .btn-secundario {
+            background-color: #007bff;
+            color: #ffffff;
+            margin-top: 10px;
+            text-decoration: none;
+            display: block;
+            text-align: center;
+        }
+        .btn-secundario:hover {
+            background-color: #0056b3;
+        }
+        .mensajes {
+            list-style: none;
+            padding: 0;
+            margin-bottom: 20px;
+        }
+        .mensajes li {
+            padding: 10px;
+            margin-bottom: 10px;
+            border-radius: 5px;
+        }
+        .mensajes .error {
+            background-color: #f8d7da;
+            color: #721c24;
+        }
+        .mensajes .exito {
+            background-color: #d4edda;
+            color: #155724;
+        }
+    </style>
+</head>
+<body>
+    <div class="contenedor">
+        <h1>Registro de Actividades</h1>
+
+        <!-- Mostrar los mensajes de error o éxito -->
+        {% if messages %}
+            <ul class="mensajes">
+                {% for message in messages %}
+                    {% if message.tags == "error" %}
+                        <li class="error">{{ message }}</li>
+                    {% elif message.tags == "success" %}
+                        <li class="exito">{{ message }}</li>
+                    {% else %}
+                        <li>{{ message }}</li>
+                    {% endif %}
+                {% endfor %}
+            </ul>
+        {% endif %}
+
+        <!-- Formulario para crear actividades -->
+        <form method="POST" action="{% url 'actividades' %}">
+            {% csrf_token %}
+            {{ form.as_p }}
+            <button type="submit">Guardar Actividad</button>
+        </form>
+
+        <a href="{% url 'lista_actividades' %}" class="btn-secundario">Ver Lista de Actividades</a>
+    </div>
+</body>
+</html>
