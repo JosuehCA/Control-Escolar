@@ -19,12 +19,15 @@ class ReporteAlumno(Reporte):
     """TDA Reporte de Alumno. Reporte individual por alumno que registra detalles conductuales, de asistencias,
     entre otros."""
 
-    alumno = m.ForeignKey("Alumno", on_delete=m.CASCADE, related_name="alumno_reporte")
+    alumno: Alumno = m.ForeignKey("Alumno", on_delete=m.CASCADE, related_name="alumno_reporte")
 
 
     class Meta:
         verbose_name = "Reporte Alumno"
         verbose_name_plural = "Reportes: Alumnos"
+
+    def __str__(self):
+        return f"Reporte de {self.alumno.getNombre()}, {self.fecha.strftime('%d-%m-%Y %I:%M:%S %p')}"
 
 
 
