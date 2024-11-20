@@ -1,3 +1,4 @@
+from abc import ABC, abstractmethod
 from typing import List
 from django.db import models as m
 from django.conf import settings
@@ -83,7 +84,71 @@ class UsuarioEscolar(AbstractUser):
         verbose_name = "Usuario Escolar"
         verbose_name_plural = "Usuarios Escolares"
 
+class CreadorDeUsuariosEscolares(ABC):
+    @abstractmethod
+    def crearUsuarioEscolar(self, **kwargs) -> UsuarioEscolar:    
+        pass
 
+class CreadorDeProfesores(CreadorDeUsuariosEscolares):
+    def crearUsuarioEscolar(self, **kwargs) -> None:
+        
+        grupo_id = kwargs.get('grupo')
+        
+        try:
+            grupo = Grupo.objects.get(id=grupo_id)
+            return Profesor.objects.create(
+                username=kwargs.get('username'),
+                first_name=kwargs.get('nombre'),
+                last_name=kwargs.get('apellido'),
+                password=kwargs.get('contrasena'),
+                grupo=grupo
+            )
+        except Grupo.DoesNotExist:
+             print(f"Error: No se encontró el grupo con ID {grupo_id}")
+            
+
+class CreadorDeTutores(CreadorDeUsuariosEscolares):
+    def crearUsuarioEscolar(self, **kwargs) -> None:
+        return Tutor.objects.create(
+            username=kwargs.get('username'),
+            first_name=kwargs.get('nombre'),
+            last_name=kwargs.get('apellido'),
+            password=kwargs.get('contrasena')
+        )
+
+class CreadorDeAlumnos(CreadorDeUsuariosEscolares):
+    
+    def crearUsuarioEscolar(self, **kwargs) -> None:
+        
+        tutorId = kwargs.get('tutor')
+        try:
+            tutor = Tutor.objects.get(id=tutorId)
+            return Alumno.objects.create(
+                username=kwargs.get('username'),
+                first_name=kwargs.get('nombre'),
+                last_name=kwargs.get('apellido'),
+                password=kwargs.get('contrasena'),
+                tutorAlumno=tutor
+            )
+        except Tutor.DoesNotExist:
+            print(f"Error: No se encontró el tutor con ID {tutorId}")
+        
+class CreadorDeNutricionistas(CreadorDeUsuariosEscolares):
+    def crearUsuarioEscolar(self, **kwargs) -> None:
+        return Nutricionista.objects.create(
+            username=kwargs.get('username'),
+            first_name=kwargs.get('nombre'),
+            last_name=kwargs.get('apellido'),
+            password=kwargs.get('contrasena')
+        )
+
+FACTORIES = {
+    'Profesor': CreadorDeProfesores(),
+    'Tutor': CreadorDeTutores(),
+    'Alumno': CreadorDeAlumnos(),
+    'Nutricionista': CreadorDeNutricionistas(),
+}
+    
 
 class Administrador(UsuarioEscolar):
     """TDA Administrador. Rol especial dentro del plantel cuyos permisos permiten controlar todo cuanto
@@ -140,51 +205,25 @@ class Administrador(UsuarioEscolar):
                 grupo.alumnos.remove(alumno)
                 grupo.save()
             
-    @classmethod    
-    def crearUsuarioEscolar(cls, nombre, apellido, username, contrasena, rol, **kwargs) -> None:
-        if not UsuarioEscolar.objects.filter(username=username).exists():
-            if rol == 'Profesor':
-                grupo_id = kwargs.get('grupo')  # Obtener el ID del grupo
-                try:
-                    grupo = Grupo.objects.get(id=grupo_id)  # Buscar la instancia de Grupo
-                    Profesor.objects.create(
-                        username=username,
-                        first_name=nombre,
-                        last_name=apellido,
-                        password=contrasena,
-                        grupo=grupo  # Asignar la instancia de Grupo
-                    )
-                except Grupo.DoesNotExist:
-                    print(f"Error: No se encontró el grupo con ID {grupo_id}")
-            elif rol == 'Tutor':
-                Tutor.objects.create(
-                    username=username,
-                    first_name=nombre,
-                    last_name=apellido,
-                    password=contrasena
-                )
-            elif rol == 'Alumno':
-                tutorId = kwargs.get('tutor') 
-                try:
-                    tutor = Tutor.objects.get(id=tutorId)  # Buscar la instancia de Grupo
-                    Alumno.objects.create(
-                        username=username,
-                        first_name=nombre,
-                        last_name=apellido,
-                        password=contrasena,
-                        tutorAlumno = tutor  
-                    )
-                except Grupo.DoesNotExist:
-                    print(f"Error: No se encontró el tutor con ID {grupo_id}")
-            elif rol == 'Nutricionista':
-                Nutricionista.objects.create(
-                    username=username,
-                    first_name=nombre,
-                    last_name=apellido,
-                    password=contrasena
-                )
-        else:
-            print("Error: El usuario ya existe.")
+    @classmethod
+    def crearUsuarioEscolar(cls, nombre, apellido, username, contrasena, rol, **kwargs):
+        if UsuarioEscolar.objects.filter(username=username).exists():
+            raise ValueError("Error: El usuario ya existe.")
+
+        factory = FACTORIES.get(rol)
+        if not factory:
+            raise ValueError(f"Error: Rol no soportado: {rol}")
+
+        try:
+            factory.crearUsuarioEscolar(
+                nombre=nombre,
+                apellido=apellido,
+                username=username,
+                contrasena=contrasena,
+                **kwargs
+            )
+        except ValueError as e:
+            print(e)
         
     @classmethod
     def eliminarUsuarioEscolar(cls, usuarios_ids: list[int]) -> None:
