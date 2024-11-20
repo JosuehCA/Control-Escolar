@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Actualizar Actividad</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f0f4f8;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+
+        .contenedor {
+            background-color: white;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            max-width: 500px;
+            width: 100%;
+        }
+
+        h1 {
+            text-align: center;
+            color: #3a7bd5;
+        }
+
+        form {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        label {
+            font-weight: bold;
+        }
+
+        input, textarea, button {
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            font-size: 1rem;
+        }
+
+        button {
+            background-color: #3a7bd5;
+            color: white;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+
+        button:hover {
+            background-color: #2f6aba;
+        }
+
+        .boton-regresar {
+            color: #16a085;
+        }
+
+        .boton-regresar:hover {
+            color: #12816e;
+        }
+
+        .mensajes {
+            margin-bottom: 20px;
+            text-align: left;
+        }
+
+        .mensajes li {
+            padding: 12px;
+            border-radius: 6px;
+            margin-bottom: 10px;
+            font-size: 14px;
+        }
+
+        .mensajes .error {
+            background-color: #fdecea;
+            color: #c0392b;
+            border: 1px solid #f5b7b1;
+        }
+
+        .mensajes .exito {
+            background-color: #eafaf1;
+            color: #27ae60;
+            border: 1px solid #a3e4d7;
+        }
+
+    </style>
+</head>
+<body>
+    <div class="contenedor">
+        <h1>Actualizar Actividad</h1>
+
+        <!-- Mostrar mensajes de éxito o error -->
+        {% if messages %}
+            <ul class="mensajes">
+                {% for message in messages %}
+                    <li class="mensaje {% if message.level == DEFAULT_MESSAGE_LEVELS.SUCCESS %}exito{% elif message.level == DEFAULT_MESSAGE_LEVELS.ERROR %}error{% endif %}">
+                        {{ message }}
+                    </li>
+                {% endfor %}
+            </ul>
+        {% endif %}
+
+        <div class="mensajes">
+            <!-- Errores globales -->
+            {% if form.non_field_errors %}
+                {% for error in form.non_field_errors %}
+                    <li class="error">{{ error }}</li>
+                {% endfor %}
+            {% endif %}
+
+            
+            <!-- Errores específicos de cada campo -->
+            {% for field in form %}
+                {% for error in field.errors %}
+                    <li class="error">{{ error }}</li>
+                {% endfor %}
+            {% endfor %}
+        </div>
+
+        <form method="POST">
+            {% csrf_token %}
+            
+            <!-- Mostrar los campos sin los errores automáticos -->
+            {% for field in form %}
+                <div>
+                    {{ field.label_tag }}
+                    {{ field }}
+                </div>
+            {% endfor %}
+
+            <p><strong>Fecha:</strong> {{ actividad.fecha }}</p>
+            <p><strong>Horario:</strong> {{ actividad.horario }}</p>
+            <button type="submit">Actualizar</button>
+
+            <a href="{% url 'lista_actividades' %}" class="boton-regresar">Regresar a la lista
+            </a>
+        </form>
+    </div>
+
+    {% if redirect %}
+    <script>
+        // Mostrar el mensaje por 1 segundo antes de redirigir
+        setTimeout(function() {
+            window.location.href = "{% url 'lista_actividades' %}";
+        }, 1000); 
+    </script>
+    {% endif %}
+</body>
+</html>

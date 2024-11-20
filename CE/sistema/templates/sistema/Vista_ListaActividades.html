@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lista de Actividades</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f0f4f8;
+        }
+
+        h1 {
+            background-color: #3a7bd5;
+            color: white;
+            text-align: center;
+            padding: 20px 0;
+            margin: 0;
+            font-size: 2em;
+        }
+
+        form {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 10px;
+            margin: 20px auto;
+            padding: 15px;
+            background-color: white;
+            border-radius: 8px;
+            max-width: 600px;
+        }
+
+        label {
+            font-weight: bold;
+            color: #3a7bd5;
+        }
+
+        input[type="date"] {
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            font-size: 1rem;
+        }
+
+        button {
+            padding: 10px 15px;
+            background-color: #3a7bd5;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+
+        button:hover {
+            background-color: #2f6aba;
+        }
+
+        ul {
+            list-style: none;
+            padding: 0;
+            margin: 20px auto;
+            max-width: 700px;
+        }
+
+        li {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px;
+            margin-bottom: 10px;
+            background-color: white;
+            border-left: 5px solid #3a7bd5;
+            border-radius: 5px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        li a {
+            color: #3a7bd5;
+            font-weight: bold;
+            text-decoration: none;
+            font-size: 1.1rem;
+        }
+
+        li a:hover {
+            text-decoration: underline;
+        }
+
+        .no-actividades {
+            text-align: center;
+            color: #777;
+            font-style: italic;
+            padding: 15px;
+            background-color: #f4f4f4;
+            border-radius: 5px;
+        }
+
+        .boton-eliminar {
+            background-color: #e74c3c;
+            color: white;
+            padding: 8px 12px;
+            border: none;
+            border-radius: 5px;
+            font-size: 0.9rem;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+
+        .boton-eliminar:hover {
+            background-color: #c0392b;
+        }
+
+        .acciones-actividad {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+
+        .botones-actividad {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            margin-bottom: 20px;
+        }
+
+        .contenedor-boton-volver {
+            display: flex;
+        }
+
+        .boton-volver {
+            padding: 6px 12px; 
+            background-color: #dcdcdc; 
+            color: #555; 
+            border: none;
+            border-radius: 5px;
+            font-size: 0.9rem; 
+            font-weight: normal; 
+            cursor: pointer;
+            transition: background-color 0.3s;
+            text-align: center;
+        }
+
+        .boton-volver:hover {
+            background-color: #b0b0b0; 
+        }
+
+        .boton-agregar-actividad {
+            display: flex;
+        }
+
+        .boton-agregar-actividad button {
+            padding: 12px 20px;
+            background-color: #3a7bd5;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: bold;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+
+        .boton-agregar-actividad button:hover {
+            background-color: #2f6aba;
+        }
+
+        
+    </style>
+    <script>
+        function confirmarEliminacion(event) {
+            if (!confirm("¿Estás seguro de que deseas eliminar esta actividad?")) {
+                event.preventDefault(); // Prevenir la acción de eliminar si no se confirma
+            }
+        }
+    </script>
+</head>
+<body>
+    <h1>Lista de Actividades</h1>
+
+    <form method="GET" action="{% url 'lista_actividades' %}">
+        {% csrf_token %}
+        <label for="fecha">Selecciona una fecha:</label>
+        <input type="date" name="fecha" value="{{ fecha }}" required>
+        <button type="submit">Filtrar</button>
+    </form>
+
+    <div class="botones-actividad">
+        {% if fecha %}
+        <a href="{% url 'lista_actividades' %}" class="contenedor-boton-volver">
+            <button class="boton-volver">Mostrar todas las actividades</button>
+        </a>
+        {% endif %}
+    
+        <div class="boton-agregar-actividad">
+            <a href="{% url 'actividades' %}">
+                <button>Agregar Actividad</button>
+            </a>
+        </div>
+    </div>
+
+    <ul>
+        {% if actividades %}
+            {% for actividad in actividades %}
+            <li>
+                <a href="{% url 'detalle_actividad' actividad.id %}">
+                    {{ actividad.nombre }} ({{ actividad.horaInicio }} - {{ actividad.horaFinal }})
+                </a>
+                <div class="acciones-actividad">
+                    <form action="{% url 'eliminar_actividad' actividad.id %}" method="POST" style="margin: 0;" onsubmit="confirmarEliminacion(event)">
+                        {% csrf_token %}
+                        <button type="submit" class="boton-eliminar">Eliminar</button>
+                    </form>
+                    <a href="{% url 'actualizar_actividad' actividad.id %}" class="boton-editar">
+                        <button class="boton-eliminar" style="background-color: #3498db;">Editar</button>
+                    </a>
+                </div>
+            </li>
+            {% endfor %}
+        {% else %}
+            <li class="no-actividades">No hay actividades programadas para esta fecha.</li>
+        {% endif %}
+    </ul>
+</body>
+</html>
