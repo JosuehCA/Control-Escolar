@@ -2,7 +2,7 @@ from django.shortcuts import redirect
 from django.http import HttpRequest, HttpResponse
 from django.shortcuts import render
 
-from CE.sistema.models.forms_mensajeria import MensajeDirectoForm
+from sistema.models.forms_mensajeria import MensajeDirectoForm
 from sistema.models.models_mensajeria import MensajeDirecto, ManejadorVistaMensajeria
 
 def mostrarVistaConversacion(request: HttpRequest, servicioDeMensajeriaURL: str) -> HttpResponse:
@@ -21,7 +21,8 @@ def mostrarVistaConversacion(request: HttpRequest, servicioDeMensajeriaURL: str)
                 return render(request, "sistema/Vista_Conversacion.html", {
                 "titulo": "Conversación Privada",
                 "mensajes": mensajesUsuario,
-                "form": mensajeDirectoForm,})
+                "form": mensajeDirectoForm,
+                "servicioDeMensajeriaURL": servicioDeMensajeriaURL,})
             else:
                 mensajeDirectoForm.add_error(None, "No puedes enviarte mensajes a ti mismo.")
     else:
