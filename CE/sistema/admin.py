@@ -1,7 +1,7 @@
 from django.contrib import admin
 
 from .models.models import *
-from .models.models_msj import *
+from .models.models_mensajeria import *
 from .models.models_reportes import *
 
 admin.site.register(Platillo)

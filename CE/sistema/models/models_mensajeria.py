@@ -1,6 +1,21 @@
 from django.db import models as m
 from django.conf import settings
 from sistema.models.models import UsuarioEscolar, Grupo
+from django.http import HttpRequest
+
+class ManejadorVistaMensajeria:
+    """TDA Manejador de Vista de Mensajería. Controla la vista de mensajería del sistema."""
+
+    def __init__(self) -> None:
+        """Inicializa un manejador de vista de mensajería."""
+        
+    def obtenerTipoDeConversacion(self, servicioDeMensajeria: str) -> str:
+        """Devuelve el tipo de conversación a mostrar."""
+        return self.__separarTipoDeUrl(servicioDeMensajeria)[0]
+    
+    def __separarTipoDeUrl(self, cadenaUrl: str) -> tuple:
+        """Separa la variable de la URL por "_" ."""
+        return cadenaUrl.split("_")
 
 class Mensaje(m.Model):
     """TDA Mensaje. Define la estructura de un mensaje dentro del mensajero virtual."""
