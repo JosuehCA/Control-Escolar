@@ -1,5 +1,5 @@
 from django.http import HttpRequest, HttpResponse
-from weasyprint import HTML
+#from weasyprint import HTML
 import matplotlib
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt

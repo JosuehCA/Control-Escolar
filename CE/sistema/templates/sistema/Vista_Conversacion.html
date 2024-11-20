@@ -1,96 +1,106 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Enviar Mensaje</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Enviar Mensaje</title>
 
-<script>
+  <script>
     const ws = new WebSocket('ws://' + window.location.host + '/ws/mensajeria/{{ servicioDeMensajeriaURL }}');
 
     ws.onopen = function() {
-        console.log('Connected to WebSocket');
+      console.log('Conectado al WebSocket'); // Connected to WebSocket
     };
 
     ws.onmessage = function(event) {
-        const message = JSON.parse(event.data);
-        const messageList = document.querySelector('.mensaje-list');
-        const li = document.createElement('li');
-        li.textContent = message.mensaje;
-        messageList.appendChild(li);
-        // Scroll to the bottom of the message list
-        messageList.scrollTop = messageList.scrollHeight;
+      const message = JSON.parse(event.data);
+      console.log('Mensaje recibido:', message); // Message received:
+
+      const mensajeList = document.querySelector('.mensaje-lista');
+      const li = document.createElement('li');
+      li.textContent = message.mensaje;
+      mensajeList.appendChild(li);
+
+      // Scroll to the bottom of the message list
+      mensajeList.scrollTop = mensajeList.scrollHeight;
     };
 
     ws.onclose = function() {
-        console.log('WebSocket connection closed');
+      console.log('Conexión WebSocket cerrada'); // WebSocket connection closed
     };
 
-    const form = document.querySelector('form');
-    form.addEventListener('submit', (event) => {
-        event.preventDefault();
-        const messageInput = document.querySelector('textarea[name="mensaje"]');   
-
-        const message = messageInput.value;
-        ws.send(JSON.stringify({ 'mensaje': message }));
-        messageInput.value = '';
+    document.addEventListener('DOMContentLoaded', () => {
+        const form = document.getElementById('form');
+        form.addEventListener('submit', (event) => {
+          event.preventDefault();
+          const messageInput = document.getElementById('id_contenidoMensaje');
+          const message = messageInput.value;
+          ws.send(JSON.stringify({ 'mensaje': message }));
+          messageInput.value = '';
+          console.log('Mensaje enviado:', message); // Message sent:
+        });
     });
-
-</script>
-<style>
+  </script>
+  <style>
     body {
-        font-family: Arial, sans-serif;
-        margin: 20px;
+      font-family: Arial, sans-serif;
+      margin: 20px;
     }
+
     form {
-        margin-top: 20px;
+      margin-top: 20px;
     }
+
     input, textarea, select {
-        width: 100%;
-        padding: 10px;
-        margin: 5px 0;
+      width: 100%;
+      padding: 10px;
+      margin: 5px 0;
     }
+
     button {
-        padding: 10px 20px;
-        background-color: #007bff;
-        color: white;
-        border: none;
-        cursor: pointer;
+      padding: 10px 20px;
+      background-color: #007bff;
+      color: white;
+      border: none;
+      cursor: pointer;
     }
+
     button:hover {
-        background-color: #0056b3;
+      background-color: #0056b3;
     }
-    .mensaje-list {
-        margin-top: 30px;
+
+    .mensaje-lista {
+      margin-top: 30px;
     }
+
     .mensaje-item {
-        border-bottom: 1px solid #ddd;
-        padding: 10px;
+      border-bottom: 1px solid #ddd;
+      padding: 10px;
     }
-</style>
+  </style>
 </head>
 <body>
-<h1>Enviar Mensaje</h1>
-<div class="mensaje-list">
+  <h1>Enviar Mensaje</h1>
+  <div class="mensaje-lista">
     <h2>Mensajes Recientes</h2>
     {% if mensajes %}
-        <ul>
-            {% for mensaje in mensajes %}
-                <li class="mensaje-item">
-                    <strong>De: {{ mensaje.emisorUsuario.username }}</strong><br>
-                    {{ mensaje.contenidoMensaje }}<br>
-                    <small>{{ mensaje.fechaEnviado }}</small>
-                </li>
-            {% endfor %}
-        </ul>
+      <ul>
+        {% for mensaje in mensajes %}
+          <li class="mensaje-item">
+            <strong>De: {{ mensaje.emisorUsuario.username }}</strong><br>
+            {{ mensaje.contenidoMensaje }}<br>
+            <small>{{ mensaje.fechaEnviado }}</small>
+          </li>
+        {% endfor %}
+      </ul>
     {% else %}
-        <p>No hay mensajes recientes.</p>
+      <p>No hay mensajes recientes.</p>
     {% endif %}
-</div>
-<form method="post">
+  </div>
+  <form id="form" method="post">
     {% csrf_token %}
     {{ form.as_p }}
     <button type="submit">Enviar Mensaje</button>
-</form>
+  </form>
 </body>
 </html>
