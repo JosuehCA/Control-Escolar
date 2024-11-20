@@ -1,5 +1,5 @@
 from django import forms
-from .models import *
+from sistema.models.models_actividades import *
 from django.core.exceptions import ValidationError  
 from typing import Any, Dict
 from datetime import date, time

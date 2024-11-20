@@ -3,6 +3,8 @@ from django.db import models as m
 from django.conf import settings
 from django.contrib.auth.models import AbstractUser
 
+from .models_actividades import Actividad
+
 
 class MenuSemanal(m.Model):
     """TDA Menu. Define un Menú de comidas personalizable de acuerdo al administrador, y tomando en cuenta
@@ -57,23 +59,6 @@ class Platillo(m.Model):
 
     def __str__(self):
         return f"{self.nombre} ({self.dia or 'Sin Día'})"
-
-
-class Actividad(m.Model):
-    """TDA Actividad. Representa una actividad específica que los alumnos pueden realizar en un
-    periodo de tiempo."""
-
-    nombre = m.CharField(max_length=100)
-    horaInicio = m.TimeField()
-    horaFinal = m.TimeField()
-
-
-    class Meta:
-        verbose_name_plural = "Actividades"
-
-    def __str__(self):
-        return self.nombre
-
 
 
 
