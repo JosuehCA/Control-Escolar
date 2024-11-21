@@ -148,12 +148,9 @@ FACTORIES = {
     'Alumno': CreadorDeAlumnos(),
     'Nutricionista': CreadorDeNutricionistas(),
 }
+
+class AdministradorGrupos(UsuarioEscolar):
     
-
-class Administrador(UsuarioEscolar):
-    """TDA Administrador. Rol especial dentro del plantel cuyos permisos permiten controlar todo cuanto
-    sea necesario. Tiene acceso a todos los apartados."""    
-
     @classmethod
     def crearGrupo(cls, nombre: str, alumnos: List['Alumno']) -> bool:
         
@@ -179,23 +176,25 @@ class Administrador(UsuarioEscolar):
         return alumnosSinGrupo
 
     @classmethod
-    def eliminarGrupo(cls, grupos: List['Grupo']) -> None:
+    def eliminarGrupo(cls, grupoId) -> None:
         try:
-            for grupo in grupos:
-                grupo.delete()
-        except Grupo.DoesNotExist:
-            print("El grupo no existe.")
+            grupo = Grupo.objects.get(id=grupoId)
+            grupo.delete()
+        except Exception as e:
+            print(f"Error al eliminar grupo: {e}")
 
     @classmethod
-    def editarGrupo(cls, grupo_id: int, nombre: str, alumnos: List['Alumno']) -> None:
+    def actualizarGrupo(cls, grupo_id: int, nombre: str, alumnos: List['Alumno']) -> bool:
         try:
             cls.eliminarGruposAlumnosSeleccionados(alumnos)
             grupo = Grupo.objects.get(id=grupo_id)
             grupo.nombre = nombre
             grupo.alumnos.set(alumnos)
             grupo.save()
+            return True
         except Grupo.DoesNotExist:
             print("El grupo no existe.")
+            return False
 
     @classmethod
     def eliminarGruposAlumnosSeleccionados(cls, alumnos: List['Alumno']) -> None:
@@ -204,7 +203,16 @@ class Administrador(UsuarioEscolar):
             for grupo in grupos:
                 grupo.alumnos.remove(alumno)
                 grupo.save()
-            
+    
+    class Meta:
+        verbose_name = "AdministradorGrupos"
+        verbose_name_plural = "AdministradoresGrupos"
+    
+
+class AdministradorUsuarios(UsuarioEscolar):
+    """TDA Administrador. Rol especial dentro del plantel cuyos permisos permiten controlar todo cuanto
+    sea necesario. Tiene acceso a todos los apartados."""    
+
     @classmethod
     def crearUsuarioEscolar(cls, nombre, apellido, username, contrasena, rol, **kwargs):
         if UsuarioEscolar.objects.filter(username=username).exists():
@@ -226,14 +234,15 @@ class Administrador(UsuarioEscolar):
             print(e)
         
     @classmethod
-    def eliminarUsuarioEscolar(cls, usuarios_ids: list[int]) -> None:
+    def eliminarUsuarioEscolar(cls, usuarioId : int) -> None:
         try:
-            UsuarioEscolar.objects.filter(id__in=usuarios_ids).delete()
+            usuario = UsuarioEscolar.objects.get(id=usuarioId)
+            usuario.delete()
         except Exception as e:
             print(f"Error al eliminar usuarios: {e}")
             
     @classmethod
-    def editarUsuarioEscolar(cls, usuario_id: int, nombre, apellido, username, contrasena, rol, **kwargs) -> None:
+    def actualizarUsuarioEscolar(cls, usuario_id: int, nombre, apellido, username, contrasena, rol, **kwargs) -> None:
         try:
             if rol == 'Profesor':
                 grupo_id = kwargs.get('grupo')
@@ -276,8 +285,8 @@ class Administrador(UsuarioEscolar):
             
             
     class Meta:
-        verbose_name = "Administrador"
-        verbose_name_plural = "Administradores"
+        verbose_name = "AdministradorUsuarios"
+        verbose_name_plural = "AdministradoresUsuarios"
 
 
 class Profesor(UsuarioEscolar):
@@ -296,7 +305,7 @@ class Profesor(UsuarioEscolar):
 class Alumno(UsuarioEscolar):
     """TDA Alumno. Registrado solo para fines logísticos. Representa a cada alumno inscrito en el sistema y
     contiene un registro de su información académica."""
-    tutorAlumno = m.ForeignKey(Tutor, on_delete=m.RESTRICT, related_name="tutor_alumno")
+    tutorAlumno = m.ForeignKey("Tutor", on_delete=m.RESTRICT, related_name="tutor_alumno")
     asistencias = m.IntegerField(default=0)
     faltas = m.IntegerField(default=0)
     actividadActual = m.ForeignKey(Actividad, on_delete=m.SET_NULL, related_name="actividadActual", null=True, blank=True)
@@ -315,7 +324,7 @@ class Alumno(UsuarioEscolar):
         self.actividadActual = nuevaActividad
         self.save()
 
-    def getTutor(self) -> Tutor:
+    def getTutor(self) -> "Tutor":
         return self.tutorAlumno
 
     def getAsistencias(self) -> int:

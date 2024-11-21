@@ -97,6 +97,15 @@
             color: blue;
         }
     </style>
+
+    <script>
+        function confirmarEliminacion(event) {
+            if (!confirm("¿Estás seguro de que deseas eliminar este usuario?")) {
+                event.preventDefault(); // Prevenir la acción de eliminar si no se confirma
+            }
+        }
+    </script>
+
 </head>
 <body>
     <h1>Lista de Usuarios</h1>
@@ -113,10 +122,16 @@
                 <a href="#">
                     {{ alumno.first_name }} {{ alumno.last_name }}
                 </a>
+                <div class="acciones-actividad">
+                    <form action="{% url 'eliminarUsuario' alumno.id %}" method="POST" style="margin: 0;" onsubmit="confirmarEliminacion(event)">
+                        {% csrf_token %}
+                        <button type="submit" class="boton-eliminar">Eliminar</button>
+                    </form>
+                </div>
             </li>
             {% endfor %}
         {% else %}
-            <li class="no-grupos">No hay grupos registrados.</li>
+            <li class="no-grupos">No hay alumnos registrados.</li>
         {% endif %}
         
     </ul>
@@ -129,6 +144,12 @@
                 <a href="#">
                     {{ tutor.first_name }} {{ tutor.last_name }}
                 </a>
+                <div class="acciones-actividad">
+                    <form action="{% url 'eliminarUsuario' tutor.id %}" method="POST" style="margin: 0;" onsubmit="confirmarEliminacion(event)">
+                        {% csrf_token %}
+                        <button type="submit" class="boton-eliminar">Eliminar</button>
+                    </form>
+                </div>
             </li>
             {% endfor %}
         {% else %}
@@ -145,6 +166,12 @@
                 <a href="#">
                     {{ profesor.first_name }} {{ profesor.last_name }}
                 </a>
+                <div class="acciones-actividad">
+                    <form action="{% url 'eliminarUsuario' profesor.id %}" method="POST" style="margin: 0;" onsubmit="confirmarEliminacion(event)">
+                        {% csrf_token %}
+                        <button type="submit" class="boton-eliminar">Eliminar</button>
+                    </form>
+                </div>
             </li>
             {% endfor %}
         {% else %}

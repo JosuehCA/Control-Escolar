@@ -1,11 +1,11 @@
 from django.contrib import messages
-from django.shortcuts import render
+from django.shortcuts import get_object_or_404, render
 from django.shortcuts import redirect
 
 from sistema.forms_usuarios import CrearUsuarioForm, EliminarUsuarioForm
-from sistema.models.models import Alumno, Grupo, Administrador, Profesor, Tutor
+from sistema.models.models import AdministradorGrupos, Alumno, Grupo, AdministradorUsuarios, Profesor, Tutor
 from django.shortcuts import redirect
-from sistema.forms_grupos import CrearGrupoForm, EliminarGrupoForm, ModificarGrupoForm
+from sistema.forms_grupos import ActualizarGrupoForm, CrearGrupoForm
 
 def administrar(request):
     return render(request, "sistema/Vista_Administrador.html")
@@ -21,7 +21,7 @@ def crearGrupo(request):
             nombre = form.cleaned_data['nombre']
             alumnos = form.cleaned_data['alumnos']
             
-        if Administrador.crearGrupo(nombre, list(alumnos)):
+        if AdministradorGrupos.crearGrupo(nombre, list(alumnos)):
             messages.success(request, "Grupo creado con éxito.")
             return redirect('crearGrupo')
         else:
@@ -33,47 +33,37 @@ def crearGrupo(request):
         'form': form
     })
     
-def eliminarGrupo(request):
+def eliminarGrupo(request, grupoId):
     
-    if request.method == 'POST':
-        form = EliminarGrupoForm(request.POST)
-        if form.is_valid():
-            grupos = form.cleaned_data['grupos']
-            
-        try:
-            Administrador.eliminarGrupo(list(grupos))
-            messages.success(request, "Grupos eliminados con éxito.")
-        except:
-            messages.error(request, "Error al eliminar grupos.")
-        return redirect('eliminarGrupo')
-    else:
-        form = EliminarGrupoForm()  
+    if AdministradorGrupos.eliminarGrupo(grupoId):
+        return redirect("listaGrupos")
+    
+    grupos = Grupo.objects.prefetch_related('alumnos').all()  # Prefetch para cargar alumnos de forma eficiente
+    return render(request, "sistema/Vista_ListaGrupos.html", {'grupos': grupos})
+    
+def modificarGrupo(request, grupoId):
+    grupo = get_object_or_404(Grupo, id=grupoId)
 
-    return render(request, "sistema/Vista_EliminarGrupo.html", {'form': form})
-    
-def modificarGrupo(request):
-    if request.method == 'POST':
-        form = ModificarGrupoForm(request.POST)
-        if form.is_valid():
-            grupo = form.cleaned_data['grupo']
-            nuevo_nombre = form.cleaned_data['nombre']
-            nuevos_alumnos = form.cleaned_data['alumnos']
+    if request.method == "POST":
+        actualizarGrupoForm = ActualizarGrupoForm(request.POST, instance=grupo)
+
+        if actualizarGrupoForm.is_valid():
+            nombre = actualizarGrupoForm.cleaned_data['nombre']
+            alumnos = actualizarGrupoForm.cleaned_data['alumnos']
 
             try:
-                if nuevo_nombre:
-                    grupo.nombre = nuevo_nombre
-                
-                if nuevos_alumnos:
-                    Administrador.editarGrupo(grupo.id, grupo.nombre, list(nuevos_alumnos))
-
-                messages.success(request, "Grupo modificado con éxito.")
-                return redirect('modificarGrupo')
-            except Exception as e:
-                messages.error(request, f"Error al modificar el grupo: {str(e)}")
+                cambios = AdministradorGrupos.actualizarGrupo(grupo_id=grupoId, nombre=nombre, alumnos=alumnos)
+                if cambios:
+                    messages.success(request, "Grupo actualizado con éxito.")
+                else:
+                    messages.info(request, "No se realizaron cambios.")
+                return redirect('listaGrupos')  # Cambiar a la vista o URL deseada
+            except ValueError as e:
+                actualizarGrupoForm.add_error(None, str(e))
     else:
-        form = ModificarGrupoForm()
+        actualizarGrupoForm = ActualizarGrupoForm(instance=grupo)
 
-    return render(request, 'sistema/Vista_ModificarGrupo.html', {'form': form})
+    return render(request, 'sistema/Vista_ModificarGrupo.html', {'form': actualizarGrupoForm, 'grupo': grupo})
 
     
 def listar_grupos(request):
@@ -95,7 +85,7 @@ def crearUsuario(request):
 
             # Llamar al método para crear el usuario
             try:
-                Administrador.crearUsuarioEscolar(
+                AdministradorUsuarios.crearUsuarioEscolar(
                     nombre=nombre,
                     apellido=apellido,
                     username=username,
@@ -121,24 +111,33 @@ def crearUsuario(request):
 
     return render(request, "sistema/Vista_CrearUsuario.html", {'form': form})
 
-def eliminarUsuario(request):
-    if request.method == 'POST':
-        form = EliminarUsuarioForm(request.POST)
-        if form.is_valid():
-            usuarios = form.cleaned_data['usuarios']  # Lista de objetos UsuarioEscolar
-            try:
-                # Pasar solo los IDs de los usuarios al método
-                Administrador.eliminarUsuarioEscolar([usuario.id for usuario in usuarios])
-                messages.success(request, "Usuarios eliminados con éxito.")
-            except Exception as e:
-                messages.error(request, f"Error al eliminar: {str(e)}")
-        else:
-            messages.error(request, "Formulario inválido. Intenta de nuevo.")
-        return redirect('eliminarUsuario')
-    else:
-        form = EliminarUsuarioForm()
+def eliminarUsuario(request, usuarioId):
     
-    return render(request, "sistema/Vista_EliminarUsuario.html", {'form': form})
+    alumnos = Alumno.objects.all()
+    profesores = Profesor.objects.all()
+    tutores = Tutor.objects.all()
+    
+    if AdministradorUsuarios.eliminarUsuarioEscolar(usuarioId):
+        return redirect("listaUsuarios")
+    messages.error(request, "Formulario inválido. Intenta de nuevo.")
+    return render(request, "sistema/Vista_ListaUsuarios.html", {'alumnos': alumnos, 'profesores': profesores, 'tutores': tutores})
+    #if request.method == 'POST':
+    #    form = EliminarUsuarioForm(request.POST)
+     #   if form.is_valid():
+      #      usuarios = form.cleaned_data['usuarios']  # Lista de objetos UsuarioEscolar
+       #     try:
+        #        # Pasar solo los IDs de los usuarios al método
+         #       Administrador.eliminarUsuarioEscolar([usuario.id for usuario in usuarios])
+          #      messages.success(request, "Usuarios eliminados con éxito.")
+           # except Exception as e:
+            #    messages.error(request, f"Error al eliminar: {str(e)}")
+        #else:
+         #   messages.error(request, "Formulario inválido. Intenta de nuevo.")
+       # return redirect('eliminarUsuario')
+    #else:
+     #   form = EliminarUsuarioForm()
+    
+    #return render(request, "sistema/Vista_EliminarUsuario.html", {'form': form})
 
 
 def modificarUsuario(request):

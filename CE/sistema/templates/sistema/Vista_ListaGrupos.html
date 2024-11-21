@@ -97,9 +97,28 @@
             color: blue;
         }
     </style>
+    <script>
+        function confirmarEliminacion(event) {
+            if (!confirm("¿Estás seguro de que deseas eliminar este grupo?")) {
+                event.preventDefault(); // Prevenir la acción de eliminar si no se confirma
+            }
+        }
+    </script>
 </head>
 <body>
     <h1>Lista de Grupos</h1>
+
+    <div>
+        {% if messages %}
+            <ul class="mensajes">
+                {% for message in messages %}
+                    <li class="{% if message.tags %}{{ message.tags }}{% endif %}">
+                        {{ message }}
+                    </li>
+                {% endfor %}
+            </ul>
+        {% endif %}
+    </div>
 
     <div class="boton-agregar-grupo">
         <a href="{% url 'crearGrupo' %}">Agregar Grupo</a>
@@ -113,12 +132,12 @@
                     {{ grupo.nombre }}
                 </a>
 
-                <div class="acciones-grupo">
-                    <form action="#" method="POST" style="margin: 0;" onsubmit="return confirm('¿Estás seguro de que deseas eliminar este grupo?');">
+                <div class="acciones-actividad">
+                    <form action="{% url 'eliminarGrupo' grupo.id %}" method="POST" style="margin: 0;" onsubmit="confirmarEliminacion(event)">
                         {% csrf_token %}
                         <button type="submit" class="boton-eliminar">Eliminar</button>
                     </form>
-                    <a href="#">
+                    <a href="{% url 'modificarGrupo' grupo.id%}" class="boton-editar">
                         <button class="boton-eliminar" style="background-color: #3498db;">Editar</button>
                     </a>
                 </div>
