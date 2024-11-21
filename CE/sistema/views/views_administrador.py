@@ -1,0 +1,150 @@
+from django.contrib import messages
+from django.shortcuts import get_object_or_404, render
+from django.shortcuts import redirect
+
+from sistema.forms_usuarios import CrearUsuarioForm, EliminarUsuarioForm
+from sistema.models.models import AdministradorGrupos, Alumno, Grupo, AdministradorUsuarios, Profesor, Tutor
+from django.shortcuts import redirect
+from sistema.forms_grupos import ActualizarGrupoForm, CrearGrupoForm
+
+def administrar(request):
+    return render(request, "sistema/Vista_Administrador.html")
+
+def administrarGrupo(request):
+    return render(request, "sistema/Vista_AdministrarGrupos.html")
+    
+def crearGrupo(request):
+    
+    if request.method == 'POST':
+        form = CrearGrupoForm(request.POST)
+        if form.is_valid():
+            nombre = form.cleaned_data['nombre']
+            alumnos = form.cleaned_data['alumnos']
+            
+        if AdministradorGrupos.crearGrupo(nombre, list(alumnos)):
+            messages.success(request, "Grupo creado con éxito.")
+            return redirect('crearGrupo')
+        else:
+            messages.error(request, "Error al crear el grupo.")
+    else:
+        form = CrearGrupoForm()
+
+    return render(request, 'sistema/Vista_CrearGrupo.html', {
+        'form': form
+    })
+    
+def eliminarGrupo(request, grupoId):
+    
+    if AdministradorGrupos.eliminarGrupo(grupoId):
+        return redirect("listaGrupos")
+    
+    grupos = Grupo.objects.prefetch_related('alumnos').all()  # Prefetch para cargar alumnos de forma eficiente
+    return render(request, "sistema/Vista_ListaGrupos.html", {'grupos': grupos})
+    
+def modificarGrupo(request, grupoId):
+    grupo = get_object_or_404(Grupo, id=grupoId)
+
+    if request.method == "POST":
+        actualizarGrupoForm = ActualizarGrupoForm(request.POST, instance=grupo)
+
+        if actualizarGrupoForm.is_valid():
+            nombre = actualizarGrupoForm.cleaned_data['nombre']
+            alumnos = actualizarGrupoForm.cleaned_data['alumnos']
+
+            try:
+                cambios = AdministradorGrupos.actualizarGrupo(grupo_id=grupoId, nombre=nombre, alumnos=alumnos)
+                if cambios:
+                    messages.success(request, "Grupo actualizado con éxito.")
+                else:
+                    messages.info(request, "No se realizaron cambios.")
+                return redirect('listaGrupos')  # Cambiar a la vista o URL deseada
+            except ValueError as e:
+                actualizarGrupoForm.add_error(None, str(e))
+    else:
+        actualizarGrupoForm = ActualizarGrupoForm(instance=grupo)
+
+    return render(request, 'sistema/Vista_ModificarGrupo.html', {'form': actualizarGrupoForm, 'grupo': grupo})
+
+    
+def listar_grupos(request):
+    grupos = Grupo.objects.prefetch_related('alumnos').all()  # Prefetch para cargar alumnos de forma eficiente
+    return render(request, "sistema/Vista_ListaGrupos.html", {'grupos': grupos})
+
+def crearUsuario(request):
+    if request.method == 'POST':
+        form = CrearUsuarioForm(request.POST)
+        if form.is_valid():
+            # Obtener datos del formulario
+            nombre = form.cleaned_data['nombre']
+            apellido = form.cleaned_data['apellido']
+            username = form.cleaned_data['username']
+            contrasena = form.cleaned_data['contrasena']
+            rol = form.cleaned_data['rol']
+            grupo = form.cleaned_data.get('grupo')
+            tutor = form.cleaned_data.get('tutor')
+
+            # Llamar al método para crear el usuario
+            try:
+                AdministradorUsuarios.crearUsuarioEscolar(
+                    nombre=nombre,
+                    apellido=apellido,
+                    username=username,
+                    contrasena=contrasena,
+                    rol=rol,
+                    grupo=grupo.id if grupo else None,
+                    tutor=tutor.id if tutor else None
+                )
+                messages.success(request, "Usuario creado con éxito.")
+                return redirect('crearUsuario')  # Redirige al mismo formulario para más usuarios
+            except Grupo.DoesNotExist:
+                messages.error(request, "El grupo seleccionado no existe.")
+            except Tutor.DoesNotExist:
+                messages.error(request, "El tutor seleccionado no existe.")
+            except ValueError as ve:
+                messages.error(request, f"Error: {ve}")
+            except Exception as e:
+                messages.error(request, f"Error inesperado: {e}")
+        else:
+            messages.error(request, "Por favor corrige los errores en el formulario.")
+    else:
+        form = CrearUsuarioForm()
+
+    return render(request, "sistema/Vista_CrearUsuario.html", {'form': form})
+
+def eliminarUsuario(request, usuarioId):
+    
+    alumnos = Alumno.objects.all()
+    profesores = Profesor.objects.all()
+    tutores = Tutor.objects.all()
+    
+    if AdministradorUsuarios.eliminarUsuarioEscolar(usuarioId):
+        return redirect("listaUsuarios")
+    messages.error(request, "Formulario inválido. Intenta de nuevo.")
+    return render(request, "sistema/Vista_ListaUsuarios.html", {'alumnos': alumnos, 'profesores': profesores, 'tutores': tutores})
+    #if request.method == 'POST':
+    #    form = EliminarUsuarioForm(request.POST)
+     #   if form.is_valid():
+      #      usuarios = form.cleaned_data['usuarios']  # Lista de objetos UsuarioEscolar
+       #     try:
+        #        # Pasar solo los IDs de los usuarios al método
+         #       Administrador.eliminarUsuarioEscolar([usuario.id for usuario in usuarios])
+          #      messages.success(request, "Usuarios eliminados con éxito.")
+           # except Exception as e:
+            #    messages.error(request, f"Error al eliminar: {str(e)}")
+        #else:
+         #   messages.error(request, "Formulario inválido. Intenta de nuevo.")
+       # return redirect('eliminarUsuario')
+    #else:
+     #   form = EliminarUsuarioForm()
+    
+    #return render(request, "sistema/Vista_EliminarUsuario.html", {'form': form})
+
+
+def modificarUsuario(request):
+    return render(request, "sistema/Vista_ModificarUsuario.html")
+
+def listarUsuarios(request):
+    alumnos = Alumno.objects.all()
+    profesores = Profesor.objects.all()
+    tutores = Tutor.objects.all()
+    return render(request, "sistema/Vista_ListaUsuarios.html", {'alumnos': alumnos, 'profesores': profesores, 'tutores': tutores})

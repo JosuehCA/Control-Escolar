@@ -1,6 +1,21 @@
 from django.db import models as m
 from django.conf import settings
 from sistema.models.models import UsuarioEscolar, Grupo
+from abc import abstractmethod
+
+class ManejadorVistaMensajeria:
+    """TDA Manejador de Vista de Mensajería. Controla la vista de mensajería del sistema."""
+
+    def __init__(self) -> None:
+        """Inicializa un manejador de vista de mensajería."""
+        
+    def obtenerTipoDeConversacion(self, servicioDeMensajeria: str) -> str:
+        """Devuelve el tipo de conversación a mostrar."""
+        return self.__separarTipoDeUrl(servicioDeMensajeria)[0]
+    
+    def __separarTipoDeUrl(self, cadenaUrl: str) -> tuple:
+        """Separa la variable de la URL por "_" ."""
+        return cadenaUrl.split("_")
 
 class Mensaje(m.Model):
     """TDA Mensaje. Define la estructura de un mensaje dentro del mensajero virtual."""
@@ -12,6 +27,18 @@ class Mensaje(m.Model):
     def __str__(self) -> str:
         """Representación en cadena de un mensaje."""
         return f"Mensaje de {self.emisorUsuario} enviado en {self.fechaEnviado}"
+    
+    def establecerContenido(self, contenido: str) -> None:
+        """Establece el contenido de un mensaje."""
+        self.contenidoMensaje = contenido
+
+    def almacenarEnBaseDeDatos(self) -> None:
+        """Almacena el mensaje en la base de datos."""
+        self.save()
+    @abstractmethod
+    def recibirDatosDeMensajeEnJSON(self, datosDeMensaje: dict) -> None:
+        """Recibe los datos de un mensaje en formato JSON."""
+        pass
 
     class Meta:
         abstract = True
@@ -28,7 +55,7 @@ class MensajeDirecto(Mensaje):
             return False
         self.emisorUsuario = emisor
         self.receptorUsuario = receptor
-        self.save()
+        self.almacenarEnBaseDeDatos()
         return True
     
     def es_valido_para_envio(self, emisor: UsuarioEscolar, receptor: UsuarioEscolar) -> bool:
@@ -55,8 +82,12 @@ class MensajeDirecto(Mensaje):
 class MensajeGrupo(Mensaje):
     """TDA Mensaje de Grupo. Particulariza un mensaje de manera grupal."""
 
-    gruposRelacionados = m.ManyToManyField(Grupo, related_name="mensajes")
+    gruposRelacionados = m.ForeignKey(Grupo, on_delete=m.DO_NOTHING, related_name="mensajes")
 
+    @staticmethod
+    def obtenerMensajesFiltrados(grupo: Grupo) -> m.QuerySet:
+        """Obtiene los mensajes filtrados que fueron enviados a un grupo específico."""
+        return MensajeGrupo.objects.filter(grupoRelacionado=grupo).order_by('-fechaEnviado')
 
     class Meta:
         verbose_name = "Mensaje Grupo"
@@ -64,25 +95,22 @@ class MensajeGrupo(Mensaje):
 
 
 
-class MensajePlantel(Mensaje):
+class MensajeGeneral(Mensaje):
     """TDA Mensaje Plantel. Establece un mensaje compartido de manera global a todo el plantel."""
 
-    pass
+    @staticmethod
+    def obtenerMensajesFiltrados() -> m.QuerySet:
+        """Obtiene los mensajes filtrados que fueron enviados a todo el plantel."""
+        return MensajeGeneral.objects.all().order_by('-fechaEnviado')
 
+    def recibirDatosDeMensajeEnDiccionario(self, datosDeMensaje: dict) -> None:
+        """Recibe los datos de un mensaje general en formato JSON."""
+        self.emisorUsuario = datosDeMensaje['emisorUsuario']
+        self.contenidoMensaje = datosDeMensaje['contenidoMensaje']
 
     class Meta:
-        verbose_name = "Mensaje Plantel"
-        verbose_name_plural = "Mensajes: Plantel"
-
-
-
-class Mensajero(m.Model):
-    """TDA Mensajero. Modela el mensajero virtual presente en el sistema y propio de cada usuario 
-    registrado."""
-
-    pass
-
-
+        verbose_name = "Mensaje General"
+        verbose_name_plural = "Mensajes: Generales"
 
 class Conversacion(m.Model):
     """TDA Conversacion. Representa una conversacion individual entre dos partes registradas en el sistema."""
