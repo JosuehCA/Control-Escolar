@@ -67,7 +67,7 @@ class ManejadorReportes:
     """Clase para manejar la generación y almacenamiento de reportes en el sistema."""
 
     @staticmethod
-    def obtenerFaltasAlumnado() -> tuple[int]:
+    def obtenerDispersionFaltasAlumnado() -> tuple[int]:
         """Devuelve estadísticas de faltas del alumnado."""
         faltas_1_o_menos = 0
         faltas_2 = 0
@@ -92,8 +92,10 @@ class ManejadorReportes:
     @staticmethod
     def generarDiagramaPastelFaltas(valores: tuple[int]) -> str:
         """Genera un diagrama de pastel de faltas y lo devuelve como imagen base64."""
-        figura, eje = plt.subplots()
+        
         etiquetas = ["1 falta o menos", "2 faltas", "3 faltas", "4 o más faltas"]
+
+        figura, eje = plt.subplots()
         eje.pie(valores, labels=etiquetas, autopct='%1.1f%%', startangle=90, 
                 colors=["#FF0000", "#FF7F00", "#FFFF00", "#00FF00"])
         plt.axis('equal')  # Mantener relación de aspecto del gráfico

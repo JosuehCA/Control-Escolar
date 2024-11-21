@@ -16,13 +16,16 @@ from sistema.models.models_reportes import *
 
 
 def obtenerDiagramaPastel(request: HttpRequest, tipo: str) -> HttpResponse:
+
     if tipo.lower() == "faltas":
-        faltas = ManejadorReportes.obtenerFaltasAlumnado()
+        faltas = ManejadorReportes.obtenerDispersionFaltasAlumnado()
         diagramaBase64 = ManejadorReportes.generarDiagramaPastelFaltas(faltas)
+
     elif tipo.lower() == "calificaciones":
-        valores = [10, 20, 30, 40]  # Ejemplo de calificaciones
+        valores = [10, 20, 30, 40]
         etiquetas = ["Excelente", "Bueno", "Regular", "Deficiente"]
         diagramaBase64 = ManejadorReportes.generarDiagramaPastelCalificaciones(valores, etiquetas)
+
 
     contenidoHTML = render_to_string("sistema/Vista_DiagramaPastel.html", {
         "imagenDiagramaPastelPNG": f"data:image/png;base64, {diagramaBase64}",
@@ -113,7 +116,7 @@ def obtenerHistogramaAsistencias(request: HttpRequest) -> HttpResponse:
 
 def actualizarAsistencias(request: HttpRequest) -> HttpResponse:
     if request.method == "POST":
-        form = (request.POST)
+        form = AsistenciaForm(request.POST)
         if form.is_valid():
             alumno: Alumno = form.cleaned_data['alumno']
             asistencias = form.cleaned_data['asistencias']
@@ -123,7 +126,7 @@ def actualizarAsistencias(request: HttpRequest) -> HttpResponse:
             alumno.setFaltas(faltas)
             alumno.save()
 
-            return redirect('generar_reporte')  # Redirigir a la página de reportes
+            return redirect('reportes_disponibles')  # Redirigir a la página de reportes
 
     else:
         form = AsistenciaForm()

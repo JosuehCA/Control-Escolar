@@ -187,6 +187,11 @@ class Alumno(UsuarioEscolar):
     def getConsideracionesMenu(self) -> m.JSONField:
         return self.consideracionesMenu
     
+    def setAsistencias(self, asistencias: int) -> None:
+        self.asistencias = asistencias
+    
+    def setFaltas(self, faltas: int) -> None:
+        self.faltas = faltas
 
     class Meta:
         verbose_name = "Alumno"
