@@ -148,12 +148,9 @@ FACTORIES = {
     'Alumno': CreadorDeAlumnos(),
     'Nutricionista': CreadorDeNutricionistas(),
 }
+
+class AdministradorGrupos(UsuarioEscolar):
     
-
-class Administrador(UsuarioEscolar):
-    """TDA Administrador. Rol especial dentro del plantel cuyos permisos permiten controlar todo cuanto
-    sea necesario. Tiene acceso a todos los apartados."""    
-
     @classmethod
     def crearGrupo(cls, nombre: str, alumnos: List['Alumno']) -> bool:
         
@@ -204,7 +201,16 @@ class Administrador(UsuarioEscolar):
             for grupo in grupos:
                 grupo.alumnos.remove(alumno)
                 grupo.save()
-            
+    
+    class Meta:
+        verbose_name = "AdministradorGrupos"
+        verbose_name_plural = "AdministradoresGrupos"
+    
+
+class AdministradorUsuarios(UsuarioEscolar):
+    """TDA Administrador. Rol especial dentro del plantel cuyos permisos permiten controlar todo cuanto
+    sea necesario. Tiene acceso a todos los apartados."""    
+
     @classmethod
     def crearUsuarioEscolar(cls, nombre, apellido, username, contrasena, rol, **kwargs):
         if UsuarioEscolar.objects.filter(username=username).exists():
@@ -277,8 +283,8 @@ class Administrador(UsuarioEscolar):
             
             
     class Meta:
-        verbose_name = "Administrador"
-        verbose_name_plural = "Administradores"
+        verbose_name = "AdministradorUsuarios"
+        verbose_name_plural = "AdministradoresUsuarios"
 
 
 class Profesor(UsuarioEscolar):

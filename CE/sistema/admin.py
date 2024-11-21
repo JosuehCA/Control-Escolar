@@ -16,7 +16,7 @@ admin.site.register(ReporteGlobal)
 
 
 admin.site.register(UsuarioEscolar)
-admin.site.register(Administrador)
+admin.site.register(AdministradorUsuarios)
 admin.site.register(Profesor)
 admin.site.register(Tutor)
 admin.site.register(Alumno)

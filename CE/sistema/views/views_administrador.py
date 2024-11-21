@@ -3,7 +3,7 @@ from django.shortcuts import render
 from django.shortcuts import redirect
 
 from sistema.forms_usuarios import CrearUsuarioForm, EliminarUsuarioForm
-from sistema.models.models import Alumno, Grupo, Administrador, Profesor, Tutor
+from sistema.models.models import AdministradorGrupos, Alumno, Grupo, AdministradorUsuarios, Profesor, Tutor
 from django.shortcuts import redirect
 from sistema.forms_grupos import CrearGrupoForm, EliminarGrupoForm, ModificarGrupoForm
 
@@ -21,7 +21,7 @@ def crearGrupo(request):
             nombre = form.cleaned_data['nombre']
             alumnos = form.cleaned_data['alumnos']
             
-        if Administrador.crearGrupo(nombre, list(alumnos)):
+        if AdministradorGrupos.crearGrupo(nombre, list(alumnos)):
             messages.success(request, "Grupo creado con éxito.")
             return redirect('crearGrupo')
         else:
@@ -35,7 +35,7 @@ def crearGrupo(request):
     
 def eliminarGrupo(request, grupoId):
     
-    if Administrador.eliminarGrupo(grupoId):
+    if AdministradorGrupos.eliminarGrupo(grupoId):
         return redirect("listaGrupos")
     
     grupos = Grupo.objects.prefetch_related('alumnos').all()  # Prefetch para cargar alumnos de forma eficiente
@@ -54,7 +54,7 @@ def modificarGrupo(request):
                     grupo.nombre = nuevo_nombre
                 
                 if nuevos_alumnos:
-                    Administrador.editarGrupo(grupo.id, grupo.nombre, list(nuevos_alumnos))
+                   AdministradorGrupos.editarGrupo(grupo.id, grupo.nombre, list(nuevos_alumnos))
 
                 messages.success(request, "Grupo modificado con éxito.")
                 return redirect('modificarGrupo')
@@ -85,7 +85,7 @@ def crearUsuario(request):
 
             # Llamar al método para crear el usuario
             try:
-                Administrador.crearUsuarioEscolar(
+                AdministradorUsuarios.crearUsuarioEscolar(
                     nombre=nombre,
                     apellido=apellido,
                     username=username,
@@ -117,7 +117,7 @@ def eliminarUsuario(request, usuarioId):
     profesores = Profesor.objects.all()
     tutores = Tutor.objects.all()
     
-    if Administrador.eliminarUsuarioEscolar(usuarioId):
+    if AdministradorUsuarios.eliminarUsuarioEscolar(usuarioId):
         return redirect("listaUsuarios")
     messages.error(request, "Formulario inválido. Intenta de nuevo.")
     return render(request, "sistema/Vista_ListaUsuarios.html", {'alumnos': alumnos, 'profesores': profesores, 'tutores': tutores})
