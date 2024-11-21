@@ -5,7 +5,7 @@ from sistema.models.models_mensajeria import MensajeDirecto, MensajeGrupo, Mensa
 from datetime import datetime
 from abc import ABC, abstractmethod
 
-class ConsumidorBase(AsyncWebsocketConsumer, ABC):
+class ConsumidorBase(ABC):
     @abstractmethod
     async def conectarUsuarioACanal(self):
         pass
@@ -18,16 +18,19 @@ class ConsumidorBase(AsyncWebsocketConsumer, ABC):
     async def recibirDeCanal(self, text_data):
         pass
 
-    async def connect(self):
-        self.conectarUsuarioACanal()
+    async def connect(self) -> None:
+        """Conecta al usuario al grupo WebSocket general."""
+        await self.conectarUsuarioACanal()
 
     async def disconnect(self, close_code):
-        self.desconectarUsuarioDeCanal()
+        """Desconecta al usuario del grupo WebSocket."""
+        await self.desconectarUsuarioDeCanal()
 
     async def receive(self, text_data):
+        """Recibe un mensaje en formato JSON a través de WebSocket."""
         self.recibirDeCanal(text_data)
 
-class MensajePrivadoConsumidor(ConsumidorBase):
+class MensajePrivadoConsumidor(ConsumidorBase, AsyncWebsocketConsumer):
 
     async def connect(self) -> None:
         """Conecta al usuario al grupo WebSocket."""
@@ -81,7 +84,7 @@ class MensajePrivadoConsumidor(ConsumidorBase):
 
         print(f'Mensaje enviado: {mensajeJSON}')
 
-class MensajeGrupalConsumidor(ConsumidorBase):
+class MensajeGrupalConsumidor(ConsumidorBase, AsyncWebsocketConsumer):
     async def connect(self) -> None:
         pass
 
@@ -90,13 +93,13 @@ class MensajeGrupalConsumidor(ConsumidorBase):
     async def receive(self, text_data: str) -> None:
         pass
 
-class MensajeGeneralConsumidor(ConsumidorBase):
+class MensajeGeneralConsumidor(ConsumidorBase, AsyncWebsocketConsumer):
 
     mensajerGeneralInstancia = MensajeGeneral()
 
     async def conectarUsuarioACanal(self) -> None:
         """Conecta al usuario al grupo WebSocket general."""
-        print('Conexión establecida: conversacion_general')
+        print("Conectando usuario al canal general")
         self.canalWebSocket = f'conversacion_general'
 
         await self.channel_layer.group_add(
@@ -111,6 +114,7 @@ class MensajeGeneralConsumidor(ConsumidorBase):
             self.canalWebSocket,
             self.channel_name
         )
+        print("Desconectando usuario del canal general")
 
     async def recibirDeCanal(self, datosJSON: str) -> None:
         """Recibe un mensaje en formato JSON a través de WebSocket."""
