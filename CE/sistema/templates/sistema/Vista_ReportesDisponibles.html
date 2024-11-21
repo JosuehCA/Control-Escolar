@@ -98,10 +98,10 @@
         document.getElementById('reporteForm').addEventListener('submit', function(event) {
             event.preventDefault();
 
-            const alumnoId = document.getElementById('alumno').value;
-            const tipoReporte = document.getElementById('tipo_reporte').value;
+            const alumnoId = document.getElementById('alumno');
+            const tipoReporte = document.getElementById('tipo_reporte').selectedOptions[0];
 
-            if (!alumnoId || !tipoReporte) {
+            if ((!alumnoId.value || !tipoReporte.value) && tipoReporte.classList[0] != "general") {
                 alert("Por favor, selecciona un alumno y un tipo de reporte.");
                 return;
             }
@@ -112,10 +112,10 @@
             // Redirigir a la URL de generación de reporte
             let url = "";
             if (tipoReporte === "asistencia") {
-                url = `{% url 'generar_reporte' %}?alumno_id=${alumnoId}`;
-            } else if (tipoReporte === "calificaciones") {
+                url = `{% url 'generar_reporte' %}?alumno_id=${alumnoId.value}`;
+            } else if (tipoReporte.value === "calificaciones") {
                 url = "http://127.0.0.1:8000/reportes/generarDiagramaPastel/calificaciones";
-            } else if (tipoReporte === "faltas_general") {
+            } else if (tipoReporte.value === "faltas_general") {
                 url = "http://127.0.0.1:8000/reportes/generarDiagramaPastel/faltas";
             }
 

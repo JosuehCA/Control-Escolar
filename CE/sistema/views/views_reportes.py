@@ -3,10 +3,8 @@ from weasyprint import HTML
 import matplotlib
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
-import numpy as np
 import base64
 from django.template.loader import render_to_string
-from django.shortcuts import get_object_or_404
 from io import BytesIO
 from django.utils.timezone import localtime, now
 from django.shortcuts import render, redirect
@@ -16,47 +14,35 @@ from sistema.models.forms_lista import *
 from sistema.models.models import Alumno
 from sistema.models.models_reportes import *
 
-
-
-def crearDiagramaPastelFaltas() -> base64:
+def generarDiagramaPastel(valores: tuple[int]) -> None:
     # Contadores de las categorías de faltas
-    faltas_1 = 0
-    faltas_2 = 0
-    faltas_3 = 0
-    faltas_4_o_mas = 0
-
-    # Iterar por todos los alumnos y contar las faltas
-    alumnos = Alumno.objects.all()
-    for alumno in alumnos:
-        faltas = alumno.getFaltas()
-
-        if faltas == 1 or faltas == 0:
-            faltas_1 += 1
-        elif faltas == 2:
-            faltas_2 += 1
-        elif faltas == 3:
-            faltas_3 += 1
-        elif faltas >= 4:
-            faltas_4_o_mas += 1
+    faltas_1_o_menos = valores[0]
+    faltas_2 = valores[1]
+    faltas_3 = valores[2]
+    faltas_4_o_mas = valores[3]
 
     # Crear gráfico de pastel Matplotlib
     figura, eje = plt.subplots()
     etiquetas = ["1 falta o menos", "2 faltas", "3 faltas", "4 o más faltas"]
-    valores = [faltas_1, faltas_2, faltas_3, faltas_4_o_mas]
+    valores = [faltas_1_o_menos, faltas_2, faltas_3, faltas_4_o_mas]
 
     eje.pie(valores, labels=etiquetas, autopct='%1.1f%%', startangle=90, colors=["#FF0000", "#FF7F00", "#FFFF00", "#00FF00"])
     plt.axis('equal')  # Mantener relación de aspecto del gráfico
+
+
+def crearImagenDiagramaPastelFaltas(faltas: tuple[int]) -> base64:
+    generarDiagramaPastel(faltas)   # Generar gráfico de acuerdo a los datos
 
     # Guardar gráfico a objeto BytesIO y codificarlo como base 64
     imagenBinaria = BytesIO()
     plt.savefig(imagenBinaria, format='png')
     imagenBinaria.seek(0)
     plt.close()
-    imagen = base64.b64encode(imagenBinaria.getvalue()).decode('utf-8')
+    imagen: str = base64.b64encode(imagenBinaria.getvalue()).decode('utf-8')
 
     return imagen
 
-def crearDiagramaPastelCalificaciones() -> base64:
+def crearImagenDiagramaPastelCalificaciones() -> base64:
     # Crear gráfico de pastel Matplotlib
     figura, eje = plt.subplots()
     eje.pie([10, 20, 30, 40], labels=["Category A", "Category B", "Category C", "Category D"],
@@ -76,10 +62,15 @@ def obtenerDiagramaPastel(request: HttpRequest, tipo: str) -> HttpResponse:
 
     diagramaBase64: base64
 
+
     if tipo.lower() == "faltas":
-        diagramaBase64 = crearDiagramaPastelFaltas()
+        faltasAlumnado: tuple[int] = ManejadorReportes.obtenerFaltasAlumnado()
+
+        diagramaBase64 = crearImagenDiagramaPastelFaltas(faltasAlumnado)
     elif tipo.lower() == "calificaciones":
-        diagramaBase64 = crearDiagramaPastelCalificaciones()
+        
+
+        diagramaBase64 = crearImagenDiagramaPastelCalificaciones()
 
     # Renderizar contenido HTML con texto base 64 del gráfico
     contenidoHTML = render_to_string("sistema/Vista_DiagramaPastel.html", {
@@ -94,7 +85,7 @@ def obtenerDiagramaPastel(request: HttpRequest, tipo: str) -> HttpResponse:
 
     return HttpResponse(archivoPDFBinario, content_type='application/pdf')
 
-def crearReporteAsistencia(alumno: Alumno) -> base64:
+def crearImagenReporteAsistenciaIndividual(alumno: Alumno) -> base64:
     # Datos de asistencia
     asistencias = alumno.getAsistencias()
     faltas = alumno.getFaltas()
@@ -140,7 +131,7 @@ def obtenerHistogramaAsistencias(request: HttpRequest) -> HttpResponse:
             "mensaje_error": f"No se encontró un alumno con el ID {alumno_id}. Por favor, seleccione un alumno válido."
         })
 
-    diagramaBase64 = crearReporteAsistencia(alumno)
+    diagramaBase64 = crearImagenReporteAsistenciaIndividual(alumno)
 
     cantidadAsistencias: int = alumno.getAsistencias()
     cantidadFaltas: int = alumno.getFaltas()

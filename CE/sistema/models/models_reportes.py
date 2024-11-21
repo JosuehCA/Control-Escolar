@@ -56,3 +56,39 @@ class ReporteGlobal(Reporte):
     class Meta:
         verbose_name = "Reporte Global"
         verbose_name_plural = "Reportes: Globales"
+
+
+class ManejadorReportes():
+    """TDA Manejador de Reportes. Trabaja sobre los datos de los alumnos para proporcionar a los
+    controladores correspondientes."""
+    
+    def obtenerFaltasAlumnado() -> tuple[int]:
+        """Itera sobre todos los alumnos registrados y devuelve cuántos tienen 1 falta o menos, 2,
+        3 o 4 o más"""
+
+        faltas_1_o_menos = 0
+        faltas_2 = 0
+        faltas_3 = 0
+        faltas_4_o_mas = 0
+
+        alumnos = Alumno.objects.all()
+        for alumno in alumnos:
+            faltas = alumno.getFaltas()
+
+            if faltas == 1 or faltas == 0:
+                faltas_1_o_menos += 1
+            elif faltas == 2:
+                faltas_2 += 1
+            elif faltas == 3:
+                faltas_3 += 1
+            elif faltas >= 4:
+                faltas_4_o_mas += 1
+
+        return (faltas_1_o_menos, faltas_2, faltas_3, faltas_4_o_mas)
+    
+
+    
+
+
+
+    
