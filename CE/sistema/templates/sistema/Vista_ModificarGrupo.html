@@ -117,15 +117,63 @@
 </head>
 <body>
     <div class="contenedor">
-        <h1>Modificar Grupo</h1>
+        <h1>Actualizar Grupo</h1>
+
+        <!-- Mostrar mensajes de éxito o error -->
+        {% if messages %}
+            <ul class="mensajes">
+                {% for message in messages %}
+                    <li class="mensaje {% if message.level == DEFAULT_MESSAGE_LEVELS.SUCCESS %}exito{% elif message.level == DEFAULT_MESSAGE_LEVELS.ERROR %}error{% endif %}">
+                        {{ message }}
+                    </li>
+                {% endfor %}
+            </ul>
+        {% endif %}
+
+        <div class="mensajes">
+            <!-- Errores globales -->
+            {% if form.non_field_errors %}
+                {% for error in form.non_field_errors %}
+                    <li class="error">{{ error }}</li>
+                {% endfor %}
+            {% endif %}
+
+            
+            <!-- Errores específicos de cada campo -->
+            {% for field in form %}
+                {% for error in field.errors %}
+                    <li class="error">{{ error }}</li>
+                {% endfor %}
+            {% endfor %}
+        </div>
+
+
         <form method="POST">
             {% csrf_token %}
-            {{ form.as_p }}
-            <button type="submit">Modificar Grupo</button>
-            <button class="enlace">
-                <a href="{% url 'listaGrupos' %}">Ver Lista de Grupos</a>
-            </button>
+            
+            <!-- Mostrar los campos sin los errores automáticos -->
+            {% for field in form %}
+                <div>
+                    {{ field.label_tag }}
+                    {{ field }}
+                </div>
+            {% endfor %}
+
+            <button type="submit">Actualizar</button>
+
+            <a href="{% url 'listaGrupos' %}" class="boton-regresar">Regresar a la lista
+            </a>
         </form>
     </div>
+
+    {% if redirect %}
+    <script>
+        // Mostrar el mensaje por 1 segundo antes de redirigir
+        setTimeout(function() {
+            window.location.href = "{% url 'lista_actividades' %}";
+        }, 1000); 
+    </script>
+    {% endif %}
+
 </body>
 </html>

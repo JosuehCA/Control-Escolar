@@ -184,15 +184,17 @@ class AdministradorGrupos(UsuarioEscolar):
             print(f"Error al eliminar grupo: {e}")
 
     @classmethod
-    def editarGrupo(cls, grupo_id: int, nombre: str, alumnos: List['Alumno']) -> None:
+    def actualizarGrupo(cls, grupo_id: int, nombre: str, alumnos: List['Alumno']) -> bool:
         try:
             cls.eliminarGruposAlumnosSeleccionados(alumnos)
             grupo = Grupo.objects.get(id=grupo_id)
             grupo.nombre = nombre
             grupo.alumnos.set(alumnos)
             grupo.save()
+            return True
         except Grupo.DoesNotExist:
             print("El grupo no existe.")
+            return False
 
     @classmethod
     def eliminarGruposAlumnosSeleccionados(cls, alumnos: List['Alumno']) -> None:
@@ -240,7 +242,7 @@ class AdministradorUsuarios(UsuarioEscolar):
             print(f"Error al eliminar usuarios: {e}")
             
     @classmethod
-    def editarUsuarioEscolar(cls, usuario_id: int, nombre, apellido, username, contrasena, rol, **kwargs) -> None:
+    def actualizarUsuarioEscolar(cls, usuario_id: int, nombre, apellido, username, contrasena, rol, **kwargs) -> None:
         try:
             if rol == 'Profesor':
                 grupo_id = kwargs.get('grupo')

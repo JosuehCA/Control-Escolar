@@ -29,26 +29,23 @@ class EliminarGrupoForm(forms.Form):
         label="Selecciona Grupos para eliminar"
     )
 
-class ModificarGrupoForm(forms.Form):
+class ActualizarGrupoForm(forms.ModelForm):
     
-    grupo = forms.ModelMultipleChoiceField(
-        queryset=Grupo.objects.all(),  
-        widget=forms.CheckboxSelectMultiple,  # Usa checkboxes para selección múltiple
-        required=True,  # Obliga a seleccionar al menos un grupo
-        label="Selecciona Grupos para modificar"
-    )
-     
-    nombre = forms.CharField(
-        max_length=2000,
-        required=False,  # El nombre será opcional
-        label="Nuevo nombre del grupo",
-        widget=forms.TextInput(attrs={'placeholder': 'Deja vacío para mantener el nombre actual'})
-    )
-
     alumnos = forms.ModelMultipleChoiceField(
-        queryset=Alumno.objects.all(),  # Lista de alumnos
-        widget=forms.CheckboxSelectMultiple,  # Selección múltiple con checkboxes
-        required=False,  # Dejar vacío para mantener los alumnos actuales
-        label="Selecciona alumnos"
+        queryset=Alumno.objects.all(),  # Obtiene todos los alumnos de la base de datos
+        widget=forms.CheckboxSelectMultiple,  # Usa checkboxes para la selección múltiple
+        required=True,  # Obliga a seleccionar al menos un alumno
+        label="Selecciona los alumnos para el grupo"
     )
+    
+    class Meta:
+        model = Grupo
+        fields = ['nombre']  # Campos editables
+        widgets = {
+            'nombre': forms.TextInput(attrs={'placeholder': 'Nombre del grupo'}),
+        }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['nombre'].required = False  # El campo 'nombre' no será obligatorio
     

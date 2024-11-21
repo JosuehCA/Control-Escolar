@@ -1,11 +1,11 @@
 from django.contrib import messages
-from django.shortcuts import render
+from django.shortcuts import get_object_or_404, render
 from django.shortcuts import redirect
 
 from sistema.forms_usuarios import CrearUsuarioForm, EliminarUsuarioForm
 from sistema.models.models import AdministradorGrupos, Alumno, Grupo, AdministradorUsuarios, Profesor, Tutor
 from django.shortcuts import redirect
-from sistema.forms_grupos import CrearGrupoForm, EliminarGrupoForm, ModificarGrupoForm
+from sistema.forms_grupos import ActualizarGrupoForm, CrearGrupoForm
 
 def administrar(request):
     return render(request, "sistema/Vista_Administrador.html")
@@ -41,29 +41,29 @@ def eliminarGrupo(request, grupoId):
     grupos = Grupo.objects.prefetch_related('alumnos').all()  # Prefetch para cargar alumnos de forma eficiente
     return render(request, "sistema/Vista_ListaGrupos.html", {'grupos': grupos})
     
-def modificarGrupo(request):
-    if request.method == 'POST':
-        form = ModificarGrupoForm(request.POST)
-        if form.is_valid():
-            grupo = form.cleaned_data['grupo']
-            nuevo_nombre = form.cleaned_data['nombre']
-            nuevos_alumnos = form.cleaned_data['alumnos']
+def modificarGrupo(request, grupoId):
+    grupo = get_object_or_404(Grupo, id=grupoId)
+
+    if request.method == "POST":
+        actualizarGrupoForm = ActualizarGrupoForm(request.POST, instance=grupo)
+
+        if actualizarGrupoForm.is_valid():
+            nombre = actualizarGrupoForm.cleaned_data['nombre']
+            alumnos = actualizarGrupoForm.cleaned_data['alumnos']
 
             try:
-                if nuevo_nombre:
-                    grupo.nombre = nuevo_nombre
-                
-                if nuevos_alumnos:
-                   AdministradorGrupos.editarGrupo(grupo.id, grupo.nombre, list(nuevos_alumnos))
-
-                messages.success(request, "Grupo modificado con éxito.")
-                return redirect('modificarGrupo')
-            except Exception as e:
-                messages.error(request, f"Error al modificar el grupo: {str(e)}")
+                cambios = AdministradorGrupos.actualizarGrupo(grupo_id=grupoId, nombre=nombre, alumnos=alumnos)
+                if cambios:
+                    messages.success(request, "Grupo actualizado con éxito.")
+                else:
+                    messages.info(request, "No se realizaron cambios.")
+                return redirect('listaGrupos')  # Cambiar a la vista o URL deseada
+            except ValueError as e:
+                actualizarGrupoForm.add_error(None, str(e))
     else:
-        form = ModificarGrupoForm()
+        actualizarGrupoForm = ActualizarGrupoForm(instance=grupo)
 
-    return render(request, 'sistema/Vista_ModificarGrupo.html', {'form': form})
+    return render(request, 'sistema/Vista_ModificarGrupo.html', {'form': actualizarGrupoForm, 'grupo': grupo})
 
     
 def listar_grupos(request):

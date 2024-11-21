@@ -108,6 +108,18 @@
 <body>
     <h1>Lista de Grupos</h1>
 
+    <div>
+        {% if messages %}
+            <ul class="mensajes">
+                {% for message in messages %}
+                    <li class="{% if message.tags %}{{ message.tags }}{% endif %}">
+                        {{ message }}
+                    </li>
+                {% endfor %}
+            </ul>
+        {% endif %}
+    </div>
+
     <div class="boton-agregar-grupo">
         <a href="{% url 'crearGrupo' %}">Agregar Grupo</a>
     </div>
@@ -125,6 +137,9 @@
                         {% csrf_token %}
                         <button type="submit" class="boton-eliminar">Eliminar</button>
                     </form>
+                    <a href="{% url 'modificarGrupo' grupo.id%}" class="boton-editar">
+                        <button class="boton-eliminar" style="background-color: #3498db;">Editar</button>
+                    </a>
                 </div>
             </li>
 
