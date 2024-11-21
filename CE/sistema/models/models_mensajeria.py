@@ -1,6 +1,7 @@
 from django.db import models as m
 from django.conf import settings
 from sistema.models.models import UsuarioEscolar, Grupo
+from abc import abstractmethod
 
 class ManejadorVistaMensajeria:
     """TDA Manejador de Vista de Mensajería. Controla la vista de mensajería del sistema."""
@@ -27,13 +28,17 @@ class Mensaje(m.Model):
         """Representación en cadena de un mensaje."""
         return f"Mensaje de {self.emisorUsuario} enviado en {self.fechaEnviado}"
     
-    def establecer_contenido(self, contenido: str) -> None:
+    def establecerContenido(self, contenido: str) -> None:
         """Establece el contenido de un mensaje."""
         self.contenidoMensaje = contenido
 
     def almacenarEnBaseDeDatos(self) -> None:
         """Almacena el mensaje en la base de datos."""
         self.save()
+    @abstractmethod
+    def recibirDatosDeMensajeEnJSON(self, datosDeMensaje: dict) -> None:
+        """Recibe los datos de un mensaje en formato JSON."""
+        pass
 
     class Meta:
         abstract = True
@@ -97,12 +102,11 @@ class MensajeGeneral(Mensaje):
     def obtenerMensajesFiltrados() -> m.QuerySet:
         """Obtiene los mensajes filtrados que fueron enviados a todo el plantel."""
         return MensajeGeneral.objects.all().order_by('-fechaEnviado')
-    
-    def diccionarioAMensaje(self, emisorUsuario: UsuarioEscolar, datosDeMensaje: dict) -> None:
-        """Convierte un diccionario a un mensaje JSON con claves emisorUsuario, contenidoMensaje, fechaEnviado."""
-        self.emisorUsuario = emisorUsuario
-        self.contenidoMensaje = datosDeMensaje['contenidoMensaje']
 
+    def recibirDatosDeMensajeEnDiccionario(self, datosDeMensaje: dict) -> None:
+        """Recibe los datos de un mensaje general en formato JSON."""
+        self.emisorUsuario = datosDeMensaje['emisorUsuario']
+        self.contenidoMensaje = datosDeMensaje['contenidoMensaje']
 
     class Meta:
         verbose_name = "Mensaje General"

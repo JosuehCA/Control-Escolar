@@ -122,25 +122,31 @@ class MensajeGeneralConsumidor(ConsumidorBase, AsyncWebsocketConsumer):
         """Recibe un mensaje en formato JSON a través de WebSocket."""
         datosDeMensaje: dict = json.loads(datosJSON)
         usuarioCanal = self.scope['user']
-        self.mensajerGeneralInstancia.diccionarioAMensaje(usuarioCanal, datosDeMensaje)
-        await sync_to_async(self.mensajerGeneralInstancia.almacenarEnBaseDeDatos)()
+        instanciaMensajeGeneral = MensajeGeneral()
+        datosDeMensajeGeneral ={
+            'emisorUsuario': usuarioCanal,
+            'contenidoMensaje': datosDeMensaje['contenidoMensaje'],
+        }
+        instanciaMensajeGeneral.recibirDatosDeMensajeEnDiccionario(datosDeMensajeGeneral)
+        await sync_to_async(instanciaMensajeGeneral.almacenarEnBaseDeDatos)()
 
         await self.channel_layer.group_send(
             self.canalWebSocket,
             {
                 'type': 'eventoMensajeGeneral',
-                'mensaje': datosDeMensaje
+                'mensaje': instanciaMensajeGeneral
             }
         )
         print(f'Mensaje recibido: {datosDeMensaje}')
 
     async def eventoMensajeGeneral(self, eventoDatos: dict) -> None:
         """Envía el mensaje recibido a través de WebSocket."""
-        datosDeMensaje: dict = eventoDatos['mensaje']
+        mensaje = eventoDatos['mensaje']  # Obtener la instancia de MensajeGeneral
+
         await self.send(text_data=json.dumps({
-        'emisor': self.scope['user'].username,
-        'contenido': datosDeMensaje['contenidoMensaje'],
-        'fecha': self.mensajerGeneralInstancia.fechaEnviado.strftime('%Y-%m-%d %H:%M:%S')
+            'emisor': mensaje.emisorUsuario.username,
+            'contenido': mensaje.contenidoMensaje,
+            'fecha': mensaje.fechaEnviado.strftime('%Y-%m-%d %H:%M:%S')
         }))
 
-        print(f'Mensaje enviado: {datosDeMensaje}')
+        print(f'Mensaje enviado: {mensaje.contenidoMensaje}')
