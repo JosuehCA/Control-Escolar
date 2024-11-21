@@ -97,6 +97,13 @@
             color: blue;
         }
     </style>
+    <script>
+        function confirmarEliminacion(event) {
+            if (!confirm("¿Estás seguro de que deseas eliminar este grupo?")) {
+                event.preventDefault(); // Prevenir la acción de eliminar si no se confirma
+            }
+        }
+    </script>
 </head>
 <body>
     <h1>Lista de Grupos</h1>
@@ -113,14 +120,11 @@
                     {{ grupo.nombre }}
                 </a>
 
-                <div class="acciones-grupo">
-                    <form action="#" method="POST" style="margin: 0;" onsubmit="return confirm('¿Estás seguro de que deseas eliminar este grupo?');">
+                <div class="acciones-actividad">
+                    <form action="{% url 'eliminarGrupo' grupo.id %}" method="POST" style="margin: 0;" onsubmit="confirmarEliminacion(event)">
                         {% csrf_token %}
                         <button type="submit" class="boton-eliminar">Eliminar</button>
                     </form>
-                    <a href="#">
-                        <button class="boton-eliminar" style="background-color: #3498db;">Editar</button>
-                    </a>
                 </div>
             </li>
 
