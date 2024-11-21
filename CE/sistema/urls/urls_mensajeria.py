@@ -1,7 +1,9 @@
 from django.urls import path
 
-from sistema.views.views_mensajeria import mostrarVistaConversacion
+from sistema.views.views_mensajeria import mostrarVistaConversacionGeneral, mostrarVistaConversacionGrupal, mostrarVistaConversacionPrivada
 
 urlpatterns = [
-    path("<str:servicioDeMensajeriaURL>", mostrarVistaConversacion, name="conversacion"),
+    path("privado/<str:nombreDeUsuarioReceptor>", mostrarVistaConversacionPrivada, name="conversacion"),
+    path("grupal/<str:grupoReceptor>", mostrarVistaConversacionGrupal, name="conversacionGrupal"),
+    path("general", mostrarVistaConversacionGeneral, name="conversacionGeneral"),
 ]

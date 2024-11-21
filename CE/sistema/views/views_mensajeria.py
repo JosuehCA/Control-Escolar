@@ -2,13 +2,13 @@ from django.shortcuts import redirect
 from django.http import HttpRequest, HttpResponse
 from django.shortcuts import render
 
-from sistema.models.forms_mensajeria import MensajeDirectoForm
-from sistema.models.models_mensajeria import MensajeDirecto, ManejadorVistaMensajeria
+from sistema.models.forms_mensajeria import MensajeDirectoForm, MensajeGeneralForm
+from sistema.models.models_mensajeria import MensajeDirecto, ManejadorVistaMensajeria, MensajeGeneral
 
-def mostrarVistaConversacion(request: HttpRequest, servicioDeMensajeriaURL: str) -> HttpResponse:
+def mostrarVistaConversacionPrivada(request: HttpRequest, nombreDeUsuarioReceptor: str) -> HttpResponse:
     """Vista dinamica para conversaciones individuales, grupales o generales."""
     manejador = ManejadorVistaMensajeria()
-    tipoDeConversacion = manejador.obtenerTipoDeConversacion(servicioDeMensajeriaURL)
+    tipoDeConversacion = manejador.obtenerTipoDeConversacion(nombreDeUsuarioReceptor)
     if request.method == 'POST':
         mensajeDirectoForm = MensajeDirectoForm(request.POST)
         mensajesUsuario = MensajeDirecto.obtenerMensajesFiltrados(request.user)
@@ -22,7 +22,7 @@ def mostrarVistaConversacion(request: HttpRequest, servicioDeMensajeriaURL: str)
                 "titulo": "Conversación Privada",
                 "mensajes": mensajesUsuario,
                 "form": mensajeDirectoForm,
-                "servicioDeMensajeriaURL": servicioDeMensajeriaURL,})
+                "servicioDeMensajeriaURL": nombreDeUsuarioReceptor,})
             else:
                 mensajeDirectoForm.add_error(None, "No puedes enviarte mensajes a ti mismo.")
     else:
@@ -34,7 +34,7 @@ def mostrarVistaConversacion(request: HttpRequest, servicioDeMensajeriaURL: str)
                 "titulo": "Conversación Privada",
                 "mensajes": mensajesUsuario,
                 "form": mensajeDirectoForm,
-                "servicioDeMensajeriaURL": servicioDeMensajeriaURL,})
+                "servicioDeMensajeriaURL": nombreDeUsuarioReceptor,})
         
         elif(tipoDeConversacion == "grupo"):
             mensajesUsuario = MensajeDirecto.obtenerMensajesFiltrados(request.user)
@@ -47,3 +47,18 @@ def mostrarVistaConversacion(request: HttpRequest, servicioDeMensajeriaURL: str)
             return render(request, "sistema/Vista_Conversacion.html", {
                 "titulo": "Conversación General",
                 "mensajes": MensajeDirecto.obtenerMensajesFiltrados(request.user),})
+        
+def mostrarVistaConversacionGrupal(request: HttpRequest, grupoReceptor: str) -> HttpResponse:
+    """Vista para conversaciones individuales."""
+    return mostrarVistaConversacionPrivada(request, grupoReceptor)
+
+def mostrarVistaConversacionGeneral(request: HttpRequest) -> HttpResponse:
+    """Vista para conversaciones generales."""
+
+    mensajeGeneralForm = MensajeGeneralForm()
+    mensajesGenerales = MensajeGeneral.obtenerMensajesFiltrados()
+
+    return render(request, "sistema/Vista_Conversacion.html", {
+        "titulo": "Conversación General",
+        "form": mensajeGeneralForm,
+        "mensajes": mensajesGenerales,})

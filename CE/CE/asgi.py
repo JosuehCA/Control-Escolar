@@ -29,4 +29,4 @@ application = ProtocolTypeRouter({
     )
 })
 
-ASGI_APPLICATION = "asgi.application"
+ASGI_APPLICATION = "CE.asgi.application"

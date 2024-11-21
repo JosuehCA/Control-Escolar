@@ -27,6 +27,14 @@ class Mensaje(m.Model):
     def __str__(self) -> str:
         """Representación en cadena de un mensaje."""
         return f"Mensaje de {self.emisorUsuario} enviado en {self.fechaEnviado}"
+    
+    def establecer_contenido(self, contenido: str) -> None:
+        """Establece el contenido de un mensaje."""
+        self.contenidoMensaje = contenido
+
+    def almacenarEnBaseDeDatos(self) -> None:
+        """Almacena el mensaje en la base de datos."""
+        self.save()
 
     class Meta:
         abstract = True
@@ -43,7 +51,7 @@ class MensajeDirecto(Mensaje):
             return False
         self.emisorUsuario = emisor
         self.receptorUsuario = receptor
-        self.save()
+        self.almacenarEnBaseDeDatos()
         return True
     
     def es_valido_para_envio(self, emisor: UsuarioEscolar, receptor: UsuarioEscolar) -> bool:
@@ -70,8 +78,12 @@ class MensajeDirecto(Mensaje):
 class MensajeGrupo(Mensaje):
     """TDA Mensaje de Grupo. Particulariza un mensaje de manera grupal."""
 
-    gruposRelacionados = m.ManyToManyField(Grupo, related_name="mensajes")
+    gruposRelacionados = m.ForeignKey(Grupo, on_delete=m.DO_NOTHING, related_name="mensajes")
 
+    @staticmethod
+    def obtenerMensajesFiltrados(grupo: Grupo) -> m.QuerySet:
+        """Obtiene los mensajes filtrados que fueron enviados a un grupo específico."""
+        return MensajeGrupo.objects.filter(grupoRelacionado=grupo).order_by('-fechaEnviado')
 
     class Meta:
         verbose_name = "Mensaje Grupo"
@@ -79,25 +91,24 @@ class MensajeGrupo(Mensaje):
 
 
 
-class MensajePlantel(Mensaje):
+class MensajeGeneral(Mensaje):
     """TDA Mensaje Plantel. Establece un mensaje compartido de manera global a todo el plantel."""
 
-    pass
+    @staticmethod
+    def obtenerMensajesFiltrados() -> m.QuerySet:
+        """Obtiene los mensajes filtrados que fueron enviados a todo el plantel."""
+        return MensajeGeneral.objects.all().order_by('-fechaEnviado')
+    
+    def diccionarioAMensaje(self, datos: dict) -> None:
+        """Convierte un diccionario a un mensaje."""
+        self.emisorUsuario = datos['emisorusuario']
+        self.contenidoMensaje = datos['contenidoMensaje']
+        self.fechaEnviado = datos['fechaEnviado']
 
 
     class Meta:
-        verbose_name = "Mensaje Plantel"
-        verbose_name_plural = "Mensajes: Plantel"
-
-
-
-class Mensajero(m.Model):
-    """TDA Mensajero. Modela el mensajero virtual presente en el sistema y propio de cada usuario 
-    registrado."""
-
-    pass
-
-
+        verbose_name = "Mensaje General"
+        verbose_name_plural = "Mensajes: Generales"
 
 class Conversacion(m.Model):
     """TDA Conversacion. Representa una conversacion individual entre dos partes registradas en el sistema."""

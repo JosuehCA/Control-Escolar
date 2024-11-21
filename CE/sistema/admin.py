@@ -25,7 +25,6 @@ admin.site.register(Nutricionista)
 
 admin.site.register(MensajeDirecto)
 admin.site.register(MensajeGrupo)
-admin.site.register(MensajePlantel)
-admin.site.register(Mensajero)
+admin.site.register(MensajeGeneral)
 admin.site.register(Conversacion)
 admin.site.register(Notificacion)

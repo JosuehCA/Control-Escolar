@@ -305,7 +305,7 @@ class Profesor(UsuarioEscolar):
 class Alumno(UsuarioEscolar):
     """TDA Alumno. Registrado solo para fines logísticos. Representa a cada alumno inscrito en el sistema y
     contiene un registro de su información académica."""
-    tutorAlumno = m.ForeignKey("Tutor", on_delete=m.RESTRICT, related_name="tutor_alumno")
+    tutorAlumno = m.ForeignKey('Tutor', on_delete=m.RESTRICT, related_name="tutor_alumno")
     asistencias = m.IntegerField(default=0)
     faltas = m.IntegerField(default=0)
     actividadActual = m.ForeignKey(Actividad, on_delete=m.SET_NULL, related_name="actividadActual", null=True, blank=True)

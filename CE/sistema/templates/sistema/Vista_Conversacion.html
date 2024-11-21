@@ -6,40 +6,48 @@
   <title>Enviar Mensaje</title>
 
   <script>
-    const ws = new WebSocket('ws://' + window.location.host + '/ws/mensajeria/{{ servicioDeMensajeriaURL }}');
+    console.log(window.location.host);
+    const socket = new WebSocket('ws://' + window.location.host + '/ws/mensajeria/general');
 
-    ws.onopen = function() {
-      console.log('Conectado al WebSocket'); // Connected to WebSocket
+    socket.onopen = function() {
+      console.log('Conexión al WebSocket establecida');
     };
 
-    ws.onmessage = function(event) {
-      const message = JSON.parse(event.data);
-      console.log('Mensaje recibido:', message); // Message received:
+    socket.onmessage = function(event) {
+      const datosDelMensaje = JSON.parse(event.data);
+      console.log('Mensaje recibido:', datosDelMensaje);
 
-      const mensajeList = document.querySelector('.mensaje-lista');
-      const li = document.createElement('li');
-      li.textContent = message.mensaje;
-      mensajeList.appendChild(li);
+      const listaDeMensajes = document.querySelector('.mensajes-lista');
+      const elementoDeLista = document.createElement('li');
+      elementoDeLista.classList.add('elemento-de-mensaje');
 
-      // Scroll to the bottom of the message list
-      mensajeList.scrollTop = mensajeList.scrollHeight;
+      // Formatea el mensaje con el remitente, contenido y fecha
+      const mensajeFormateado = `<strong>De: ${datosDelMensaje.emisor}</strong><br> ${datosDelMensaje.contenido} <br> <small>${datosDelMensaje.fecha}</small>`;
+      elementoDeLista.innerHTML = mensajeFormateado;
+
+      listaDeMensajes.appendChild(elementoDeLista);
+
+      // Desplaza la lista de mensajes hacia abajo
+      listaDeMensajes.scrollTop = listaDeMensajes.scrollHeight;
     };
 
-    ws.onclose = function() {
-      console.log('Conexión WebSocket cerrada'); // WebSocket connection closed
+    socket.onclose = function() {
+      console.log('Conexión WebSocket cerrada');
     };
 
     document.addEventListener('DOMContentLoaded', () => {
-        const form = document.getElementById('form');
-        form.addEventListener('submit', (event) => {
-          event.preventDefault();
-          const messageInput = document.getElementById('id_contenidoMensaje');
-          const message = messageInput.value;
-          ws.send(JSON.stringify({ 'mensaje': message }));
-          messageInput.value = '';
-          console.log('Mensaje enviado:', message); // Message sent:
-        });
-    });
+      const formulario = document.getElementById('formulario');
+      formulario.addEventListener('submit',(event) => {
+            event.preventDefault();
+            const entradaDeMensaje = document.getElementById('id_contenidoMensaje');
+            const mensaje = entradaDeMensaje.value;
+            socket.send(JSON.stringify({ 'mensaje': mensaje }));
+            entradaDeMensaje.value = '';
+            console.log('Mensaje enviado:', mensaje);
+          }
+        );
+      }
+    );
   </script>
   <style>
     body {
@@ -69,7 +77,7 @@
       background-color: #0056b3;
     }
 
-    .mensaje-lista {
+    .mensajes-lista {
       margin-top: 30px;
     }
 
@@ -81,7 +89,7 @@
 </head>
 <body>
   <h1>Enviar Mensaje</h1>
-  <div class="mensaje-lista">
+  <div class="mensajes-lista">
     <h2>Mensajes Recientes</h2>
     {% if mensajes %}
       <ul>
@@ -97,7 +105,7 @@
       <p>No hay mensajes recientes.</p>
     {% endif %}
   </div>
-  <form id="form" method="post">
+  <form id="formulario" method="post">
     {% csrf_token %}
     {{ form.as_p }}
     <button type="submit">Enviar Mensaje</button>
