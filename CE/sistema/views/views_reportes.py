@@ -16,7 +16,46 @@ from sistema.models.forms_lista import *
 from sistema.models.models import Alumno
 from sistema.models.models_reportes import *
 
-    
+
+
+def crearDiagramaPastelFaltas() -> base64:
+    # Contadores de las categorías de faltas
+    faltas_1 = 0
+    faltas_2 = 0
+    faltas_3 = 0
+    faltas_4_o_mas = 0
+
+    # Iterar por todos los alumnos y contar las faltas
+    alumnos = Alumno.objects.all()
+    for alumno in alumnos:
+        faltas = alumno.getFaltas()
+
+        if faltas == 1 or faltas == 0:
+            faltas_1 += 1
+        elif faltas == 2:
+            faltas_2 += 1
+        elif faltas == 3:
+            faltas_3 += 1
+        elif faltas >= 4:
+            faltas_4_o_mas += 1
+
+    # Crear gráfico de pastel Matplotlib
+    figura, eje = plt.subplots()
+    etiquetas = ["1 falta o menos", "2 faltas", "3 faltas", "4 o más faltas"]
+    valores = [faltas_1, faltas_2, faltas_3, faltas_4_o_mas]
+
+    eje.pie(valores, labels=etiquetas, autopct='%1.1f%%', startangle=90, colors=["#FF0000", "#FF7F00", "#FFFF00", "#00FF00"])
+    plt.axis('equal')  # Mantener relación de aspecto del gráfico
+
+    # Guardar gráfico a objeto BytesIO y codificarlo como base 64
+    imagenBinaria = BytesIO()
+    plt.savefig(imagenBinaria, format='png')
+    imagenBinaria.seek(0)
+    plt.close()
+    imagen = base64.b64encode(imagenBinaria.getvalue()).decode('utf-8')
+
+    return imagen
+
 def crearDiagramaPastelCalificaciones() -> base64:
     # Crear gráfico de pastel Matplotlib
     figura, eje = plt.subplots()
@@ -33,12 +72,20 @@ def crearDiagramaPastelCalificaciones() -> base64:
 
     return imagen
 
-def generarDiagramaPastel(request: HttpRequest) -> HttpResponse:
+def obtenerDiagramaPastel(request: HttpRequest, tipo: str) -> HttpResponse:
 
-    diagramaBase64: base64 = crearDiagramaPastelCalificaciones()
+    diagramaBase64: base64
+
+    if tipo.lower() == "faltas":
+        diagramaBase64 = crearDiagramaPastelFaltas()
+    elif tipo.lower() == "calificaciones":
+        diagramaBase64 = crearDiagramaPastelCalificaciones()
 
     # Renderizar contenido HTML con texto base 64 del gráfico
-    contenidoHTML = render_to_string("sistema/Vista_DiagramaPastel.html", {"imagenDiagramaPastelPNG": f"data:image/png;base64, {diagramaBase64}"})
+    contenidoHTML = render_to_string("sistema/Vista_DiagramaPastel.html", {
+        "imagenDiagramaPastelPNG": f"data:image/png;base64, {diagramaBase64}",
+        "titulo": tipo}
+    )
 
     # Generar PDF con Weasyprint
     archivoPDFBinario = BytesIO()
@@ -78,7 +125,7 @@ def crearReporteAsistencia(alumno: Alumno) -> base64:
 
     return imagen
 
-def generarReporteAsistencia(request: HttpRequest) -> HttpResponse:
+def obtenerHistogramaAsistencias(request: HttpRequest) -> HttpResponse:
     alumno_id = request.GET.get('alumno_id')
 
     if not alumno_id:
@@ -92,7 +139,7 @@ def generarReporteAsistencia(request: HttpRequest) -> HttpResponse:
         return render(request, "sistema/Vista_Error.html", {
             "mensaje_error": f"No se encontró un alumno con el ID {alumno_id}. Por favor, seleccione un alumno válido."
         })
-    
+
     diagramaBase64 = crearReporteAsistencia(alumno)
 
     cantidadAsistencias: int = alumno.getAsistencias()
@@ -117,16 +164,18 @@ def generarReporteAsistencia(request: HttpRequest) -> HttpResponse:
 
     return HttpResponse(archivoPDFBinario, content_type='application/pdf')
 
+
+
 def actualizarAsistencias(request: HttpRequest) -> HttpResponse:
     if request.method == "POST":
         form = (request.POST)
         if form.is_valid():
-            alumno = form.cleaned_data['alumno']
+            alumno: Alumno = form.cleaned_data['alumno']
             asistencias = form.cleaned_data['asistencias']
             faltas = form.cleaned_data['faltas']
 
-            alumno.setAsistencias(asistencias) 
-            alumno.setFaltas(faltas)         
+            alumno.setAsistencias(asistencias)
+            alumno.setFaltas(faltas)
             alumno.save()
 
             return redirect('generar_reporte')  # Redirigir a la página de reportes

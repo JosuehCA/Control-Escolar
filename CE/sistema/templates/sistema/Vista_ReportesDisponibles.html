@@ -75,8 +75,9 @@
                 <label for="tipo_reporte">Selecciona el tipo de reporte:</label>
                 <select id="tipo_reporte" required>
                     <option value="" disabled selected>Elige un tipo de reporte</option>
-                    <option value="asistencia">Reporte de Asistencia</option>
+                    <option value="asistencia">Histograma de Asistencia</option>
                     <option value="calificaciones">Diagrama de Calificaciones</option>
+                    <option class="general" value="faltas_general">Diagrama de faltas general</option>
                 </select>
             </div>
             <button type="submit">Generar Reporte</button>
@@ -85,6 +86,15 @@
     </div>
 
     <script>
+        document.getElementById("tipo_reporte").addEventListener('change', function() {
+            const tipoReporte = this.selectedOptions[0].classList[0];
+            opcion = document.getElementById('alumno');
+
+            if(tipoReporte === "general") {
+                opcion.disabled = true;
+            } else opcion.disabled = false;
+        });
+
         document.getElementById('reporteForm').addEventListener('submit', function(event) {
             event.preventDefault();
 
@@ -104,7 +114,9 @@
             if (tipoReporte === "asistencia") {
                 url = `{% url 'generar_reporte' %}?alumno_id=${alumnoId}`;
             } else if (tipoReporte === "calificaciones") {
-                url = `{% url 'generar_diagrama_pastel' %}`;
+                url = "http://127.0.0.1:8000/reportes/generarDiagramaPastel/calificaciones";
+            } else if (tipoReporte === "faltas_general") {
+                url = "http://127.0.0.1:8000/reportes/generarDiagramaPastel/faltas";
             }
 
             // Navegar a la URL para generar el reporte
