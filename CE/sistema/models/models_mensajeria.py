@@ -1,7 +1,6 @@
 from django.db import models as m
 from django.conf import settings
 from sistema.models.models import UsuarioEscolar, Grupo
-from django.http import HttpRequest
 
 class ManejadorVistaMensajeria:
     """TDA Manejador de Vista de Mensajería. Controla la vista de mensajería del sistema."""
@@ -99,11 +98,10 @@ class MensajeGeneral(Mensaje):
         """Obtiene los mensajes filtrados que fueron enviados a todo el plantel."""
         return MensajeGeneral.objects.all().order_by('-fechaEnviado')
     
-    def diccionarioAMensaje(self, datos: dict) -> None:
-        """Convierte un diccionario a un mensaje."""
-        self.emisorUsuario = datos['emisorusuario']
-        self.contenidoMensaje = datos['contenidoMensaje']
-        self.fechaEnviado = datos['fechaEnviado']
+    def diccionarioAMensaje(self, emisorUsuario: UsuarioEscolar, datosDeMensaje: dict) -> None:
+        """Convierte un diccionario a un mensaje JSON con claves emisorUsuario, contenidoMensaje, fechaEnviado."""
+        self.emisorUsuario = emisorUsuario
+        self.contenidoMensaje = datosDeMensaje['contenidoMensaje']
 
 
     class Meta:

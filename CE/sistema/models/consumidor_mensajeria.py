@@ -4,8 +4,10 @@ from typing import Any
 from sistema.models.models_mensajeria import MensajeDirecto, MensajeGrupo, MensajeGeneral
 from datetime import datetime
 from abc import ABC, abstractmethod
+from asgiref.sync import sync_to_async
 
 class ConsumidorBase(ABC):
+    '''Clase abstracta para consumidores de mensajes WebSocket. Nota: Los consumidores directos deben heredar de AsyncWebsocketConsumer.'''
     @abstractmethod
     async def conectarUsuarioACanal(self):
         pass
@@ -28,7 +30,7 @@ class ConsumidorBase(ABC):
 
     async def receive(self, text_data):
         """Recibe un mensaje en formato JSON a través de WebSocket."""
-        self.recibirDeCanal(text_data)
+        await self.recibirDeCanal(text_data)
 
 class MensajePrivadoConsumidor(ConsumidorBase, AsyncWebsocketConsumer):
 
@@ -119,9 +121,9 @@ class MensajeGeneralConsumidor(ConsumidorBase, AsyncWebsocketConsumer):
     async def recibirDeCanal(self, datosJSON: str) -> None:
         """Recibe un mensaje en formato JSON a través de WebSocket."""
         datosDeMensaje: dict = json.loads(datosJSON)
-
-        self.mensajerGeneralInstancia.diccionarioAMensaje(datosDeMensaje)
-        self.mensajerGeneralInstancia.almacenarEnBaseDeDatos()
+        usuarioCanal = self.scope['user']
+        self.mensajerGeneralInstancia.diccionarioAMensaje(usuarioCanal, datosDeMensaje)
+        await sync_to_async(self.mensajerGeneralInstancia.almacenarEnBaseDeDatos)()
 
         await self.channel_layer.group_send(
             self.canalWebSocket,
@@ -130,14 +132,15 @@ class MensajeGeneralConsumidor(ConsumidorBase, AsyncWebsocketConsumer):
                 'mensaje': datosDeMensaje
             }
         )
+        print(f'Mensaje recibido: {datosDeMensaje}')
 
     async def eventoMensajeGeneral(self, eventoDatos: dict) -> None:
         """Envía el mensaje recibido a través de WebSocket."""
         datosDeMensaje: dict = eventoDatos['mensaje']
         await self.send(text_data=json.dumps({
-        'emisor': datosDeMensaje['emisorUsuario'],
+        'emisor': self.scope['user'].username,
         'contenido': datosDeMensaje['contenidoMensaje'],
-        'fecha': datosDeMensaje['fechaEnviado']
+        'fecha': self.mensajerGeneralInstancia.fechaEnviado.strftime('%Y-%m-%d %H:%M:%S')
         }))
 
         print(f'Mensaje enviado: {datosDeMensaje}')

@@ -41,7 +41,9 @@
             event.preventDefault();
             const entradaDeMensaje = document.getElementById('id_contenidoMensaje');
             const mensaje = entradaDeMensaje.value;
-            socket.send(JSON.stringify({ 'mensaje': mensaje }));
+            socket.send(JSON.stringify({ 
+              'contenidoMensaje': mensaje,
+            }));
             entradaDeMensaje.value = '';
             console.log('Mensaje enviado:', mensaje);
           }
