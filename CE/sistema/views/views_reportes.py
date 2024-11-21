@@ -14,78 +14,28 @@ from sistema.models.forms_lista import *
 from sistema.models.models import Alumno
 from sistema.models.models_reportes import *
 
-def generarDiagramaPastel(valores: tuple[int]) -> None:
-    # Contadores de las categorías de faltas
-    faltas_1_o_menos = valores[0]
-    faltas_2 = valores[1]
-    faltas_3 = valores[2]
-    faltas_4_o_mas = valores[3]
-
-    # Crear gráfico de pastel Matplotlib
-    figura, eje = plt.subplots()
-    etiquetas = ["1 falta o menos", "2 faltas", "3 faltas", "4 o más faltas"]
-    valores = [faltas_1_o_menos, faltas_2, faltas_3, faltas_4_o_mas]
-
-    eje.pie(valores, labels=etiquetas, autopct='%1.1f%%', startangle=90, colors=["#FF0000", "#FF7F00", "#FFFF00", "#00FF00"])
-    plt.axis('equal')  # Mantener relación de aspecto del gráfico
-
-
-def crearImagenDiagramaPastelFaltas(faltas: tuple[int]) -> base64:
-    generarDiagramaPastel(faltas)   # Generar gráfico de acuerdo a los datos
-
-    # Guardar gráfico a objeto BytesIO y codificarlo como base 64
-    imagenBinaria = BytesIO()
-    plt.savefig(imagenBinaria, format='png')
-    imagenBinaria.seek(0)
-    plt.close()
-    imagen: str = base64.b64encode(imagenBinaria.getvalue()).decode('utf-8')
-
-    return imagen
-
-def crearImagenDiagramaPastelCalificaciones() -> base64:
-    # Crear gráfico de pastel Matplotlib
-    figura, eje = plt.subplots()
-    eje.pie([10, 20, 30, 40], labels=["Category A", "Category B", "Category C", "Category D"],
-           autopct='%1.1f%%', startangle=90, colors=["#FF0000", "#00FF00", "#0000FF", "#FFFF00"])
-    plt.axis('equal')  # Mantener relación de aspecto del gráfico
-
-    # Guardar gráfico a objeto BytesIO y codificarlo como base 64
-    imagenBinaria = BytesIO()
-    plt.savefig(imagenBinaria, format='png')
-    imagenBinaria.seek(0)
-    plt.close()
-    imagen = base64.b64encode(imagenBinaria.getvalue()).decode('utf-8')
-
-    return imagen
 
 def obtenerDiagramaPastel(request: HttpRequest, tipo: str) -> HttpResponse:
-
-    diagramaBase64: base64
-
-
     if tipo.lower() == "faltas":
-        faltasAlumnado: tuple[int] = ManejadorReportes.obtenerFaltasAlumnado()
-
-        diagramaBase64 = crearImagenDiagramaPastelFaltas(faltasAlumnado)
+        faltas = ManejadorReportes.obtenerFaltasAlumnado()
+        diagramaBase64 = ManejadorReportes.generarDiagramaPastelFaltas(faltas)
     elif tipo.lower() == "calificaciones":
-        
+        valores = [10, 20, 30, 40]  # Ejemplo de calificaciones
+        etiquetas = ["Excelente", "Bueno", "Regular", "Deficiente"]
+        diagramaBase64 = ManejadorReportes.generarDiagramaPastelCalificaciones(valores, etiquetas)
 
-        diagramaBase64 = crearImagenDiagramaPastelCalificaciones()
-
-    # Renderizar contenido HTML con texto base 64 del gráfico
     contenidoHTML = render_to_string("sistema/Vista_DiagramaPastel.html", {
         "imagenDiagramaPastelPNG": f"data:image/png;base64, {diagramaBase64}",
-        "titulo": tipo}
-    )
+        "titulo": tipo
+    })
 
-    # Generar PDF con Weasyprint
     archivoPDFBinario = BytesIO()
     HTML(string=contenidoHTML).write_pdf(archivoPDFBinario)
     archivoPDFBinario.seek(0)
 
     return HttpResponse(archivoPDFBinario, content_type='application/pdf')
 
-def crearImagenReporteAsistenciaIndividual(alumno: Alumno) -> base64:
+def generarReporteAsistenciaIndividual(alumno: Alumno) -> int:
     # Datos de asistencia
     asistencias = alumno.getAsistencias()
     faltas = alumno.getFaltas()
@@ -101,6 +51,12 @@ def crearImagenReporteAsistenciaIndividual(alumno: Alumno) -> base64:
     eje.set_title(f"Reporte de Asistencia de {alumno.getNombre()}")
     eje.set_ylabel('Clases')
 
+    return porcentaje_asistencia
+
+def crearImagenReporteAsistenciaIndividual(alumno: Alumno) -> base64:
+    
+    razonDeFaltas = generarReporteAsistenciaIndividual(alumno)
+
     # Guardar gráfico como imagen base64
     imagenBinaria = BytesIO()
     plt.savefig(imagenBinaria, format='png')
@@ -111,7 +67,7 @@ def crearImagenReporteAsistenciaIndividual(alumno: Alumno) -> base64:
     print(time)
 
     # Guardar reporte en la base de datos
-    contenido = f"Asistencias: {asistencias}, Faltas: {faltas}, Porcentaje: {porcentaje_asistencia:.2f}%"
+    contenido = f"Asistencias: {alumno.getAsistencias()}, Faltas: {alumno.getFaltas()}, Porcentaje: {razonDeFaltas:.2f}%"
     ReporteAlumno.objects.create(alumno=alumno, contenido=contenido, fecha=time)
 
     return imagen
@@ -155,8 +111,6 @@ def obtenerHistogramaAsistencias(request: HttpRequest) -> HttpResponse:
 
     return HttpResponse(archivoPDFBinario, content_type='application/pdf')
 
-
-
 def actualizarAsistencias(request: HttpRequest) -> HttpResponse:
     if request.method == "POST":
         form = (request.POST)
@@ -179,3 +133,37 @@ def actualizarAsistencias(request: HttpRequest) -> HttpResponse:
 def reportesDisponibles(request: HttpRequest) -> HttpResponse:
     alumnos = Alumno.objects.all()
     return render(request, "sistema/Vista_ReportesDisponibles.html", {"alumnos": alumnos})
+
+def obtenerHistogramaAsistencias(request: HttpRequest) -> HttpResponse:
+    alumno_id = request.GET.get('alumno_id')
+    if not alumno_id:
+        return render(request, "sistema/Vista_Error.html", {
+            "mensaje_error": "No se proporcionó un ID de alumno."
+        })
+
+    try:
+        alumno = Alumno.objects.get(id=alumno_id)
+    except Alumno.DoesNotExist:
+        return render(request, "sistema/Vista_Error.html", {
+            "mensaje_error": f"No se encontró un alumno con ID {alumno_id}."
+        })
+
+    diagramaBase64 = ManejadorReportes.generarHistogramaAsistenciaIndividual(alumno)
+    porcentajeAsistencia = alumno.getAsistencias() / (alumno.getAsistencias() + alumno.getFaltas()) * 100 if (alumno.getAsistencias() + alumno.getFaltas()) > 0 else 0
+    contenido = f"Asistencias: {alumno.getAsistencias()}, Faltas: {alumno.getFaltas()}, Porcentaje: {porcentajeAsistencia:.2f}%"
+    
+    ManejadorReportes.guardarReporteAlumno(alumno, contenido)
+
+    contenidoHTML = render_to_string("sistema/Vista_ReporteAsistencia.html", {
+        "imagenAsistenciaPNG": f"data:image/png;base64, {diagramaBase64}",
+        "nombre_alumno": alumno.getNombre(),
+        "asistencias": alumno.getAsistencias(),
+        "faltas": alumno.getFaltas(),
+        "porcentaje_asistencia": f"{porcentajeAsistencia:.2f}"
+    })
+
+    archivoPDFBinario = BytesIO()
+    HTML(string=contenidoHTML).write_pdf(archivoPDFBinario)
+    archivoPDFBinario.seek(0)
+
+    return HttpResponse(archivoPDFBinario, content_type='application/pdf')
