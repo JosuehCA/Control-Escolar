@@ -39,11 +39,12 @@ class ReporteGlobal(Reporte):
     """TDA Reporte Global. Proporciona detalles conductuales y de asistencia de todos los alumnos inscritos
     en el plantel."""
 
-    pass
-
     class Meta:
         verbose_name = "Reporte Global"
         verbose_name_plural = "Reportes: Globales"
+
+    def __str__(self):
+        return f"Reporte global número {self.id}, {self.fecha.strftime('%d-%m-%Y %I:%M:%S %p')}"
 
 
 class ManejadorReportes:
@@ -51,7 +52,7 @@ class ManejadorReportes:
 
     # Generar distintos tipos de reporte
     @staticmethod
-    def generarHistogramaCalificacionesBase64(alumno: Alumno) -> str:
+    def generarHistogramaEnMemoria(tipo: str, alcance: str) -> None:
         # Crear gráfico de barras
         figura, eje = plt.subplots()
         barras = eje.bar(["Asistencias", "Faltas"], [alumno.getAsistencias(), alumno.getFaltas()], color=["#00FF00", "#FF0000"])
@@ -61,13 +62,14 @@ class ManejadorReportes:
         eje.set_title(f"Reporte de Asistencia de {alumno.getNombre()}")
         eje.set_ylabel('Clases')
 
-        return ManejadorReportes._codificarImagenBase64DesdeMemoria()
-
     @staticmethod
-    def generarDiagramaPastelBase64(tipo: str, alcance: str, etiquetas: list, colores: list) -> str:
+    def generarDiagramaPastelEnMemoria(tipo_de_datos: str, alcance: str, colores: list) -> None:
         """Genera un diagrama de pastel de faltas y lo devuelve como imagen base64."""
 
-        if tipo == "faltas":
+        etiquetas: list[str]
+
+        if tipo_de_datos == "faltas":
+            etiquetas = ["1 falta o menos", "2 faltas", "3 faltas", "4 o más faltas"]
 
             valores = ManejadorReportes._obtenerDispersionFaltasAlumnado(alcance)
 
@@ -80,33 +82,22 @@ class ManejadorReportes:
         total = sum(valores_filtrados)
         porcentajes = [(v / total) * 100 for v in valores_filtrados]
 
-        # Crear la figura y el gráfico
+        
         figura, eje = plt.subplots()
         eje.pie(valores_filtrados, labels=etiquetas_filtradas, autopct='%1.1f%%', startangle=90, 
                 colors=colores_filtrados)
-        plt.axis('equal')  # Mantener relación de aspecto del gráfico
+        plt.axis('equal')
 
-        contenido = {etiqueta: f"{porcentaje:.1f}%" for etiqueta, porcentaje in zip(etiquetas_filtradas, porcentajes)}
+        resultadoTextual = {etiqueta: f"{porcentaje:.1f}%" for etiqueta, porcentaje in zip(etiquetas_filtradas, porcentajes)}
 
         if alcance[:5] == "grupo":
-            ManejadorReportes._guardarReporteGrupo(alcance[6:], contenido)
+            ManejadorReportes._guardarReporteGrupo(alcance[6:], resultadoTextual)
         elif alcance == "global":
-            ManejadorReportes._guardarReporteGlobal(contenido)
-
-        return ManejadorReportes._codificarImagenBase64DesdeMemoria()
+            ManejadorReportes._guardarReporteGlobal(resultadoTextual)
 
 
+# Métodos privados -------------------------------------------------------------------
 
-    # Métodos privados -------------------------------------------------------------------
-    @staticmethod
-    def _codificarImagenBase64DesdeMemoria() -> str:
-        """Codifica en base64 la imagen actual de Matplotlib."""
-        imagenBinaria = BytesIO()
-        plt.savefig(imagenBinaria, format='png')
-        imagenBinaria.seek(0)
-        plt.close()
-        return base64.b64encode(imagenBinaria.getvalue()).decode('utf-8')
-    
     @staticmethod
     def _obtenerDispersionFaltasAlumnado(alcance: str) -> tuple[int]:
         """Devuelve estadísticas de faltas del alumnado de acuerdo al alcance definido"""

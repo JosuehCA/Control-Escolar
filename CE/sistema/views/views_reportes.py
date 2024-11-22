@@ -13,29 +13,19 @@ from sistema.models.models_reportes import *
 
 def obtenerHistograma(request: HttpRequest, tipo_de_datos: str, alcance: str) -> HttpResponse:
     
-    alumno_id = request.GET.get('alumno_id')
-    if not alumno_id:
-        return render(request, "sistema/Vista_Error.html", {
-            "mensaje_error": "No se proporcionó un ID de alumno."
-        })
 
-    try:
-        alumno = Alumno.objects.get(id=alumno_id)
-    except Alumno.DoesNotExist:
-        return render(request, "sistema/Vista_Error.html", {
-            "mensaje_error": f"No se encontró un alumno con ID {alumno_id}."
-        })
+    ManejadorReportes.generarHistogramaEnMemoria(tipo_de_datos, alcance)
+    diagramaBase64 = _codificarImagenBase64DesdeMemoria()
 
-    diagramaBase64 = ManejadorReportes.generarHistogramaCalificacionesBase64(alumno)
-    porcentajeAsistencia = alumno.getAsistencias() / (alumno.getAsistencias() + alumno.getFaltas()) * 100 if (alumno.getAsistencias() + alumno.getFaltas()) > 0 else 0
-    contenido = f"Asistencias: {alumno.getAsistencias()}, Faltas: {alumno.getFaltas()}, Porcentaje: {porcentajeAsistencia:.2f}%"
+    titulo: str = alcance
+
+    if alcance[:5] == "grupo":
+        titulo = alcance[6:]
+    
     
     contenidoHTML = render_to_string("sistema/Vista_ReporteAsistencia.html", {
         "imagenAsistenciaPNG": f"data:image/png;base64, {diagramaBase64}",
-        "nombre_alumno": alumno.getNombre(),
-        "asistencias": alumno.getAsistencias(),
-        "faltas": alumno.getFaltas(),
-        "porcentaje_asistencia": f"{porcentajeAsistencia:.2f}"
+        "titulo": titulo
     })
 
     return _generarPDF(contenidoHTML)
@@ -44,10 +34,8 @@ def obtenerDiagramaPastel(request: HttpRequest, tipo_de_datos: str, alcance: str
 
     colores = ["#FF0000", "#FF7F00", "#FFFF00", "#00FF00"]
 
-    if tipo_de_datos.lower() == "faltas":
-        etiquetas = ["1 falta o menos", "2 faltas", "3 faltas", "4 o más faltas"]
-
-        diagramaBase64 = ManejadorReportes.generarDiagramaPastelBase64(tipo_de_datos.lower(), alcance.lower(), etiquetas, colores)
+    ManejadorReportes.generarDiagramaPastelEnMemoria(tipo_de_datos.lower(), alcance.lower(), colores)
+    diagramaBase64 = _codificarImagenBase64DesdeMemoria()
 
 
     contenidoHTML = render_to_string("sistema/Vista_DiagramaPastel.html", {
@@ -55,11 +43,7 @@ def obtenerDiagramaPastel(request: HttpRequest, tipo_de_datos: str, alcance: str
         "titulo": tipo_de_datos
     })
 
-    archivoPDFBinario = BytesIO()
-    HTML(string=contenidoHTML).write_pdf(archivoPDFBinario)
-    archivoPDFBinario.seek(0)
-
-    return HttpResponse(archivoPDFBinario, content_type='application/pdf')
+    return _generarPDF(contenidoHTML)
 
 def actualizarAsistencias(request: HttpRequest) -> HttpResponse:
     if request.method == "POST":
@@ -75,6 +59,14 @@ def actualizarAsistencias(request: HttpRequest) -> HttpResponse:
 
     return render(request, "sistema/Vista_ActualizarAsistencias.html", {"form": form})
 
+
+def obtenerReportesDisponibles(request: HttpRequest) -> HttpResponse:
+    alumnos = Alumno.objects.all()
+    return render(request, "sistema/Vista_ReportesDisponibles.html", {"alumnos": alumnos})
+
+
+# Métodos privados ----------------------------------------------------------------------
+
 def _obtenerYGuardarAsistenciasYFaltasEnBD(form: AsistenciaForm) -> None:
     alumno: Alumno = form.cleaned_data['alumno']
     asistencias = form.cleaned_data['asistencias']
@@ -84,10 +76,13 @@ def _obtenerYGuardarAsistenciasYFaltasEnBD(form: AsistenciaForm) -> None:
     alumno.setFaltas(faltas)
     alumno.save()
 
-def obtenerReportesDisponibles(request: HttpRequest) -> HttpResponse:
-    alumnos = Alumno.objects.all()
-    return render(request, "sistema/Vista_ReportesDisponibles.html", {"alumnos": alumnos})
-
+def _codificarImagenBase64DesdeMemoria() -> str:
+        """Codifica en base64 la imagen actual de Matplotlib."""
+        imagenBinaria = BytesIO()
+        plt.savefig(imagenBinaria, format='png')
+        imagenBinaria.seek(0)
+        plt.close()
+        return base64.b64encode(imagenBinaria.getvalue()).decode('utf-8')
 
 def _generarPDF(contenidoHTML: str) -> HttpResponse:
     archivoPDFBinario = BytesIO()

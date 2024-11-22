@@ -387,7 +387,7 @@ class RegistroCalificaciones(m.Model):
         unique_together = ('alumno', 'fecha')
 
     def __str__(self):
-        return f"Calificación de {self.alumno.first_name} {self.alumno.last_name} en {self.grupo.nombre} el {self.fecha}"
+        return f"Calificación de {self.alumno.getNombre()} en {self.grupo.nombre} el {self.fecha}"
     
 class Tutor(UsuarioEscolar):
     """TDA Tutor. Tutor legal del alumno inscrito. Cuenta con acceso al sistema y puede visualizar toda la 
