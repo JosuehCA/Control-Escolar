@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Detalle del Grupo</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f0f4f8;
+        }
+        .contenedor {
+            max-width: 800px;
+            margin: 20px auto;
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            padding: 20px;
+        }
+        h1 {
+            background-color: #3a7bd5;
+            color: white;
+            text-align: center;
+            padding: 20px 0;
+            margin: 0 0 20px;
+            font-size: 2em;
+            border-radius: 8px 8px 0 0;
+        }
+        h2 {
+            color: #3a7bd5;
+            margin-top: 0;
+        }
+        h3 {
+            color: #3498db;
+        }
+        ul {
+            list-style: none;
+            padding: 0;
+        }
+        li {
+            padding: 10px 15px;
+            margin-bottom: 10px;
+            background-color: #f4f4f4;
+            border-left: 5px solid #3a7bd5;
+            border-radius: 5px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+        .mensaje {
+            color: #777;
+            font-style: italic;
+            text-align: center;
+            padding: 10px;
+        }
+
+        .boton {
+        margin: 20px auto 0;
+        padding: 12px 20px;
+        background-color: #16a085;
+        color: white;
+        text-align: center;
+        text-decoration: none;
+        font-size: 1em;
+        font-weight: bold;
+        border-radius: 5px;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+        transition: background-color 0.3s ease;
+        width: auto; 
+        display: inline-block; 
+        }
+
+        .boton:hover {
+            background-color: #12816e;
+        }
+    </style>
+</head>
+<body>
+    <div class="contenedor">
+        <h1>Detalle del Grupo: {{ grupo.nombre }}</h1>
+        <h2>Fecha: {{ fecha }}</h2>
+
+        <h3>Alumnos con asistencia:</h3>
+        <ul>
+            {% for alumno in alumnos_asistieron %}
+                <li>{{ alumno.getNombre }}</li>
+            {% empty %}
+                <li class="mensaje">No hay alumnos con asistencia hoy.</li>
+            {% endfor %}
+        </ul>
+
+        <h3>Alumnos con falta:</h3>
+        <ul>
+            {% for alumno in alumnos_faltaron %}
+                <li>{{ alumno.getNombre }}</li>
+            {% empty %}
+                <li class="mensaje">No hay alumnos con falta hoy.</li>
+            {% endfor %}
+        </ul>
+
+        <a href="{% url 'pase_de_lista' grupo.id %}" class="boton">Editar Pase de Lista</a>
+    </div>
+</body>
+</html>

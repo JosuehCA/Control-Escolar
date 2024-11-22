@@ -66,7 +66,6 @@ class ReporteGlobal(Reporte):
 class ManejadorReportes:
     """Clase para manejar la generación y almacenamiento de reportes en el sistema."""
 
-
     # Generar distintos tipos de reporte
     @staticmethod
     def generarHistogramaCalificacionesBase64(alumno: Alumno) -> str:
@@ -82,7 +81,7 @@ class ManejadorReportes:
         return ManejadorReportes._codificarImagenBase64DesdeMemoria()
 
     @staticmethod
-    def generarDiagramaPastelBase64(tipo: str, etiquetas: list, colores: list) -> str:
+    def generarDiagramaPastelBase64(tipo: str, alcance: str, etiquetas: list, colores: list) -> str:
         """Genera un diagrama de pastel de faltas y lo devuelve como imagen base64."""
 
         if tipo == "falas":
@@ -99,26 +98,25 @@ class ManejadorReportes:
                 colors=colores_filtrados)
         plt.axis('equal')  # Mantener relación de aspecto del gráfico
 
+        if alcance == "grupo":
+            ManejadorReportes._guardarReporteGrupo(contenido)
+        elif alcance == "global":
+            ManejadorReportes._guardarReporteGlobal(contenido)
+
         return ManejadorReportes._codificarImagenBase64DesdeMemoria()
 
+    # Métodos privados
     # Guardar tipos de reportes en la base de datos
     @staticmethod
-    def guardarReporteAlumno(alumno: Alumno, contenido: str) -> None:
-        """Guarda un reporte individual para un alumno."""
-        ReporteAlumno.objects.create(alumno=alumno, contenido=contenido, fecha=now())
-
-    @staticmethod
-    def guardarReporteGrupo(grupo: Grupo, contenido: str) -> None:
+    def _guardarReporteGrupo(grupo: Grupo, contenido: str) -> None:
         """Guarda un reporte para un grupo."""
         ReporteGrupo.objects.create(grupo=grupo, contenido=contenido, fecha=now())
 
     @staticmethod
-    def guardarReporteGlobal(contenido: str) -> None:
+    def _guardarReporteGlobal(contenido: str) -> None:
         """Guarda un reporte global."""
         ReporteGlobal.objects.create(contenido=contenido, fecha=now())
 
-
-    # Métodos privados
     @staticmethod
     def _codificarImagenBase64DesdeMemoria() -> str:
         """Codifica en base64 la imagen actual de Matplotlib."""
@@ -129,15 +127,20 @@ class ManejadorReportes:
         return base64.b64encode(imagenBinaria.getvalue()).decode('utf-8')
     
     @staticmethod
-    def _obtenerDispersionFaltasAlumnado() -> tuple[int]:
+    def _obtenerDispersionFaltasAlumnado(alcance: str) -> tuple[int]:
         """Devuelve estadísticas de faltas del alumnado."""
         faltas_1_o_menos = 0
         faltas_2 = 0
         faltas_3 = 0
         faltas_4_o_mas = 0
 
+        if alcance == "grupo":
+            conjuntoDeAlumnos = 
+        elif alcance == "global":
+            conjuntoDeAlumnos = Alumno.objects.all()
+
         alumnos = Alumno.objects.all()
-        for alumno in alumnos:
+        for alumno in conjuntoDeAlumnos:
             faltas = alumno.getFaltas()
 
             if faltas == 1 or faltas == 0:

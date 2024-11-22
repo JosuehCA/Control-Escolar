@@ -35,8 +35,9 @@ class Mensaje(m.Model):
     def almacenarEnBaseDeDatos(self) -> None:
         """Almacena el mensaje en la base de datos."""
         self.save()
+
     @abstractmethod
-    def recibirDatosDeMensajeEnJSON(self, datosDeMensaje: dict) -> None:
+    def recibirDatosDeMensajeEnDiccionario(self, datosDeMensaje: dict) -> None:
         """Recibe los datos de un mensaje en formato JSON."""
         pass
 
@@ -79,15 +80,25 @@ class MensajeDirecto(Mensaje):
 
 
 
-class MensajeGrupo(Mensaje):
+class MensajeGrupal(Mensaje):
     """TDA Mensaje de Grupo. Particulariza un mensaje de manera grupal."""
 
-    gruposRelacionados = m.ForeignKey(Grupo, on_delete=m.DO_NOTHING, related_name="mensajes")
+    grupoRelacionado = m.ForeignKey(Grupo, on_delete=m.DO_NOTHING, related_name="mensajes")
 
     @staticmethod
     def obtenerMensajesFiltrados(grupo: Grupo) -> m.QuerySet:
         """Obtiene los mensajes filtrados que fueron enviados a un grupo específico."""
-        return MensajeGrupo.objects.filter(grupoRelacionado=grupo).order_by('-fechaEnviado')
+        return MensajeGrupal.objects.filter(grupoRelacionado=grupo).order_by('-fechaEnviado')
+    
+    def recibirDatosDeMensajeEnDiccionario(self, datosDeMensaje: dict) -> None:
+        """Recibe los datos de un mensaje grupal en formato JSON."""
+        self.emisorUsuario = datosDeMensaje['emisorUsuario']
+        self.contenidoMensaje = datosDeMensaje['contenidoMensaje']
+        self.grupoRelacionado = datosDeMensaje['grupoRelacionado']
+
+    def __str__(self) -> str:
+        """Representación en cadena de un mensaje grupal."""
+        return f"Mensaje grupal de {self.emisorUsuario} en {self.grupoRelacionado}, contenido: {self.contenidoMensaje}, fecha: {self.fechaEnviado}"
 
     class Meta:
         verbose_name = "Mensaje Grupo"

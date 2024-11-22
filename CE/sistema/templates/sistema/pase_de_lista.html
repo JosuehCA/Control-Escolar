@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pase de Lista</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f0f4f8;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+        .contenedor {
+            background-color: #ffffff;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            padding: 20px;
+            max-width: 700px;
+            width: 100%;
+        }
+        h2 {
+            text-align: center;
+            background-color: #3a7bd5;
+            color: white;
+            padding: 15px;
+            margin: -20px -20px 20px;
+            border-radius: 8px 8px 0 0;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 15px;
+            background-color: #f4f4f4;
+            border-radius: 5px;
+            overflow: hidden;
+        }
+        th, td {
+            text-align: left;
+            padding: 10px;
+            border-bottom: 1px solid #ddd;
+        }
+        th {
+            background-color: #3a7bd5;
+            color: white;
+        }
+        label {
+            font-weight: bold;
+            color: #333;
+        }
+        .error {
+            color: red;
+            font-size: 0.9em;
+        }
+        button {
+            background-color: #16a085;
+            color: white;
+            border: none;
+            padding: 12px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 1em;
+            margin-top: 15px;
+            display: block;
+            width: 100%;
+            text-align: center;
+            font-weight: bold;
+            transition: background-color 0.3s ease;
+        }
+        button:hover {
+            background-color: #12816e;
+        }
+    </style>
+</head>
+<body>
+    <div class="contenedor">
+        <h2>Pase de lista para {{ grupo.nombre }}</h2>
+        <form method="post">
+            {% csrf_token %}
+            {{ form.non_field_errors }}
+            <table>
+                <thead>
+                    <tr>
+                        <th>Alumno</th>
+                        <th>Asistencia</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for field in form %}
+                        <tr>
+                            <td>
+                                <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+                                {% if field.errors %}
+                                    <div class="error">{{ field.errors }}</div>
+                                {% endif %}
+                            </td>
+                            <td>{{ field }}</td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+            <button type="submit">Registrar Asistencia</button>
+        </form>
+    </div>
+</body>
+</html>

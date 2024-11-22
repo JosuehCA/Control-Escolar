@@ -16,7 +16,7 @@ admin.site.register(ReporteGlobal)
 
 
 admin.site.register(UsuarioEscolar)
-admin.site.register(AdministradorUsuarios)
+admin.site.register(GestorDeGrupos)
 admin.site.register(Profesor)
 admin.site.register(Tutor)
 admin.site.register(Alumno)
@@ -24,7 +24,7 @@ admin.site.register(Nutricionista)
 
 
 admin.site.register(MensajeDirecto)
-admin.site.register(MensajeGrupo)
+admin.site.register(MensajeGrupal)
 admin.site.register(MensajeGeneral)
 admin.site.register(Conversacion)
 admin.site.register(Notificacion)

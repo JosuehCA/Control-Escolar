@@ -2,6 +2,9 @@ from django.shortcuts import render, redirect, get_object_or_404
 from sistema.models.forms_plantel import *
 from django.contrib import messages
 from datetime import datetime
+from sistema.models.models import *
+from django.views import View
+
 
 from sistema.models.models_actividades import *
 
@@ -51,6 +54,7 @@ def crear_actividad(request):
             hora_inicio = crearActividadForm.cleaned_data['horaInicio']
             hora_final = crearActividadForm.cleaned_data['horaFinal']
             fecha = crearActividadForm.cleaned_data['fecha']
+            grupo = crearActividadForm.cleaned_data['grupo']
 
             try:
                 # Intenta agregar la actividad, la validación se hace dentro de agregarActividad
@@ -62,7 +66,8 @@ def crear_actividad(request):
                     descripcion=descripcion,
                     horaInicio=hora_inicio,
                     horaFinal=hora_final,
-                    fecha=fecha
+                    fecha=fecha,
+                    grupo=grupo
                 )
                 messages.success(request, "Actividad agregada con éxito.")
             except ValueError as e:
@@ -100,7 +105,38 @@ def listar_actividades(request):
 
 def detalle_actividad(request, id):
     actividad = get_object_or_404(Actividad, id=id)
-    return render(request, "sistema/Vista_DetallesActividad.html", {'actividad': actividad})
+    
+    # Obtener todos los alumnos del grupo asociado
+    grupo = actividad.grupo
+    alumnos = grupo.alumnos.all()
+
+    # Verificar si algún alumno ya está participando en la actividad
+    actividad_iniciada = any(alumno.actividadActual == actividad for alumno in alumnos)
+
+    if request.method == "POST":
+        # Si la actividad ya está asignada, cambiar a "terminada"
+        if actividad_iniciada:
+            for alumno in alumnos:
+                if alumno.actividadActual == actividad:
+                    alumno.actividadActual = None  # Terminar la actividad del alumno
+                    alumno.save()
+            actividad_iniciada = False
+        else:
+            # Asignar la actividad a todos los alumnos del grupo
+            for alumno in alumnos:
+                alumno.actividadActual = actividad
+                alumno.save()
+            actividad_iniciada = True
+        
+        # Redirigir de nuevo a la página de detalles de la actividad
+        return redirect('detalle_actividad', id=id)
+
+    return render(request, "sistema/Vista_DetallesActividad.html", {
+        'actividad': actividad,
+        'actividad_iniciada': actividad_iniciada,
+        'alumnos': alumnos
+    })
+
 
 def actualizar_actividad(request, actividad_id):
     actividad = get_object_or_404(Actividad, id=actividad_id)
@@ -138,3 +174,87 @@ def actualizar_actividad(request, actividad_id):
         actualizarActividadForm = ActualizarActividadForm(instance=actividad)
 
     return render(request, 'sistema/Vista_ActualizarActividad.html', {'form': actualizarActividadForm, 'actividad': actividad})
+
+
+
+
+#PASAR A OTRO LADO
+
+class PaseDeListaView(View):
+    template_name = 'sistema/pase_de_lista.html'
+
+    def get(self, request, grupo_id):
+        # Obtener el grupo
+        grupo = get_object_or_404(Grupo, id=grupo_id)
+        form = PaseDeListaForm(grupo)
+        return render(request, self.template_name, {'form': form, 'grupo': grupo})
+
+    def post(self, request, grupo_id):
+        # Obtener el grupo
+        grupo = get_object_or_404(Grupo, id=grupo_id)
+        form = PaseDeListaForm(grupo, request.POST)
+
+        if form.is_valid():
+            for alumno in grupo.alumnos.all():
+                # Revisar si el formulario tiene marcada la asistencia
+                if form.cleaned_data.get(f'asistencias_{alumno.id}', False):
+                    alumno.asistirAClase()  # Registrar asistencia
+                else:
+                    alumno.faltarAClase()  # Registrar falta
+            return redirect('grupo_detalle', grupo_id=grupo.id)
+
+        return render(request, self.template_name, {'form': form, 'grupo': grupo})
+
+class GrupoDetalleView(View):
+    template_name = 'sistema/detalle.html'
+
+    def get(self, request, grupo_id):
+        grupo = get_object_or_404(Grupo, id=grupo_id)
+        hoy = date.today()
+
+        # Obtener registros de asistencia del día
+        asistencias = RegistroAsistencia.objects.filter(
+            alumno__in=grupo.alumnos.all(),
+            fecha=hoy,
+        )
+        
+        # Separar por asistencia y falta
+        alumnos_asistieron = [registro.alumno for registro in asistencias if registro.asistencias] #le movi a registro.asistencia
+        alumnos_faltaron = [registro.alumno for registro in asistencias if not registro.asistencias]
+
+        contexto = {
+            'grupo': grupo,
+            'alumnos_asistieron': alumnos_asistieron,
+            'alumnos_faltaron': alumnos_faltaron,
+            'fecha': hoy,
+        }
+        return render(request, self.template_name, contexto)
+    
+
+def asignar_calificaciones(request, grupo_id):
+    grupo = get_object_or_404(Grupo, id=grupo_id)
+    alumnos = Alumno.objects.filter(grupo=grupo)
+    calificaciones = range(1, 6)  # Generar los números del 1 al 5
+
+    if request.method == "POST":
+        for alumno in alumnos:
+            calificacion = request.POST.get(f"calificacion_{alumno.id}")
+            comentario = request.POST.get(f"comentario_{alumno.id}")
+            
+            if calificacion:
+                RegistroCalificaciones.objects.update_or_create(
+                    alumno=alumno,
+                    grupo=grupo,
+                    fecha=date.today(),
+                    defaults={
+                        "calificacion": int(calificacion),
+                        "comentario": comentario or "",
+                    }
+                )
+        return redirect("detalle_grupo", grupo_id=grupo.id)
+
+    return render(request, "sistema/asignar_calificaciones.html", {
+        "grupo": grupo,
+        "alumnos": alumnos,
+        "calificaciones": calificaciones
+    })
