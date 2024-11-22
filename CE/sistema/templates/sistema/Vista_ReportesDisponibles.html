@@ -75,9 +75,10 @@
                 <label for="tipo_reporte">Selecciona el tipo de reporte:</label>
                 <select id="tipo_reporte" required>
                     <option value="" disabled selected>Elige un tipo de reporte</option>
-                    <option value="calificaciones">Diagrama de Calificaciones</option>
-                    <option class="grupal" value="faltas_grupal">Diagrama de faltas grupal</option>
-                    <option class="global" value="faltas_global">Diagrama de faltas global</option>
+                    <option class="global" value="calificaciones_grupal_histograma">Histograma de calificaciones grupal</option>
+                    <option class="global" value="calificaciones_global_histograma">Histograma de calificaciones global</option>
+                    <option class="grupal" value="faltas_grupal_pastel">Diagrama de pastel de faltas grupal</option>
+                    <option class="global" value="faltas_global_pastel">Diagrama de pastel de faltas global</option>
                 </select>
             </div>
             <button type="submit">Generar Reporte</button>
@@ -111,11 +112,13 @@
 
             // Redirigir a la URL de generación de reporte
             let url = "";
-            if (tipoReporte.value === "calificaciones") {
-                url = "http://127.0.0.1:8000/reportes/generarDiagramaPastel/calificaciones";
-            } else if (tipoReporte.value === "faltas_grupal") {
+            if (tipoReporte.value === "calificaciones_grupal_histograma") {
+                url = "http://127.0.0.1:8000/reportes/generarHistograma/calificaciones/grupo:prueba";
+            } else if (tipoReporte.value === "calificaciones_global_histograma") {
+                url = "http://127.0.0.1:8000/reportes/generarHistograma/calificaciones/global";
+            } else if (tipoReporte.value === "faltas_grupal_pastel") {
                 url = "http://127.0.0.1:8000/reportes/generarDiagramaPastel/faltas/grupo:prueba";
-            } else if (tipoReporte.value === "faltas_global") {
+            } else if (tipoReporte.value === "faltas_global_pastel") {
                 url = "http://127.0.0.1:8000/reportes/generarDiagramaPastel/faltas/global";
             }
 

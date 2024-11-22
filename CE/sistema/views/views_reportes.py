@@ -6,6 +6,7 @@ from django.template.loader import render_to_string
 from io import BytesIO
 from django.shortcuts import render, redirect
 from sistema.models.forms_lista import *
+import base64
 
 
 from sistema.models.models import Alumno
@@ -19,8 +20,8 @@ def obtenerHistograma(request: HttpRequest, tipo_de_datos: str, alcance: str) ->
 
     titulo: str = alcance
 
-    if alcance[:5] == "grupo":
-        titulo = alcance[6:]
+    if alcance.startswith("grupo:"):
+        titulo = alcance.removeprefix("grupo:").strip()
     
     
     contenidoHTML = render_to_string("sistema/Vista_ReporteAsistencia.html", {

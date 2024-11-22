@@ -1,10 +1,7 @@
 from django.db import models as m
-from django.conf import settings
-from .models import Grupo, Alumno
+from .models import Grupo, Alumno, RegistroCalificaciones
 
 import matplotlib.pyplot as plt
-import base64
-from io import BytesIO
 from django.utils.timezone import localtime, now
 
 class Reporte(m.Model):
@@ -31,7 +28,7 @@ class ReporteGrupo(Reporte):
         verbose_name_plural = "Reportes: Grupos"
 
     def __str__(self):
-        return f"Reporte de {self.grupo.nombre}, {self.fecha.strftime('%d-%m-%Y %I:%M:%S %p')}"
+        return f"Reporte de grupo '{self.grupo.nombre}', {self.fecha.strftime('%d-%m-%Y %I:%M:%S %p')}" 
 
 
 
@@ -53,18 +50,45 @@ class ManejadorReportes:
     # Generar distintos tipos de reporte
     @staticmethod
     def generarHistogramaEnMemoria(tipo: str, alcance: str) -> None:
-        # Crear gráfico de barras
-        figura, eje = plt.subplots()
-        barras = eje.bar(["Asistencias", "Faltas"], [alumno.getAsistencias(), alumno.getFaltas()], color=["#00FF00", "#FF0000"])
-        for barra in barras:
-            eje.text(barra.get_x() + barra.get_width() / 2, barra.get_height() / 2, f'{int(barra.get_height())}', ha='center')
+        """
+        Genera un histograma de calificaciones en memoria
+        """
 
-        eje.set_title(f"Reporte de Asistencia de {alumno.getNombre()}")
-        eje.set_ylabel('Clases')
+        if alcance.startswith("grupo:"):
+            grupo_nombre = alcance.removeprefix("grupo:").strip()
+            alumnos = Alumno.objects.filter(grupo__nombre=grupo_nombre)
+        elif alcance == "global":
+            alumnos = Alumno.objects.all()
+        else:
+            raise ValueError("Alcance inválido. Debe ser 'grupo:nombre_grupo' o 'global'.")
+
+        # Configuración del gráfico
+        figura, eje = plt.subplots()
+
+        if tipo == "calificaciones":
+            # Generar datos para el histograma de calificaciones
+            calificaciones = (
+                RegistroCalificaciones.objects.filter(alumno__in=alumnos)
+                .values_list("calificacion", flat=True)
+            )
+            eje.hist(calificaciones, bins=range(1, 7), color="#00FF00", edgecolor="black", align="left", rwidth=0.8)
+            eje.set_title(f"Histograma de Calificaciones ({'Grupo: {grupo_nombre}' if 'grupo' in alcance else 'Global'})")
+            eje.set_xlabel("Calificaciones (1-5)")
+            eje.set_xticks(range(1, 6))
+        else:
+            raise ValueError("Tipo inválido. Debe ser 'faltas' o 'calificaciones'.")
+        
+        eje.set_ylabel("Número de Alumnos")
+
+        # Ajustar formato general
+        plt.tight_layout()
+
 
     @staticmethod
     def generarDiagramaPastelEnMemoria(tipo_de_datos: str, alcance: str, colores: list) -> None:
-        """Genera un diagrama de pastel de faltas y lo devuelve como imagen base64."""
+        """
+        Genera un diagrama de pastel de faltas en memoria, de acuerdo a <1, 2, 3 o >4 faltas
+        """
 
         etiquetas: list[str]
 
@@ -90,8 +114,8 @@ class ManejadorReportes:
 
         resultadoTextual = {etiqueta: f"{porcentaje:.1f}%" for etiqueta, porcentaje in zip(etiquetas_filtradas, porcentajes)}
 
-        if alcance[:5] == "grupo":
-            ManejadorReportes._guardarReporteGrupo(alcance[6:], resultadoTextual)
+        if alcance.startswith("grupo:"):
+            ManejadorReportes._guardarReporteGrupo(alcance.removeprefix("grupo:").split(), resultadoTextual)
         elif alcance == "global":
             ManejadorReportes._guardarReporteGlobal(resultadoTextual)
 
@@ -108,9 +132,8 @@ class ManejadorReportes:
 
         conjuntoDeAlumnos = conjuntoDeAlumnos = Alumno.objects.all()
 
-        if alcance[:5] == "grupo":
-            conjuntoDeAlumnos = [alumno for alumno in conjuntoDeAlumnos
-                                if alumno.grupo and alumno.grupo.nombre == alcance[6:]]
+        if alcance.startswith("grupo:"):
+            conjuntoDeAlumnos = Alumno.objects.filter(grupo__nombre=alcance.split(":")[1].strip())
 
         for alumno in conjuntoDeAlumnos:
             faltas = alumno.getFaltas()

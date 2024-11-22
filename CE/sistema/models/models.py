@@ -383,6 +383,8 @@ class RegistroCalificaciones(m.Model):
     fecha = m.DateField(default=date.today)
     comentario = m.TextField(blank=True, null=True)
 
+    
+
     class Meta:
         unique_together = ('alumno', 'fecha')
 
