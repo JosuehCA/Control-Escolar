@@ -104,6 +104,7 @@ class CreadorDeUsuariosEscolares(ABC):
         pass
 
 class CreadorDeProfesores(CreadorDeUsuariosEscolares):
+
     def crearUsuarioEscolar(self, **kwargs) -> None:
         
         grupo_id = kwargs.get('grupo')
@@ -156,7 +157,7 @@ class CreadorDeNutricionistas(CreadorDeUsuariosEscolares):
             password=kwargs.get('contrasena')
         )
 
-FACTORIES = {
+Creadores = {
     'Profesor': CreadorDeProfesores(),
     'Tutor': CreadorDeTutores(),
     'Alumno': CreadorDeAlumnos(),
@@ -165,6 +166,8 @@ FACTORIES = {
 
 class GestorDeGrupos(UsuarioEscolar):
     
+    
+    #Recibe el nombre y lista de alumnos a asignar al grupo
     @classmethod
     def crearGrupo(cls, nombre: str, alumnos: List['Alumno']) -> bool:
         if Grupo.objects.filter(nombre=nombre).exists():
@@ -220,13 +223,6 @@ class GestorDeGrupos(UsuarioEscolar):
             print("El grupo no existe.")
             return False
 
-    @classmethod
-    def eliminarGruposAlumnosSeleccionados(cls, alumnos: List['Alumno']) -> None:
-        for alumno in alumnos:
-            alumno.grupo = None
-            alumno.save()
-
-    
     class Meta:
         verbose_name = "AdministradorGrupos"
         verbose_name_plural = "AdministradoresGrupos"
@@ -236,17 +232,20 @@ class GestorDeUsuarios(UsuarioEscolar):
     """TDA Administrador. Rol especial dentro del plantel cuyos permisos permiten controlar todo cuanto
     sea necesario. Tiene acceso a todos los apartados."""    
 
+
     @classmethod
     def crearUsuarioEscolar(cls, nombre, apellido, username, contrasena, rol, **kwargs) -> None:
+        #Si el usuario ya existe, no se crea
         if UsuarioEscolar.objects.filter(username=username).exists():
             raise ValueError("Error: El usuario ya existe.")
 
-        factory = FACTORIES.get(rol)
-        if not factory:
+        #Si el rol no es soportado, no se crea
+        creador = Creadores.get(rol)
+        if not creador:
             raise ValueError(f"Error: Rol no soportado: {rol}")
 
         try:
-            factory.crearUsuarioEscolar(
+            creador.crearUsuarioEscolar(
                 nombre=nombre,
                 apellido=apellido,
                 username=username,
@@ -425,6 +424,10 @@ class Tutor(UsuarioEscolar):
 
     def verActividadActualTutorado(self, alumno: 'Alumno') -> Actividad:
         return alumno.actividadActual
+    
+    def generarReporteTutorado(self, alumno: 'Alumno'):
+        pass
+
     
     class Meta:
         verbose_name = "Tutor"
