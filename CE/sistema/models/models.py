@@ -68,7 +68,6 @@ class Platillo(m.Model):
 
 # Roles ---------------------------------------------------------------------------------------
 
-
 class UsuarioEscolar(AbstractUser):
     """TDA Usuario Escolar. Define el rol común entre todos aquellos pertenecientes a la institución de una
     u otra manera (profesores, admnistrador, tutores, alumnos y nutricionista). Proporciona actividades 
