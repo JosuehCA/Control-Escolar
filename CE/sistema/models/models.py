@@ -245,12 +245,14 @@ class GestorDeUsuarios(UsuarioEscolar):
             print(e)
         
     @classmethod
-    def eliminarUsuarioEscolar(cls, usuarioId : int) -> None:
+    def eliminarUsuarioEscolar(cls, usuarioId : int) -> bool:
         try:
             usuario = UsuarioEscolar.objects.get(id=usuarioId)
             usuario.delete()
+            return True
         except Exception as e:
             print(f"Error al eliminar usuarios: {e}")
+            return False
             
     @classmethod
     def modificarUsuarioEscolar(cls, usuarioId: int, nombre, apellido, username, contrasena, rol, **kwargs) -> bool:
