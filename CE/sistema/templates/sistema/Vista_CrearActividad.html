@@ -101,13 +101,13 @@
         {% endif %}
 
         <!-- Formulario para crear actividades -->
-        <form method="POST" action="{% url 'actividades' %}">
+        <form method="POST" action="{% url 'crearActividad' %}">
             {% csrf_token %}
             {{ form.as_p }}
             <button type="submit">Guardar Actividad</button>
         </form>
 
-        <a href="{% url 'lista_actividades' %}" class="btn-secundario">Ver Lista de Actividades</a>
+        <a href="{% url 'listaActividades' %}" class="btn-secundario">Ver Lista de Actividades</a>
     </div>
 </body>
 </html>

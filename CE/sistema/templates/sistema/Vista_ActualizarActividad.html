@@ -137,9 +137,10 @@
 
             <p><strong>Fecha:</strong> {{ actividad.fecha }}</p>
             <p><strong>Horario:</strong> {{ actividad.horario }}</p>
+            <p><strong>{{actividad.grupo}}</strong></p>
             <button type="submit">Actualizar</button>
 
-            <a href="{% url 'lista_actividades' %}" class="boton-regresar">Regresar a la lista
+            <a href="{% url 'listaActividades' %}" class="boton-regresar">Regresar a la lista
             </a>
         </form>
     </div>
@@ -148,7 +149,7 @@
     <script>
         // Mostrar el mensaje por 1 segundo antes de redirigir
         setTimeout(function() {
-            window.location.href = "{% url 'lista_actividades' %}";
+            window.location.href = "{% url 'listaActividades' %}";
         }, 1000); 
     </script>
     {% endif %}

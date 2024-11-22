@@ -3,12 +3,10 @@ from sistema.models.forms_plantel import *
 from django.contrib import messages
 from datetime import datetime
 from sistema.models.models import *
-from django.views import View
-
-
 from sistema.models.models_actividades import *
+from sistema.forms_grupos import *
 
-def crear_horario(request):
+def creacionHorario(request):
     if request.method == "POST":
         crearHorarioForm = CrearHorarioForm(request.POST)
         if crearHorarioForm.is_valid():
@@ -30,44 +28,44 @@ def crear_horario(request):
     return render(request, "sistema/Vista_CrearHorario.html", {'form': crearHorarioForm})
 
 
-def eliminar_horario(request, horario_id):
+def eliminacionHorario(request, horarioId):
     if request.method == "POST": 
-        horarioEliminado = GestorHorarios.eliminarHorarioEscolar(horario_id)
+        horarioEliminado = GestorHorarios.eliminarHorarioEscolar(horarioId)
         if horarioEliminado:
             messages.success(request, "Horario eliminado con éxito.")
         else:
             messages.error(request, "El horario no existe o ya ha sido eliminado.")
-    return redirect('lista_horarios') 
+    return redirect('listaHorarios') 
 
-def listar_horarios(request):
+def listaHorarios(request):
     listaHorarios = HorarioEscolar.objects.all()
     return render(request, "sistema/Vista_ListaHorarios.html", {'horarios': listaHorarios})
 
 
-def crear_actividad(request):
+def creacionActividad(request):
     if request.method == "POST":
         crearActividadForm = CrearActividadForm(request.POST)
         if crearActividadForm.is_valid():
-            horario = crearActividadForm.cleaned_data['horario']
-            nombre = crearActividadForm.cleaned_data['nombre']
-            descripcion = crearActividadForm.cleaned_data['descripcion']
-            hora_inicio = crearActividadForm.cleaned_data['horaInicio']
-            hora_final = crearActividadForm.cleaned_data['horaFinal']
-            fecha = crearActividadForm.cleaned_data['fecha']
-            grupo = crearActividadForm.cleaned_data['grupo']
+            horarioAsociado = crearActividadForm.cleaned_data['horario']
+            nombreActividad = crearActividadForm.cleaned_data['nombre']
+            descripcionActividad = crearActividadForm.cleaned_data['descripcion']
+            horaInicioActividad = crearActividadForm.cleaned_data['horaInicio']
+            horaFinalActividad = crearActividadForm.cleaned_data['horaFinal']
+            fechaActividad = crearActividadForm.cleaned_data['fecha']
+            grupoAsociado = crearActividadForm.cleaned_data['grupo']
 
             try:
                 # Intenta agregar la actividad, la validación se hace dentro de agregarActividad
                 gestorActividades = GestorActividades()
 
                 gestorActividades.agregarActividad(
-                    horario=horario,
-                    nombre=nombre,
-                    descripcion=descripcion,
-                    horaInicio=hora_inicio,
-                    horaFinal=hora_final,
-                    fecha=fecha,
-                    grupo=grupo
+                    horario=horarioAsociado,
+                    nombre=nombreActividad,
+                    descripcion=descripcionActividad,
+                    horaInicio=horaInicioActividad,
+                    horaFinal=horaFinalActividad,
+                    fecha=fechaActividad,
+                    grupo=grupoAsociado
                 )
                 messages.success(request, "Actividad agregada con éxito.")
             except ValueError as e:
@@ -79,14 +77,14 @@ def crear_actividad(request):
 
     return render(request, 'sistema/Vista_CrearActividad.html', {'form': crearActividadForm})
 
-def eliminar_actividad(request, actividad_id):
+def eliminacionActividad(request, actividadId):
     gestorActividades = GestorActividades()
 
-    if gestorActividades.eliminarActividad(actividad_id):
-        return redirect("lista_actividades")
+    if gestorActividades.eliminarActividad(actividadId):
+        return redirect("listaActividades")
     return render(request, "error.html", {"error": "No se pudo eliminar la actividad"})
 
-def listar_actividades(request):
+def listaActividades(request):
     fecha = request.GET.get('fecha', None)
     if fecha:
         try:
@@ -103,63 +101,63 @@ def listar_actividades(request):
         "fecha": fecha  
     })
 
-def detalle_actividad(request, id):
-    actividad = get_object_or_404(Actividad, id=id)
+def detallesDeActividad(request, actividadId):
+    actividad = get_object_or_404(Actividad, id=actividadId)
     
     # Obtener todos los alumnos del grupo asociado
     grupo = actividad.grupo
-    alumnos = grupo.alumnos.all()
+    listaAlumnos = grupo.alumnos.all()
 
     # Verificar si algún alumno ya está participando en la actividad
-    actividad_iniciada = any(alumno.actividadActual == actividad for alumno in alumnos)
+    actividadIniciada = any(alumno.actividadActual == actividad for alumno in listaAlumnos)
 
     if request.method == "POST":
         # Si la actividad ya está asignada, cambiar a "terminada"
-        if actividad_iniciada:
-            for alumno in alumnos:
+        if actividadIniciada:
+            for alumno in listaAlumnos:
                 if alumno.actividadActual == actividad:
                     alumno.actividadActual = None  # Terminar la actividad del alumno
                     alumno.save()
-            actividad_iniciada = False
+            actividadIniciada = False
         else:
             # Asignar la actividad a todos los alumnos del grupo
-            for alumno in alumnos:
+            for alumno in listaAlumnos:
                 alumno.actividadActual = actividad
                 alumno.save()
-            actividad_iniciada = True
+            actividadIniciada = True
         
         # Redirigir de nuevo a la página de detalles de la actividad
-        return redirect('detalle_actividad', id=id)
+        return redirect('detallesDeActividad', id=actividadId)
 
     return render(request, "sistema/Vista_DetallesActividad.html", {
         'actividad': actividad,
-        'actividad_iniciada': actividad_iniciada,
-        'alumnos': alumnos
+        'actividadIniciada': actividadIniciada,
+        'alumnos': listaAlumnos
     })
 
 
-def actualizar_actividad(request, actividad_id):
-    actividad = get_object_or_404(Actividad, id=actividad_id)
-    gestor_actividades = GestorActividades()
+def actualizacionActividad(request, actividadId):
+    actividad = get_object_or_404(Actividad, id=actividadId)
+    gestorActividades = GestorActividades()
     
     if request.method == "POST":
         actualizarActividadForm = ActualizarActividadForm(request.POST, instance=actividad)
         
         if actualizarActividadForm.is_valid():
             # Obtener los datos del formulario
-            nombre = actualizarActividadForm.cleaned_data['nombre']
-            descripcion = actualizarActividadForm.cleaned_data['descripcion']
-            hora_Inicio = actualizarActividadForm.cleaned_data['horaInicio']
-            hora_Final = actualizarActividadForm.cleaned_data['horaFinal']
+            nuevoNombre = actualizarActividadForm.cleaned_data['nombre']
+            nuevaDescripcion = actualizarActividadForm.cleaned_data['descripcion']
+            nuevaHoraInicio = actualizarActividadForm.cleaned_data['horaInicio']
+            nuevaHoraFinal = actualizarActividadForm.cleaned_data['horaFinal']
             
             # Intentar actualizar la actividad con los nuevos datos
             try:
-                if gestor_actividades.actualizarActividad(
+                if gestorActividades.actualizarActividad(
                     actividad=actividad,
-                    nombre=nombre,
-                    descripcion=descripcion,
-                    horaInicio=hora_Inicio,
-                    horaFinal=hora_Final
+                    nombre=nuevoNombre,
+                    descripcion=nuevaDescripcion,
+                    horaInicio=nuevaHoraInicio,
+                    horaFinal=nuevaHoraFinal
                 ):
                     # Si se actualizó, redirigir a la lista de actividades
                     messages.success(request, "Actividad actualizada con éxito.")
@@ -178,66 +176,62 @@ def actualizar_actividad(request, actividad_id):
 
 
 
-#PASAR A OTRO LADO
+#PASAR A OTRO LADO---------------------
 
-class PaseDeListaView(View):
-    template_name = 'sistema/pase_de_lista.html'
 
-    def get(self, request, grupo_id):
-        # Obtener el grupo
-        grupo = get_object_or_404(Grupo, id=grupo_id)
-        form = PaseDeListaForm(grupo)
-        return render(request, self.template_name, {'form': form, 'grupo': grupo})
+def paseDeLista(request, grupoId):
+    # Obtener el grupo
+    grupo = get_object_or_404(Grupo, id=grupoId)
+    paseDeListaForm = PaseDeListaForm(grupo)
 
-    def post(self, request, grupo_id):
-        # Obtener el grupo
-        grupo = get_object_or_404(Grupo, id=grupo_id)
-        form = PaseDeListaForm(grupo, request.POST)
+    if request.method == 'POST':
+        # Crear el formulario con los datos del POST
+        paseDeListaForm = PaseDeListaForm(grupo, request.POST)
 
-        if form.is_valid():
+        if paseDeListaForm.is_valid():
             for alumno in grupo.alumnos.all():
                 # Revisar si el formulario tiene marcada la asistencia
-                if form.cleaned_data.get(f'asistencias_{alumno.id}', False):
+                if paseDeListaForm.cleaned_data.get(f'asistencias_{alumno.id}', False):
                     alumno.asistirAClase()  # Registrar asistencia
                 else:
                     alumno.faltarAClase()  # Registrar falta
-            return redirect('grupo_detalle', grupo_id=grupo.id)
+            return redirect('registroDeAsistencia', grupoId=grupo.id)
 
-        return render(request, self.template_name, {'form': form, 'grupo': grupo})
+    return render(request, 'sistema/Vista_PaseDeLista.html', {'form': paseDeListaForm, 'grupo': grupo})
 
-class GrupoDetalleView(View):
-    template_name = 'sistema/detalle.html'
 
-    def get(self, request, grupo_id):
-        grupo = get_object_or_404(Grupo, id=grupo_id)
-        hoy = date.today()
 
-        # Obtener registros de asistencia del día
-        asistencias = RegistroAsistencia.objects.filter(
-            alumno__in=grupo.alumnos.all(),
-            fecha=hoy,
-        )
-        
-        # Separar por asistencia y falta
-        alumnos_asistieron = [registro.alumno for registro in asistencias if registro.asistencias] #le movi a registro.asistencia
-        alumnos_faltaron = [registro.alumno for registro in asistencias if not registro.asistencias]
+def registroDeAsistencia(request, grupoId):
+    # Obtener el grupo
+    grupo = get_object_or_404(Grupo, id=grupoId)
+    fechaActual = date.today()
 
-        contexto = {
-            'grupo': grupo,
-            'alumnos_asistieron': alumnos_asistieron,
-            'alumnos_faltaron': alumnos_faltaron,
-            'fecha': hoy,
-        }
-        return render(request, self.template_name, contexto)
+    # Obtener registros de asistencia del día
+    listaAsistencias = RegistroAsistencia.objects.filter(
+        alumno__in=grupo.alumnos.all(),
+        fecha=fechaActual,
+    )
+    
+    # Separar por asistencia y falta
+    alumnosPresentes = [registro.alumno for registro in listaAsistencias if registro.asistencias] 
+    alumnosAusentes = [registro.alumno for registro in listaAsistencias if not registro.asistencias]
+
+    contexto = {
+        'grupo': grupo,
+        'alumnosPresentes': alumnosPresentes,
+        'alumnosAusentes': alumnosAusentes,
+        'fecha': fechaActual,
+    }
+    return render(request, 'sistema/Vista_RegistroDeAsistencias.html', contexto)
     
 
-def asignar_calificaciones(request, grupo_id):
-    grupo = get_object_or_404(Grupo, id=grupo_id)
-    alumnos = Alumno.objects.filter(grupo=grupo)
-    calificaciones = range(1, 6)  # Generar los números del 1 al 5
+def asignacionCalificaciones(request, grupoId):
+    grupo = get_object_or_404(Grupo, id=grupoId)
+    listaAlumnos = Alumno.objects.filter(grupo=grupo)
+    rangoDecalificaciones = range(1, 6)  
 
     if request.method == "POST":
-        for alumno in alumnos:
+        for alumno in listaAlumnos:
             calificacion = request.POST.get(f"calificacion_{alumno.id}")
             comentario = request.POST.get(f"comentario_{alumno.id}")
             
@@ -251,10 +245,10 @@ def asignar_calificaciones(request, grupo_id):
                         "comentario": comentario or "",
                     }
                 )
-        return redirect("detalle_grupo", grupo_id=grupo.id)
+        return redirect("registroDeAsistencia", grupoId=grupo.id)
 
-    return render(request, "sistema/asignar_calificaciones.html", {
+    return render(request, "sistema/Vista_AsignarCalificaciones.html", {
         "grupo": grupo,
-        "alumnos": alumnos,
-        "calificaciones": calificaciones
+        "alumnos": listaAlumnos,
+        "calificaciones": rangoDecalificaciones
     })

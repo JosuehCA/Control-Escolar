@@ -2,7 +2,9 @@ from django import forms
 
 from sistema.models.models import Alumno, Grupo
 from .models import *
-from django.core.exceptions import ValidationError  
+from django.core.exceptions import ValidationError 
+from sistema.models.models import *
+
 
         
 class CrearGrupoForm(forms.ModelForm):
@@ -49,3 +51,20 @@ class ActualizarGrupoForm(forms.ModelForm):
         super().__init__(*args, **kwargs)
         self.fields['nombre'].required = False  # El campo 'nombre' no será obligatorio
     
+
+class PaseDeListaForm(forms.Form):
+    def __init__(self, grupo, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        for alumno in grupo.alumnos.all():
+            self.fields[f'asistencias_{alumno.id}'] = forms.BooleanField(
+                label=f"{alumno.getNombre()}",
+                required=False
+            )
+
+class AsignarCalificacionForm(forms.ModelForm):
+    class Meta:
+        model = RegistroCalificaciones
+        fields = ['alumno', 'calificacion', 'comentario']
+
+    calificacion = forms.ChoiceField(choices=[(i, str(i)) for i in range(1, 6)], label="Calificación")
+    comentario = forms.CharField(required=False, widget=forms.Textarea, label="Comentario")

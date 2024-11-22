@@ -3,12 +3,12 @@ from django.urls import path
 from sistema.views import views_actividades
 
 urlpatterns = [
-    path("actividades/", views_actividades.crear_actividad, name="actividades"),
-    path("lista_actividades/", views_actividades.listar_actividades, name="lista_actividades"),
-    path('actividades/actualizar/<int:actividad_id>/', views_actividades.actualizar_actividad, name='actualizar_actividad'),
-    path('actividad/<int:id>/', views_actividades.detalle_actividad, name='detalle_actividad'),
-    path('crear_horario', views_actividades.crear_horario, name='crear_horario'),
-    path('lista-horarios/', views_actividades.listar_horarios, name='lista_horarios'),
-    path('eliminar-horario/<int:horario_id>/', views_actividades.eliminar_horario, name='eliminar_horario'),
-    path('eliminar_actividad/<int:actividad_id>', views_actividades.eliminar_actividad, name='eliminar_actividad'),
+    path('crearActividad/', views_actividades.creacionActividad, name='crearActividad'),
+    path('listaActividades/', views_actividades.listaActividades, name='listaActividades'),
+    path('actualizar/<int:actividadId>/', views_actividades.actualizacionActividad, name='actualizarActividad'),
+    path('detallesActividad/<int:actividadId>/', views_actividades.detallesDeActividad, name='detallesDeActividad'),
+    path('crearHorario/', views_actividades.creacionHorario, name='crearHorario'),
+    path('listaHorarios/', views_actividades.listaHorarios, name='listaHorarios'),
+    path('eliminarHorario/<int:horarioId>/', views_actividades.eliminacionHorario, name='eliminarHorario'),
+    path('eliminarActividad/<int:actividadId>', views_actividades.eliminacionActividad, name='eliminarActividad'),
 ]

@@ -11,8 +11,7 @@ urlpatterns = [
     path('listaGrupos/', views_administrador.listar_grupos, name='listaGrupos'),
     path('eliminarGrupo/<int:grupoId>/', views_administrador.eliminarGrupo, name='eliminarGrupo'),
     path('actualizarGrupo/<int:grupoId>/', views_administrador.modificarGrupo, name='modificarGrupo'),
-    path('grupo/<int:grupo_id>/pase-de-lista/', PaseDeListaView.as_view(), name='pase_de_lista'),
-    path('grupo/<int:grupo_id>/detalle/', GrupoDetalleView.as_view(), name='grupo_detalle'),
-    path('grupo/<int:grupo_id>/asignar_calificaciones/', views_actividades.asignar_calificaciones, name='asignar_calificaciones'),
-
+    path('paseDeLista/<int:grupoId>/', views_actividades.paseDeLista, name='paseDeLista'),
+    path('registroDeAsistencia/<int:grupoId>/', views_actividades.registroDeAsistencia, name='registroDeAsistencia'),
+    path('asignarCalificaciones/<int:grupoId>/', views_actividades.asignacionCalificaciones, name='asignarCalificaciones')
 ]

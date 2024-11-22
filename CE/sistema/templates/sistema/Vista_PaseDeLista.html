@@ -78,32 +78,27 @@
 </head>
 <body>
     <div class="contenedor">
-        <h2>Pase de lista para {{ grupo.nombre }}</h2>
-        <form method="post">
+        <h1>Asignación de Calificaciones</h1>
+        <form method="POST">
             {% csrf_token %}
-            {{ form.non_field_errors }}
-            <table>
-                <thead>
-                    <tr>
-                        <th>Alumno</th>
-                        <th>Asistencia</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for field in form %}
-                        <tr>
-                            <td>
-                                <label for="{{ field.id_for_label }}">{{ field.label }}</label>
-                                {% if field.errors %}
-                                    <div class="error">{{ field.errors }}</div>
-                                {% endif %}
-                            </td>
-                            <td>{{ field }}</td>
-                        </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
-            <button type="submit">Registrar Asistencia</button>
+            {% for alumno in alumnos %}
+                <fieldset>
+                    <legend>{{ alumno.getNombre }}</legend>
+                    <input type="hidden" name="alumno_id" value="{{ alumno.id }}">
+                    <label for="calificacion_{{ alumno.id }}">Calificación (1-5 o No Aplica):</label>
+                    <select name="calificacion_{{ alumno.id }}" required>
+                        <option value="">Selecciona...</option>
+                        <option value="no_aplica">No Aplica</option>
+                        {% for i in calificaciones %}
+                            <option value="{{ i }}">{{ i }}</option>
+                        {% endfor %}
+                    </select>
+
+                    <label for="comentario_{{ alumno.id }}">Comentario (opcional):</label>
+                    <textarea name="comentario_{{ alumno.id }}"></textarea>
+                </fieldset>
+            {% endfor %}
+            <button type="submit">Guardar Calificaciones</button>
         </form>
     </div>
 </body>
