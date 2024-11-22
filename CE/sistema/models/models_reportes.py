@@ -19,23 +19,6 @@ class Reporte(m.Model):
         abstract = True
 
 
-
-class ReporteAlumno(Reporte):
-    """TDA Reporte de Alumno. Reporte individual por alumno que registra detalles conductuales, de asistencias,
-    entre otros."""
-
-    alumno: Alumno = m.ForeignKey("Alumno", on_delete=m.CASCADE, related_name="alumno_reporte")
-
-
-    class Meta:
-        verbose_name = "Reporte Alumno"
-        verbose_name_plural = "Reportes: Alumnos"
-
-    def __str__(self):
-        return f"Reporte de {self.alumno.getNombre()}, {self.fecha.strftime('%d-%m-%Y %I:%M:%S %p')}"
-
-
-
 class ReporteGrupo(Reporte):
     """TDA Reporte de Grupo. Proporciona detalles condensados por grupos acerca de su conducta, asistencias, 
     entre otros."""
@@ -84,13 +67,18 @@ class ManejadorReportes:
     def generarDiagramaPastelBase64(tipo: str, alcance: str, etiquetas: list, colores: list) -> str:
         """Genera un diagrama de pastel de faltas y lo devuelve como imagen base64."""
 
-        if tipo == "falas":
-            valores = ManejadorReportes._obtenerDispersionFaltasAlumnado()
+        if tipo == "faltas":
+
+            valores = ManejadorReportes._obtenerDispersionFaltasAlumnado(alcance)
 
         # Filtrar etiquetas y colores para faltas mayores a 0
         valores_filtrados = [v for v in valores if v > 0]
         etiquetas_filtradas = [etiquetas[i] for i, v in enumerate(valores) if v > 0]
         colores_filtrados = [colores[i] for i, v in enumerate(valores) if v > 0]
+
+         # Calcular porcentajes
+        total = sum(valores_filtrados)
+        porcentajes = [(v / total) * 100 for v in valores_filtrados]
 
         # Crear la figura y el gráfico
         figura, eje = plt.subplots()
@@ -98,25 +86,18 @@ class ManejadorReportes:
                 colors=colores_filtrados)
         plt.axis('equal')  # Mantener relación de aspecto del gráfico
 
-        if alcance == "grupo":
-            ManejadorReportes._guardarReporteGrupo(contenido)
+        contenido = {etiqueta: f"{porcentaje:.1f}%" for etiqueta, porcentaje in zip(etiquetas_filtradas, porcentajes)}
+
+        if alcance[:5] == "grupo":
+            ManejadorReportes._guardarReporteGrupo(alcance[6:], contenido)
         elif alcance == "global":
             ManejadorReportes._guardarReporteGlobal(contenido)
 
         return ManejadorReportes._codificarImagenBase64DesdeMemoria()
 
-    # Métodos privados
-    # Guardar tipos de reportes en la base de datos
-    @staticmethod
-    def _guardarReporteGrupo(grupo: Grupo, contenido: str) -> None:
-        """Guarda un reporte para un grupo."""
-        ReporteGrupo.objects.create(grupo=grupo, contenido=contenido, fecha=now())
 
-    @staticmethod
-    def _guardarReporteGlobal(contenido: str) -> None:
-        """Guarda un reporte global."""
-        ReporteGlobal.objects.create(contenido=contenido, fecha=now())
 
+    # Métodos privados -------------------------------------------------------------------
     @staticmethod
     def _codificarImagenBase64DesdeMemoria() -> str:
         """Codifica en base64 la imagen actual de Matplotlib."""
@@ -128,18 +109,18 @@ class ManejadorReportes:
     
     @staticmethod
     def _obtenerDispersionFaltasAlumnado(alcance: str) -> tuple[int]:
-        """Devuelve estadísticas de faltas del alumnado."""
+        """Devuelve estadísticas de faltas del alumnado de acuerdo al alcance definido"""
         faltas_1_o_menos = 0
         faltas_2 = 0
         faltas_3 = 0
         faltas_4_o_mas = 0
 
-        if alcance == "grupo":
-            conjuntoDeAlumnos = 
-        elif alcance == "global":
-            conjuntoDeAlumnos = Alumno.objects.all()
+        conjuntoDeAlumnos = conjuntoDeAlumnos = Alumno.objects.all()
 
-        alumnos = Alumno.objects.all()
+        if alcance[:5] == "grupo":
+            conjuntoDeAlumnos = [alumno for alumno in conjuntoDeAlumnos
+                                if alumno.grupo and alumno.grupo.nombre == alcance[6:]]
+
         for alumno in conjuntoDeAlumnos:
             faltas = alumno.getFaltas()
 
@@ -153,3 +134,20 @@ class ManejadorReportes:
                 faltas_4_o_mas += 1
 
         return (faltas_1_o_menos, faltas_2, faltas_3, faltas_4_o_mas)
+    
+    # Guardar tipos de reportes en la base de datos
+    @staticmethod
+    def _guardarReporteGrupo(grupo: str, contenido: str) -> None:
+        """Guarda un reporte para un grupo."""
+
+        try:
+            grupo: Grupo = Grupo.objects.get(nombre=grupo)
+
+            ReporteGrupo.objects.create(grupo=grupo, contenido=contenido, fecha=now())
+        except:
+            raise("Grupo no encontrado")
+
+    @staticmethod
+    def _guardarReporteGlobal(contenido: str) -> None:
+        """Guarda un reporte global."""
+        ReporteGlobal.objects.create(contenido=contenido, fecha=now())

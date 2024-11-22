@@ -75,7 +75,6 @@
                 <label for="tipo_reporte">Selecciona el tipo de reporte:</label>
                 <select id="tipo_reporte" required>
                     <option value="" disabled selected>Elige un tipo de reporte</option>
-                    <option value="asistencia">Histograma de Asistencia</option>
                     <option value="calificaciones">Diagrama de Calificaciones</option>
                     <option class="general" value="faltas_general">Diagrama de faltas general</option>
                 </select>
@@ -111,12 +110,10 @@
 
             // Redirigir a la URL de generación de reporte
             let url = "";
-            if (tipoReporte === "asistencia") {
-                url = `{% url 'generar_reporte' %}?alumno_id=${alumnoId.value}`;
-            } else if (tipoReporte.value === "calificaciones") {
+            if (tipoReporte.value === "calificaciones") {
                 url = "http://127.0.0.1:8000/reportes/generarDiagramaPastel/calificaciones";
             } else if (tipoReporte.value === "faltas_general") {
-                url = "http://127.0.0.1:8000/reportes/generarDiagramaPastel/faltas";
+                url = "http://127.0.0.1:8000/reportes/generarDiagramaPastel/faltas/grupo:prueba";
             }
 
             // Navegar a la URL para generar el reporte

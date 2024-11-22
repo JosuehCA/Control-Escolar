@@ -470,6 +470,9 @@ class Alumno(UsuarioEscolar):
     def getConsideracionesMenu(self) -> m.JSONField:
         return self.consideracionesMenu
     
+    def getGrupo(self) -> Grupo:
+        return self.grupo
+    
     def setAsistencias(self, asistencias: int) -> None:
         self.asistencias = asistencias
     
