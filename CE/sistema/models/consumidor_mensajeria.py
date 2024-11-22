@@ -33,7 +33,7 @@ class ConsumidorBase(ABC):
         )
 
     async def connect(self) -> None:
-        """Conecta al usuario al grupo WebSocket general."""
+        """Conecta al usuario al grupo WebSocket segun la configuracion."""
         await self.conectarUsuarioACanal()
 
     async def disconnect(self, close_code):

@@ -10,7 +10,7 @@ def mostrarVistaConversacionPrivada(request: HttpRequest, nombreDeUsuarioRecepto
     """Vista dinamica para conversaciones individuales, grupales o generales."""
     mensajePrivadoForm = MensajePrivadoForm()
     usuarioReceptor = UsuarioEscolar.objects.get(username=nombreDeUsuarioReceptor)
-    mensajesPrivados = MensajePrivado.obtenerMensajesFiltrados(request.user, usuarioReceptor)
+    mensajesPrivados = MensajePrivado.obtenerMensajesEntreUsuarios(request.user, usuarioReceptor)
     return render(request, "sistema/Vista_MensajeriaPrivada.html", {
         "form": mensajePrivadoForm,
         "mensajes": mensajesPrivados,
@@ -21,7 +21,7 @@ def mostrarVistaConversacionGrupal(request: HttpRequest, grupoReceptor: str) -> 
     """Vista para conversaciones individuales."""
     mensajeGrupalForm = MensajeGrupalForm()
     grupoReceptorInstancia = Grupo.objects.get(nombre=grupoReceptor)
-    mensajesGrupales = MensajeGrupal.obtenerMensajesFiltrados(grupoReceptorInstancia)
+    mensajesGrupales = MensajeGrupal.obtenerMensajesDeGrupo(grupoReceptorInstancia)
     print(mensajesGrupales)
     return render(request, "sistema/Vista_MensajeriaGrupal.html", {
         "form": mensajeGrupalForm,
@@ -32,7 +32,7 @@ def mostrarVistaConversacionGeneral(request: HttpRequest) -> HttpResponse:
     """Vista para conversaciones generales."""
 
     mensajeGeneralForm = MensajeGeneralForm()
-    mensajesGenerales = MensajeGeneral.obtenerMensajesFiltrados()
+    mensajesGenerales = MensajeGeneral.obtenerMensajesGenerales()
 
     return render(request, "sistema/Vista_MensajeriaGeneral.html", {
         "form": mensajeGeneralForm,
