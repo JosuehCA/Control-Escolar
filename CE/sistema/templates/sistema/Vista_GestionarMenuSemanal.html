@@ -32,7 +32,18 @@
     </style>
 </head>
 <body>
+    <a href="{% url 'opcionesMenu' %}" class="button-container">Opciones Menú</a>
     <h1>Gestionar Menú: {{ menu.nombre }}</h1>
+
+    <!-- Mensajes de éxito o error -->
+    {% if messages %}
+    <div class="messages">
+        {% for message in messages %}
+        <p>{{ message }}</p>
+        {% endfor %}
+    </div>
+    {% endif %}
+    
     <table>
         <thead>
             <tr>
