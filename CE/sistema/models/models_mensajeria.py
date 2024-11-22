@@ -1,5 +1,6 @@
 from django.db import models as m
 from django.conf import settings
+from django.forms import ValidationError
 from sistema.models.models import UsuarioEscolar, Grupo
 from abc import abstractmethod
 from django.db.models import Q
@@ -16,7 +17,7 @@ class MensajeBase(m.Model):
         return f"Mensaje de {self.emisorUsuario} enviado en {self.fechaEnviado}"
 
     def almacenarEnBaseDeDatos(self) -> None:
-        """Almacena el mensaje en la base de datos."""
+        """Almacena el mensaje en la base de datos, para agregar validaciones usar clean()."""
         self.save()
 
     @abstractmethod
@@ -27,17 +28,26 @@ class MensajeBase(m.Model):
     class Meta:
         abstract = True
 
-
-
 class MensajePrivado(MensajeBase):
-    """TDA Mensaje Directo. Particulariza un mensaje de manera individual."""
+    """TDA Mensaje Privado. Particulariza un mensaje de manera individual entre usuarios."""
     receptorUsuario = m.ForeignKey(UsuarioEscolar, on_delete=m.DO_NOTHING, related_name="receptor")
+
+    def recibirDatosDeMensajeEnDiccionario(self, datosDeMensaje: dict) -> None:
+        """Recibe los datos de un mensaje privado en formato JSON."""
+        self.emisorUsuario = datosDeMensaje['emisorUsuario']
+        self.receptorUsuario = datosDeMensaje['receptorUsuario']
+        self.contenidoMensaje = datosDeMensaje['contenidoMensaje']
     
-    def receptorEsDistintoDeEmisor(self, emisor: UsuarioEscolar, receptor: UsuarioEscolar) -> bool:
-        """
-        Verifica si el mensaje es válido para ser enviado, asegurando que el emisor y receptor sean distintos.
-        """
+    @classmethod
+    def receptorEsDistintoDeEmisor(cls, emisor: UsuarioEscolar, receptor: UsuarioEscolar) -> bool:
+        """ Verifica si el mensaje es válido para ser enviado, asegurando que el emisor y receptor sean distintos. """
         return emisor != receptor
+    
+    def clean(self) -> None:
+        """Validación antes de guardar."""
+        #clean() es un método que se ejecuta dentro de save() y por lo tanto, dentro de alamcenarEnBaseDeDatos().
+        if self.emisorUsuario == self.receptorUsuario:
+            raise ValidationError('El emisor y el receptor no pueden ser el mismo.')
     
     @classmethod
     def obtenerMensajesEntreUsuarios(cls, usuarioEmisor: UsuarioEscolar, usuarioReceptor: UsuarioEscolar) -> m.QuerySet:
@@ -47,12 +57,6 @@ class MensajePrivado(MensajeBase):
     def __str__(self) -> str:
         """Representación en cadena de un mensaje directo."""
         return f"Mensaje directo de {self.emisorUsuario} a {self.receptorUsuario}"
-    
-    def recibirDatosDeMensajeEnDiccionario(self, datosDeMensaje: dict) -> None:
-        """Recibe los datos de un mensaje privado en formato JSON."""
-        self.emisorUsuario = datosDeMensaje['emisorUsuario']
-        self.receptorUsuario = datosDeMensaje['receptorUsuario']
-        self.contenidoMensaje = datosDeMensaje['contenidoMensaje']
     
     class Meta:
         verbose_name = "Mensaje Directo"
@@ -65,16 +69,16 @@ class MensajeGrupal(MensajeBase):
 
     grupoRelacionado = m.ForeignKey(Grupo, on_delete=m.DO_NOTHING, related_name="mensajes")
 
-    @classmethod
-    def obtenerMensajesDeGrupo(cls, grupo: Grupo) -> m.QuerySet:
-        """Obtiene los mensajes filtrados que fueron enviados a un grupo específico."""
-        return cls.objects.filter(grupoRelacionado=grupo).order_by('fechaEnviado')
-    
     def recibirDatosDeMensajeEnDiccionario(self, datosDeMensaje: dict) -> None:
         """Recibe los datos de un mensaje grupal en formato JSON."""
         self.emisorUsuario = datosDeMensaje['emisorUsuario']
         self.contenidoMensaje = datosDeMensaje['contenidoMensaje']
         self.grupoRelacionado = datosDeMensaje['grupoRelacionado']
+
+    @classmethod
+    def obtenerMensajesDeGrupo(cls, grupo: Grupo) -> m.QuerySet:
+        """Obtiene los mensajes filtrados que fueron enviados a un grupo específico."""
+        return cls.objects.filter(grupoRelacionado=grupo).order_by('fechaEnviado')
 
     def __str__(self) -> str:
         """Representación en cadena de un mensaje grupal."""
@@ -89,15 +93,15 @@ class MensajeGrupal(MensajeBase):
 class MensajeGeneral(MensajeBase):
     """TDA Mensaje Plantel. Establece un mensaje compartido de manera global a todo el plantel."""
 
-    @classmethod
-    def obtenerMensajesGenerales(cls) -> m.QuerySet:
-        """Obtiene los mensajes filtrados que fueron enviados a todo el plantel."""
-        return cls.objects.all().order_by('fechaEnviado')
-
     def recibirDatosDeMensajeEnDiccionario(self, datosDeMensaje: dict) -> None:
         """Recibe los datos de un mensaje general en formato JSON."""
         self.emisorUsuario = datosDeMensaje['emisorUsuario']
         self.contenidoMensaje = datosDeMensaje['contenidoMensaje']
+
+    @classmethod
+    def obtenerMensajesGenerales(cls) -> m.QuerySet:
+        """Obtiene los mensajes filtrados que fueron enviados a todo el plantel."""
+        return cls.objects.all().order_by('fechaEnviado')
 
     def __str__(self) -> str:
         """Representación en cadena de un mensaje general."""
