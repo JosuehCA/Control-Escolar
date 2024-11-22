@@ -52,7 +52,7 @@ class MensajePrivado(MensajeBase):
     @classmethod
     def obtenerMensajesEntreUsuarios(cls, usuarioEmisor: UsuarioEscolar, usuarioReceptor: UsuarioEscolar) -> m.QuerySet:
         """Obtiene los mensajes filtrados que fueron enviados a un usuario específico."""
-        return cls.objects.filter(Q(emisorUsuario=usuarioEmisor, receptorUsuario=usuarioReceptor) | Q(emisorUsuario=usuarioReceptor, receptor=usuarioEmisor)).order_by('fechaEnviado')
+        return cls.objects.filter(Q(emisorUsuario=usuarioEmisor, receptorUsuario=usuarioReceptor) | Q(emisorUsuario=usuarioReceptor, receptorUsuario=usuarioEmisor)).order_by('fechaEnviado')
     
     def __str__(self) -> str:
         """Representación en cadena de un mensaje directo."""
