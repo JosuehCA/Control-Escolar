@@ -385,11 +385,13 @@ class RegistroCalificaciones(m.Model):
     fecha = m.DateField(default=date.today)
     comentario = m.TextField(blank=True, null=True)
 
+    
+
     class Meta:
         unique_together = ('alumno', 'fecha')
 
     def __str__(self):
-        return f"Calificación de {self.alumno.first_name} {self.alumno.last_name} en {self.grupo.nombre} el {self.fecha}"
+        return f"Calificación de {self.alumno.getNombre()} en {self.grupo.nombre} el {self.fecha}"
     
 class Tutor(UsuarioEscolar):
     """TDA Tutor. Tutor legal del alumno inscrito. Cuenta con acceso al sistema y puede visualizar toda la 
@@ -471,6 +473,19 @@ class Alumno(UsuarioEscolar):
     
     def getConsideracionesMenu(self) -> m.JSONField:
         return self.consideracionesMenu
+    
+    def getGrupo(self) -> Grupo:
+        return self.grupo
+    
+    def setAsistencias(self, asistencias: int) -> None:
+        self.asistencias = asistencias
+    
+    def setFaltas(self, faltas: int) -> None:
+        self.faltas = faltas
+
+    class Meta:
+        verbose_name = "Alumno"
+        verbose_name_plural = "Alumnos"
 
     def __str__(self):
         return f"{self.getNombreUsuario()}: {self.getNombre()}"
