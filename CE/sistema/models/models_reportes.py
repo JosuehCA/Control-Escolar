@@ -5,8 +5,10 @@ import matplotlib.pyplot as plt
 from django.utils.timezone import localtime, now
 
 class Reporte(m.Model):
-    """TDA Reporte. Define una entidad reporte cuyos valores dependen del tipo de reporte
-    requerido (reporte por alumno, reporte por grupo o reporte global)."""
+    """
+    TDA Reporte. Define una entidad reporte cuyos valores dependen del tipo de reporte
+    requerido (reporte grupal o reporte global).
+    """
 
     fecha = m.DateTimeField(auto_now_add=True)
     contenido = m.TextField()
@@ -17,8 +19,9 @@ class Reporte(m.Model):
 
 
 class ReporteGrupo(Reporte):
-    """TDA Reporte de Grupo. Proporciona detalles condensados por grupos acerca de su conducta, asistencias, 
-    entre otros."""
+    """
+    TDA Reporte de Grupo. Proporciona detalles condensados por grupos acerca de su calificación conductual o asistencias. 
+    """
     
     grupo = m.ForeignKey(Grupo, on_delete=m.CASCADE)
 
@@ -33,8 +36,10 @@ class ReporteGrupo(Reporte):
 
 
 class ReporteGlobal(Reporte):
-    """TDA Reporte Global. Proporciona detalles conductuales y de asistencia de todos los alumnos inscritos
-    en el plantel."""
+    """
+    TDA Reporte Global. Proporciona detalles de calificaciones conductuales o de asistencia de todos los alumnos inscritos
+    en el plantel.
+    """
 
     class Meta:
         verbose_name = "Reporte Global"
