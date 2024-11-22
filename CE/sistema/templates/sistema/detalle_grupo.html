@@ -1,0 +1,51 @@
+{% block content %}
+<h1>Detalles del Grupo: {{ grupo.nombre }}</h1>
+<h3>Fecha: {{ fecha }}</h3>
+
+<h2>Alumnos con Asistencia</h2>
+<table>
+    <thead>
+        <tr>
+            <th>Nombre del Alumno</th>
+            <th>Calificación</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for alumno in alumnos_asistieron %}
+        <tr>
+            <td>{{ alumno.nombre }}</td>
+            <td>{{ alumno.calificacion|default:"Sin asignar" }}</td>
+        </tr>
+        {% empty %}
+        <tr>
+            <td colspan="2">No hay alumnos con asistencia registrada.</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+
+<h2>Alumnos con Falta</h2>
+<table>
+    <thead>
+        <tr>
+            <th>Nombre del Alumno</th>
+            <th>Estado</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for alumno in alumnos_faltaron %}
+        <tr>
+            <td>{{ alumno.nombre }}</td>
+            <td>Ausente</td>
+        </tr>
+        {% empty %}
+        <tr>
+            <td colspan="2">No hay alumnos con falta registrada.</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+
+<p><a href="{% url 'asignar_calificaciones' grupo.id %}">Asignar Calificaciones</a></p>
+<p><a href="{% url 'lista_grupos' %}">Regresar a la lista de grupos</a></p>
+{% endblock %}

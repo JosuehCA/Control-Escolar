@@ -14,68 +14,69 @@ def administrarGrupo(request):
     return render(request, "sistema/Vista_AdministrarGrupos.html")
     
 def crearGrupo(request):
-    
     if request.method == 'POST':
         form = CrearGrupoForm(request.POST)
         if form.is_valid():
             nombre = form.cleaned_data['nombre']
             alumnos = form.cleaned_data['alumnos']
-            
-        if alumnos.count() == 0:
-            messages.error(request, "No se puede crear un grupo sin alumnos.")
-            return redirect('crearGrupo')
-            
-        if GestorDeGrupos.crearGrupo(nombre, list(alumnos)):
-            messages.success(request, "Grupo creado con éxito.")
-            return redirect('crearGrupo')
-        else:
-            messages.error(request, "Error al crear el grupo.")
+
+            if alumnos.count() == 0:
+                messages.error(request, "No se puede crear un grupo sin alumnos.")
+                return redirect('crearGrupo')
+
+            # Crear grupo usando el gestor
+            if GestorDeGrupos.crearGrupo(nombre, list(alumnos)):
+                messages.success(request, "Grupo creado con éxito.")
+                return redirect('crearGrupo')
+            else:
+                messages.error(request, "Error al crear el grupo.")
     else:
         form = CrearGrupoForm()
 
-    return render(request, 'sistema/Vista_CrearGrupo.html', {
-        'form': form
-    })
+    return render(request, 'sistema/Vista_CrearGrupo.html', {'form': form})
+
     
 def eliminarGrupo(request, grupoId):
-    
     if GestorDeGrupos.eliminarGrupo(grupoId):
-            messages.success(request, "Grupo eliminado con éxito.")
-            return redirect('crearGrupo')
+        messages.success(request, "Grupo eliminado con éxito.")
+        return redirect('listaGrupos')
     else:
         messages.error(request, "Error al eliminar el grupo.")
     
-    grupos = Grupo.objects.prefetch_related('alumnos').all()  # Prefetch para cargar alumnos de forma eficiente
+    grupos = Grupo.objects.prefetch_related('alumnos').all()
     return render(request, "sistema/Vista_ListaGrupos.html", {'grupos': grupos})
+
     
 def modificarGrupo(request, grupoId):
     grupo = get_object_or_404(Grupo, id=grupoId)
 
     if request.method == "POST":
-        actualizarGrupoForm = ActualizarGrupoForm(request.POST, instance=grupo)
+        form = ActualizarGrupoForm(request.POST, instance=grupo)
 
-        if actualizarGrupoForm.is_valid():
-            nombre = actualizarGrupoForm.cleaned_data['nombre']
-            alumnos = actualizarGrupoForm.cleaned_data['alumnos']
+        if form.is_valid():
+            nombre = form.cleaned_data['nombre']
+            alumnos = form.cleaned_data['alumnos']
 
             try:
-                cambios = GestorDeGrupos.modificarGrupo(grupo_id=grupoId, nombre=nombre, alumnos=alumnos)
+                cambios = GestorDeGrupos.modificarGrupo(grupo_id=grupoId, nombre=nombre, alumnos=list(alumnos))
                 if cambios:
                     messages.success(request, "Grupo actualizado con éxito.")
                 else:
                     messages.info(request, "No se realizaron cambios.")
-                return redirect('listaGrupos')  # Cambiar a la vista o URL deseada
+                return redirect('listaGrupos')
             except ValueError as e:
-                actualizarGrupoForm.add_error(None, str(e))
+                form.add_error(None, str(e))
     else:
-        actualizarGrupoForm = ActualizarGrupoForm(instance=grupo)
+        form = ActualizarGrupoForm(instance=grupo)
 
-    return render(request, 'sistema/Vista_ModificarGrupo.html', {'form': actualizarGrupoForm, 'grupo': grupo})
+    return render(request, 'sistema/Vista_ModificarGrupo.html', {'form': form, 'grupo': grupo})
+
 
     
 def listar_grupos(request):
-    grupos = Grupo.objects.prefetch_related('alumnos').all()  # Prefetch para cargar alumnos de forma eficiente
+    grupos = Grupo.objects.prefetch_related('alumnos').all()
     return render(request, "sistema/Vista_ListaGrupos.html", {'grupos': grupos})
+
 
 def crearUsuario(request):
     if request.method == 'POST':

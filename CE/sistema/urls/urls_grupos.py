@@ -1,6 +1,9 @@
 from django.urls import path
-
+from sistema.views.views_actividades import *
+from sistema.views import views_actividades
 from sistema.views import views_administrador
+
+
 
 urlpatterns = [
     path("administrar", views_administrador.administrar, name="administrar"),
@@ -11,5 +14,9 @@ urlpatterns = [
     path('crearUsuario/', views_administrador.crearUsuario, name='crearUsuario'),
     path('listaUsuarios/', views_administrador.listarUsuarios, name='listaUsuarios'),
     path('eliminarUsuario/<int:usuarioId>/', views_administrador.eliminarUsuario, name='eliminarUsuario'),
-    path('modificarUsuario/<int:usuarioId>/ <str:rol>', views_administrador.modificarUsuario, name='modificarUsuario')
+    path('modificarUsuario/<int:usuarioId>/ <str:rol>', views_administrador.modificarUsuario, name='modificarUsuario'),
+    path('grupo/<int:grupo_id>/pase-de-lista/', PaseDeListaView.as_view(), name='pase_de_lista'),
+    path('grupo/<int:grupo_id>/detalle/', GrupoDetalleView.as_view(), name='grupo_detalle'),
+    path('grupo/<int:grupo_id>/asignar_calificaciones/', views_actividades.asignar_calificaciones, name='asignar_calificaciones'),
+
 ]
