@@ -56,21 +56,34 @@
             font-size: 16px;
             color: green;
         }
+
+        input[type="text"] {
+        width: 100%;
+        padding: 10px;
+        margin-top: 5px;
+        border: 1px solid #ddd;
+        border-radius: 5px;
+        font-size: 16px;
+        background: #f3f3f3;
+        transition: all 0.3s ease;
+    }
+
+    input[type="text"]:focus {
+        border-color: #007BFF;
+        background: #fff;
+        box-shadow: 0 0 5px rgba(0, 123, 255, 0.5);
+        outline: none;
+    }
+
+    #grupoContainer {
+        margin-top: 20px;
+    }
     </style>
 </head>
 <body>
     <div class="container">
         <h1>Generar Reportes</h1>
         <form id="reporteForm">
-            <div class="form-group">
-                <label for="alumno">Selecciona un alumno:</label>
-                <select id="alumno" required>
-                    <option value="" disabled selected>Elige un alumno</option>
-                    {% for alumno in alumnos %}
-                    <option value="{{ alumno.id }}">{{ alumno.getNombre }}</option>
-                    {% endfor %}
-                </select>
-            </div>
             <div class="form-group">
                 <label for="tipo_reporte">Selecciona el tipo de reporte:</label>
                 <select id="tipo_reporte" required>
@@ -81,6 +94,11 @@
                     <option class="global" value="faltas_global_pastel">Diagrama de pastel de faltas global</option>
                 </select>
             </div>
+            <div class="form-group" id="grupoContainer" style="display: none;">
+                <label for="nombre_grupo">Nombre del grupo:</label>
+                <input type="text" id="nombre_grupo" placeholder="Ingresa el nombre del grupo" />
+            </div>
+            
             <button type="submit">Generar Reporte</button>
         </form>
         <div id="message"></div>
@@ -89,42 +107,53 @@
     <script>
         document.getElementById("tipo_reporte").addEventListener('change', function() {
             const tipoReporte = this.selectedOptions[0].classList[0];
-            opcion = document.getElementById('alumno');
-
-            if(tipoReporte === "global" || tipoReporte === "grupal") {
-                opcion.disabled = true;
-            } else opcion.disabled = false;
+            const grupoContainer = document.getElementById("grupoContainer");
+    
+            // Mostrar o esconder el campo del grupo según la opción seleccionada
+            if (tipoReporte === "grupal") {
+                grupoContainer.style.display = "block";
+            } else {
+                grupoContainer.style.display = "none";
+            }
         });
-
+    
         document.getElementById('reporteForm').addEventListener('submit', function(event) {
             event.preventDefault();
-
-            const alumnoId = document.getElementById('alumno');
+    
             const tipoReporte = document.getElementById('tipo_reporte').selectedOptions[0];
-
+            const nombreGrupo = document.getElementById('nombre_grupo').value.trim();
+            const messageElement = document.getElementById('message');
+    
+            // Validar que se haya seleccionado un tipo de reporte
             if (!tipoReporte.value) {
                 alert("Por favor, selecciona un tipo de reporte.");
                 return;
             }
-
-            const messageElement = document.getElementById('message');
+    
+            // Validar que se haya ingresado un nombre de grupo si la opción es grupal
+            if (tipoReporte.classList.contains("grupal") && !nombreGrupo) {
+                alert("Por favor, ingresa el nombre del grupo.");
+                return;
+            }
+    
             messageElement.textContent = "Generando reporte...";
-
-            // Redirigir a la URL de generación de reporte
+    
+            // Generar la URL
             let url = "";
             if (tipoReporte.value === "calificaciones_grupal_histograma") {
-                url = "http://127.0.0.1:8000/reportes/generarHistograma/calificaciones/grupo:prueba";
+                url = `http://127.0.0.1:8000/reportes/generarHistograma/calificaciones/grupo:${encodeURIComponent(nombreGrupo)}`;
             } else if (tipoReporte.value === "calificaciones_global_histograma") {
                 url = "http://127.0.0.1:8000/reportes/generarHistograma/calificaciones/global";
             } else if (tipoReporte.value === "faltas_grupal_pastel") {
-                url = "http://127.0.0.1:8000/reportes/generarDiagramaPastel/faltas/grupo:prueba";
+                url = `http://127.0.0.1:8000/reportes/generarDiagramaPastel/faltas/grupo:${encodeURIComponent(nombreGrupo)}`;
             } else if (tipoReporte.value === "faltas_global_pastel") {
                 url = "http://127.0.0.1:8000/reportes/generarDiagramaPastel/faltas/global";
             }
-
+    
             // Navegar a la URL para generar el reporte
             window.location.href = url;
         });
     </script>
+    
 </body>
 </html>
