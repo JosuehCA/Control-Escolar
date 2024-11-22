@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tabla Editable con Nuevas Filas</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+        }
+        table {
+            border-collapse: collapse;
+            width: 100%; 
+            margin-top: 20px;
+        }
+        th, td {
+            border: 1px solid #ddd;
+            text-align: left;
+            padding: 8px;
+        }
+        th {
+            background-color: #f4f4f4;
+        }
+        td[contenteditable="true"] {
+            background-color: #e8f0fe;
+            outline: none;
+        }
+        button {
+            margin-top: 10px;
+            padding: 10px 20px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #45a049;
+        }
+    </style>
+</head>
+<body>
+
+    <h1>Tabla Dinámica Editable</h1>
+    <table id="dynamicTable">
+        <thead>
+            <tr>
+                <th>Nombre</th>
+                <th>Edad</th>
+                <th>Correo</th>
+                <th>Acción</th>
+            </tr>
+        </thead>
+        <tbody>
+           
+        </tbody>
+    </table>
+    <button onclick="agregarFila()">Agregar Fila</button>
+    <button onclick="guardarDatos()">Guardar</button>
+
+    <script>
+        // Agregar nueva fila
+        function agregarFila() {
+            const table = document.getElementById("dynamicTable").getElementsByTagName('tbody')[0];
+            const newRow = table.insertRow();
+
+            // Agregar celdas editables
+            newRow.innerHTML = `
+                <td contenteditable="true"></td>
+                <td contenteditable="true"></td>
+                <td contenteditable="true"></td>
+                <td><button onclick="eliminarFila(this)">Eliminar</button></td>
+            `;
+        }
+
+        // Eliminar fila
+        function eliminarFila(button) {
+            const row = button.parentElement.parentElement;
+            row.remove();
+        }
+
+        // Guardar datos
+        function guardarDatos() {
+            const table = document.getElementById("dynamicTable");
+            const data = [];
+
+            // Recolectar datos de todas las filas
+            for (let i = 1; i < table.rows.length; i++) {
+                const row = table.rows[i];
+                data.push({
+                    nombre: row.cells[0].innerText,
+                    edad: row.cells[1].innerText,
+                    correo: row.cells[2].innerText,
+                });
+            }
+
+            // Enviar datos al servidor
+            fetch('/guardar-datos/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(data),
+            })
+            .then(response => response.json())
+            .then(result => {
+                alert(result.mensaje || "Datos guardados exitosamente.");
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('Hubo un error al guardar los datos.');
+            });
+        }
+    </script>
+
+</body>
+</html>

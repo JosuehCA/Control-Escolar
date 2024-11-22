@@ -152,7 +152,7 @@ def modificarUsuario(request, usuarioId, rol):
                     usuarioId, 
                     nombre=nombre, 
                     apellido=apellido, 
-                    username=username, 
+                    nombreUsuario=username, 
                     contrasena=contrasena, 
                     rol=rol,
                     grupo=grupo.id if grupo else None,
@@ -160,7 +160,7 @@ def modificarUsuario(request, usuarioId, rol):
                 if cambios:
                     messages.success(request, "Usuario actualizado con éxito.")
                 else:
-                    messages.info(request, "No se realizaron cambios.")
+                    messages.error(request, "No se realizaron cambios.")
                 return redirect('listaUsuarios')  # Cambiar a la vista o URL deseada
             except ValueError as e:
                 actualizarUsuarioForm.add_error(None, str(e))

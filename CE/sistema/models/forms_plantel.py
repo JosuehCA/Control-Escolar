@@ -3,21 +3,59 @@ from sistema.models.models_actividades import *
 from django.core.exceptions import ValidationError  
 from typing import Any, Dict
 from datetime import date, time
-from sistema.models.models import *
 
 
-class CrearActividadForm(forms.ModelForm):
+class BaseActividadForm(forms.ModelForm):
+    @staticmethod
+    def validarDatosFormulario(formulario, horaInicio, horaFinal, actividad=None):
+        if horaFinal and horaInicio:
+            if horaFinal <= horaInicio:
+                formulario.add_error('horaFinal', 'La hora de finalización debe ser mayor que la hora de inicio.')
+                return
+
+            gestorActividades=GestorActividades()
+                # Determinar el horario
+            if actividad:
+                # Si es una actualización, usar el horario de la actividad
+                horario = actividad.horario
+            else:
+                # Si es una creación, obtener el horario del formulario
+                horario = formulario.cleaned_data.get('horario')
+
+            # Validar que el horario exista
+            if not horario:
+                formulario.add_error("horario", "Debe seleccionar un horario válido.")
+                return
+
+            # Validar rango permitido
+            if not gestorActividades.validarRangoDeActividad(horario, horaInicio, horaFinal):
+                formulario.add_error("horaFinal", "La actividad está fuera del horario permitido.")
+            
+
+
+            if actividad:
+                #horario = actividad.horario
+                listaActividades = horario.actividades.exclude(id=actividad.id)
+                for actividadExistente in listaActividades:
+                    if actividadExistente.fecha == actividad.fecha:
+                        if (horaInicio < actividadExistente.horaFinal and horaFinal > actividadExistente.horaInicio):
+                            formulario.add_error("horaFinal", f"Conflicto de horario con la actividad '{actividadExistente.nombre}' que va de {actividadExistente.horaInicio} a {actividadExistente.horaFinal}.")
+                            return
+
+
+class CrearActividadForm(BaseActividadForm):
     class Meta:
         model = Actividad
-        fields = ['nombre', 'descripcion', 'horaInicio', 'horaFinal', 'horario', 'fecha']  
+        fields = ['nombre', 'descripcion', 'horaInicio', 'horaFinal', 'horario', 'fecha', 'grupo']
 
         labels = {
-            'nombre': 'Nombre de la Actividad',
-            'descripcion': 'Descripción',
-            'horaInicio': 'Hora de Inicio',
-            'horaFinal': 'Hora de Finalización',
-            'horario': 'Horario Asociado',
-            'fecha': 'Fecha de la Actividad',  
+                'nombre': 'Nombre de la Actividad',
+                'descripcion': 'Descripción',
+                'horaInicio': 'Hora de Inicio',
+                'horaFinal': 'Hora de Finalización',
+                'horario': 'Horario Asociado',
+                'fecha': 'Fecha de la Actividad',
+                'grupo': 'Grupo Asociado',
         }
 
         widgets = {
@@ -25,66 +63,40 @@ class CrearActividadForm(forms.ModelForm):
             'horaFinal': forms.TimeInput(attrs={'type': 'time'}),
             'horario': forms.Select(),
             'fecha': forms.DateInput(attrs={'type': 'date', 'value': timezone.localdate()}),
+            'grupo': forms.Select()
         }
 
-class ActualizarActividadForm(forms.ModelForm):
+    def clean(self):
+        datosValidados = super().clean()
+        horaInicio = datosValidados.get('horaInicio')
+        horaFinal = datosValidados.get('horaFinal')
+        self.validarDatosFormulario(self, horaInicio, horaFinal)
+        return datosValidados
+
+
+class ActualizarActividadForm(BaseActividadForm):
     class Meta:
         model = Actividad
         fields = ['nombre', 'descripcion', 'horaInicio', 'horaFinal']
-
         labels = {
-            'nombre': 'Nombre de la Actividad',
-            'descripcion': 'Descripción',
-            'horaInicio': 'Hora de Inicio',
-            'horaFinal': 'Hora de Finalización',
+                'nombre': 'Nombre de la Actividad',
+                'descripcion': 'Descripción',
+                'horaInicio': 'Hora de Inicio',
+                'horaFinal': 'Hora de Finalización',
         }
 
         widgets = {
             'horaInicio': forms.TimeInput(attrs={'type': 'time'}),
             'horaFinal': forms.TimeInput(attrs={'type': 'time'}),
         }
-
-    def clean(self) -> Dict[str, Any]:
+    def clean(self):
         datosValidados = super().clean()
         horaInicio = datosValidados.get('horaInicio')
         horaFinal = datosValidados.get('horaFinal')
-        self.validarActualizacion(horaInicio, horaFinal, datosValidados)
+        self.validarDatosFormulario(self, horaInicio, horaFinal, self.instance)
         return datosValidados
 
 
-    def validarActualizacion(self, horaInicio: time, horaFinal: time, datosValidados: Dict[str, Any]) -> None:
-        # Validación de horas
-        if horaFinal and horaInicio:
-            if horaFinal <= horaInicio:
-                self.add_error('horaFinal', 'La hora de finalización debe ser mayor que la hora de inicio.')
-                return
-
-            # Validación de rango horario
-            gestorActividades = GestorActividades()
-            if not gestorActividades.validarRangoDeActividad(self.instance.horario, horaInicio, horaFinal):
-                self.add_error("horaFinal", "La actividad está fuera del horario permitido.")
-                return
-
-            # Verificación de conflictos de horario con otras actividades
-            horario = self.instance.horario
-            #listaActividades = horario.actividades.exclude(id=self.instance.id if self.instance.id else None)
-            listaActividades = horario.actividades.exclude(id=self.instance.id)
-            
-            for actividad in listaActividades:
-                # Verificamos si las actividades ocurren en la misma fecha y si las horas se solapan
-                if actividad.fecha == self.instance.fecha:
-                    if (horaInicio < actividad.horaFinal and horaFinal > actividad.horaInicio):
-                        self.add_error("horaFinal", f"Conflicto de horario con la actividad '{actividad.nombre}' que va de {actividad.horaInicio} a {actividad.horaFinal}.")
-                        return 
-        
-        # Comparar si los datos actuales son iguales a los existentes en la instancia
-        camposRevisar = ['nombre', 'descripcion', 'horaInicio', 'horaFinal']
-        cambiosRealizados = any(
-            datosValidados.get(campo) != getattr(self.instance, campo) for campo in camposRevisar
-        )
-
-        if not cambiosRealizados:
-            self.add_error(None, "No se realizaron cambios en los datos de la actividad.") 
 
 class CrearHorarioForm(forms.ModelForm):
     class Meta:
@@ -111,21 +123,3 @@ class CrearHorarioForm(forms.ModelForm):
         if HorarioEscolar.objects.filter(fecha=fecha).exists():
             raise ValidationError("Ya existe un horario para esta fecha. Por favor, elige otra fecha.")
         
-
-class PaseDeListaForm(forms.Form):
-    def __init__(self, grupo, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        for alumno in grupo.alumnos.all():
-            self.fields[f'asistencias_{alumno.id}'] = forms.BooleanField(
-                label=f"{alumno.first_name} {alumno.last_name}",
-                required=False
-            )
-
-
-class AsignarCalificacionForm(forms.ModelForm):
-    class Meta:
-        model = RegistroCalificaciones
-        fields = ['alumno', 'calificacion', 'comentario']
-
-    calificacion = forms.ChoiceField(choices=[(i, str(i)) for i in range(1, 6)], label="Calificación")
-    comentario = forms.CharField(required=False, widget=forms.Textarea, label="Comentario")

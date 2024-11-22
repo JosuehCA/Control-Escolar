@@ -6,6 +6,7 @@
   <title>Enviar Mensaje</title>
 
   <script>
+    const nombreEmisor = '{{ request.user.username }}';
     console.log(window.location.host);
     const socket = new WebSocket('ws://' + window.location.host + '/ws/mensajeria/grupal/{{grupoReceptor}}');
 
@@ -42,6 +43,7 @@
             const entradaDeMensaje = document.getElementById('id_contenidoMensaje');
             const mensaje = entradaDeMensaje.value;
             socket.send(JSON.stringify({ 
+              'nombreEmisor': nombreEmisor,
               'contenidoMensaje': mensaje,
             }));
             entradaDeMensaje.value = '';

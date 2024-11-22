@@ -101,7 +101,17 @@
         }
 
         .enlace {
+            margin-top: 20px;
+            padding: 15px;
+            color: #ffffff;
+            border: none;
+            border-radius: 8px;
+            font-size: 18px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: background-color 0.3s ease-in-out, transform 0.2s ease-in-out;
             background-color: #16a085;
+            width: 100%;
         }
 
         .enlace a{
@@ -134,11 +144,11 @@
             {{ form.as_p }} <!-- Renderiza el formulario automáticamente -->
             <button type="submit">Crear</button>
         
+        </form>
+
         <button class="enlace">
             <a href="{% url 'listaUsuarios' %}">Ver Lista de Usuarios</a>
         </button>
-        </form>
-
 
     </div>
 </body>

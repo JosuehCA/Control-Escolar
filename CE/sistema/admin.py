@@ -12,6 +12,7 @@ admin.site.register(Actividad)
 
 admin.site.register(ReporteGrupo)
 admin.site.register(ReporteGlobal)
+admin.site.register(RegistroCalificaciones)
 
 
 admin.site.register(UsuarioEscolar)
@@ -25,5 +26,3 @@ admin.site.register(Nutricionista)
 admin.site.register(MensajePrivado)
 admin.site.register(MensajeGrupal)
 admin.site.register(MensajeGeneral)
-admin.site.register(Conversacion)
-admin.site.register(Notificacion)

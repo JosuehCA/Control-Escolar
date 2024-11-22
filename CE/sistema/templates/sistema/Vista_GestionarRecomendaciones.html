@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Gestionar Recomendaciones</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        h1 { text-align: center; color: #333; }
+        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+        th, td { border: 1px solid #ddd; padding: 10px; text-align: left; }
+        th { background-color: #f4f4f4; }
+        td { vertical-align: top; }
+        a, button {
+            text-decoration: none;
+            padding: 8px 12px;
+            color: white;
+            background-color: #007bff;
+            border-radius: 5px;
+            margin-right: 10px;
+        }
+        button {
+            background-color: #dc3545;
+            border: none;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #c82333;
+        }
+        a:hover, button:hover {
+            background-color: #0056b3;
+        }
+
+        .button-container {
+            margin: 20px 0;
+            text-align: center;
+        }
+
+        .button-container a {
+            display: inline-block;
+            padding: 12px 20px;
+            font-size: 1rem;
+            background-color: #28a745;
+            color: white;
+            border-radius: 8px;
+            text-decoration: none;
+            transition: background-color 0.3s ease, transform 0.2s ease;
+        }
+
+        .button-container a:hover {
+            background-color: #218838;
+        }
+    </style>
+</head>
+<body>
+    <a href="{% url 'opcionesMenu' %}" class="button-container">Opciones Menú</a>
+
+    <h1>Gestión de Recomendaciones</h1>
+
+    <!-- Botón para agregar nueva recomendación -->
+    <div class="button-container">
+        <a href="{% url 'crearRecomendacion' %}">Agregar Recomendación</a>
+    </div>
+
+    <!-- Mensajes de éxito o error -->
+    {% if messages %}
+    <div class="messages">
+        {% for message in messages %}
+        <p>{{ message }}</p>
+        {% endfor %}
+    </div>
+    {% endif %}
+
+    <!-- Tabla de recomendaciones -->
+    <table>
+        <thead>
+            <tr>
+                <th>Nombre</th>
+                <th>Descripción</th>
+                <th>Consideraciones</th>
+                <th>Acciones</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for platillo in platillos %}
+            <tr>
+                <td>{{ platillo.nombre }}</td>
+                <td>{{ platillo.descripcion }}</td>
+                <td>{{ platillo.consideraciones }}</td>
+                <td>
+                    <a href="{% url 'editarRecomendacion' platillo_id=platillo.id %}">Editar</a>
+                    <!-- Redirige a la vista de confirmación para eliminar -->
+                    <form action="{% url 'eliminarRecomendacion' platillo_id=platillo.id %}" method="POST" style="display:inline;">
+                        {% csrf_token %}
+                        <button type="submit" onclick="return confirm('¿Estás seguro de que deseas eliminar esta recomendación?');">Eliminar</button>
+                    </form>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</body>
+</html>

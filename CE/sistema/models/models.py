@@ -1,34 +1,63 @@
+from datetime import date
 from abc import ABC, abstractmethod
+
 from typing import List
 from django.db import models as m
 from django.conf import settings
 from django.contrib.auth.models import AbstractUser
-from datetime import date
 
+from django.shortcuts import get_object_or_404
+
+from datetime import date
 
 from .models_actividades import Actividad
 
 
-class MenuSemanal(m.Model):
-    """TDA Menu. Define un Menú de comidas personalizable de acuerdo al administrador, y tomando en cuenta
-    ciertas indicaciones que los tutores manifiesten."""
 
+class MenuSemanal(m.Model):
     nombre = m.CharField(max_length=100)
     fecha_inicio = m.DateField()
     fecha_fin = m.DateField()
+    platillos = m.ManyToManyField('Platillo', through='MenuPlatillo', related_name='menus')
 
     def __str__(self):
         return self.nombre
+
+class MenuPlatillo(m.Model):
+    menu = m.ForeignKey('MenuSemanal', on_delete=m.CASCADE, related_name='menu_platillos')
+    platillo = m.ForeignKey('Platillo', on_delete=m.CASCADE, related_name='platillo_menus')
+    dia = m.CharField(
+        max_length=10,
+        choices=[
+            ('Lunes', 'Lunes'),
+            ('Martes', 'Martes'),
+            ('Miércoles', 'Miércoles'),
+            ('Jueves', 'Jueves'),
+            ('Viernes', 'Viernes'),
+        ],
+    )
+
+    class Meta:
+        unique_together = ('menu', 'platillo', 'dia')  # Evita duplicados en el mismo menú y día. Excepcion error platillo mismo dia
+
+    def __str__(self):
+        return f"{self.platillo.nombre} - {self.dia} ({self.menu.nombre})"
+
 
 class Grupo(m.Model):
     """TDA Salón. Define aquellos grupos a los que pertenece un conjunto de estudiantes bajo la dirección 
     de un profesor."""
 
     nombre = m.CharField(max_length=2000)
-    #alumnos = m.ManyToManyField('Alumno', related_name="alumnosGrupo")
 
     def __str__(self):
         return f'Grupo: {self.nombre}'
+    
+    def obtenerGrupoSegunNombre(nombreDeGrupo: str) -> 'Grupo':
+        if(Grupo.objects.filter(nombre=nombreDeGrupo).exists()):
+            return Grupo.objects.get(nombre=nombreDeGrupo)
+        else:
+            return None
     
     class Meta:
         verbose_name = "Grupo"
@@ -36,35 +65,12 @@ class Grupo(m.Model):
 
 
 class Platillo(m.Model):
-    DIAS_SEMANA = [
-        ('Lunes', 'Lunes'),
-        ('Martes', 'Martes'),
-        ('Miércoles', 'Miércoles'),
-        ('Jueves', 'Jueves'),
-        ('Viernes', 'Viernes'),
-    ]
-    
     nombre = m.CharField(max_length=200)
     descripcion = m.TextField()
     consideraciones = m.TextField(blank=True, null=True)
-    dia = m.CharField(
-        max_length=10,
-        choices=DIAS_SEMANA,
-        blank=True,  
-        null=True,
-        help_text="Día de la semana al que pertenece este platillo."
-    )
-    menu = m.ForeignKey(
-        'MenuSemanal',
-        on_delete=m.CASCADE,
-        related_name='platillos',
-        null=True,
-        blank=True,
-        help_text="Menú al que pertenece este platillo."
-    )
 
     def __str__(self):
-        return f"{self.nombre} ({self.dia or 'Sin Día'})"
+        return self.nombre
 
 
 
@@ -75,6 +81,12 @@ class UsuarioEscolar(AbstractUser):
     u otra manera (profesores, admnistrador, tutores, alumnos y nutricionista). Proporciona actividades 
     comunes dentro de estos roles."""
 
+    def obtenerUsuarioSegunNombreDeUsuario(nombreDeUsuario: str ) -> 'UsuarioEscolar':
+        if UsuarioEscolar.objects.filter(username=nombreDeUsuario).exists():
+            return UsuarioEscolar.objects.get(username= nombreDeUsuario)
+        else:
+            return None
+        
     def getNombreUsuario(self) -> str:
         return self.username
 
@@ -255,32 +267,16 @@ class GestorDeUsuarios(UsuarioEscolar):
             return False
             
     @classmethod
-    def modificarUsuarioEscolar(cls, usuarioId: int, nombre, apellido, username, contrasena, rol, **kwargs) -> bool:
+    def modificarUsuarioEscolar(cls, usuarioId: int, nombre, apellido, nombreUsuario, contrasena, rol, **kwargs) -> bool:
         
         try:
+            usuario = UsuarioEscolar.objects.get(id=usuarioId)
             if rol == 'Profesor':
-                grupo_id = kwargs.get('grupo')
-                try:
-                    profesor = Profesor.objects.get(id=usuarioId)
-                    GestorDeUsuarios._actualizarAtributos(profesor, nombre, apellido, username, contrasena)
-                    profesor.save()
-                    return True
-                except Grupo.DoesNotExist:
-                    print(f"Error: No se encontró el grupo con ID {grupo_id}")  
-                    return False
+                return cls.__modificarProfesor(usuario, nombre, apellido, nombreUsuario, contrasena, **kwargs)
             elif rol == 'Alumno':
-                tutorId = kwargs.get('tutor')
-                try:
-                    alumno = Alumno.objects.get(id=usuarioId)
-                    GestorDeUsuarios._actualizarAtributos(alumno, nombre, apellido, username, contrasena)
-                    alumno.save() 
-                    return True
-                except Grupo.DoesNotExist:
-                    print(f"Error: No se encontró el tutor con ID {tutorId}")
-                    return False
+                return cls.__modificarAlumno(usuario, nombre, apellido, nombreUsuario, contrasena, **kwargs)
             else:
-                usuario = UsuarioEscolar.objects.get(id=usuarioId)
-                GestorDeUsuarios._actualizarAtributos(usuario, nombre, apellido, username, contrasena)
+                cls.__actualizarAtributos(usuario, nombre, apellido, nombreUsuario, contrasena)
                 usuario.save()
                 return True
                 
@@ -289,35 +285,57 @@ class GestorDeUsuarios(UsuarioEscolar):
             return False
     
     @staticmethod
-    def _actualizarAtributos(usuario, nombre, apellido, username, contrasena, **kwargs):
-        """
-        Actualiza los atributos básicos del usuario si se proporcionan valores.
-        """
-        tutor_id = kwargs.get('tutor')
+    def __modificarProfesor(profesor, nombre, apellido, nombreUsuario, contrasena, **kwargs) -> bool:
         grupo_id = kwargs.get('grupo')
+        try:
+            GestorDeUsuarios.__actualizarAtributos(profesor, nombre, apellido, nombreUsuario, contrasena, grupo=grupo_id)
+            profesor.save()
+            return True
+        except Grupo.DoesNotExist:
+            print(f"Error: No se encontró el grupo con ID {grupo_id}")
+            return False
+
+    @staticmethod
+    def __modificarAlumno(alumno, nombre, apellido, nombreUsuario, contrasena, **kwargs) -> bool:
+        tutor_id = kwargs.get('tutor')
+        try:
+            GestorDeUsuarios.__actualizarAtributos(alumno, nombre, apellido, nombreUsuario, contrasena, tutor=tutor_id)
+            alumno.save()
+            return True
+        except Tutor.DoesNotExist:
+            print(f"Error: No se encontró el tutor con ID {tutor_id}")
+            return False
+    
+    
+    @staticmethod
+    def __actualizarAtributos(usuario, nombre, apellido, nombreUsuario, contrasena, **kwargs) -> None:
+
+        tutorId = kwargs.get('tutor')
+        grupoId = kwargs.get('grupo')
         
         if nombre is not None:
             usuario.first_name = nombre
         if apellido is not None:
             usuario.last_name = apellido
-        if username is not None:
-            usuario.username = username
+        if nombreUsuario is not None:
+            usuario.username = nombreUsuario
         if contrasena is not None:
             usuario.password = contrasena
         
-        if hasattr(usuario, 'tutorAlumno') and tutor_id is not None:
+        if hasattr(usuario, 'tutorAlumno') and tutorId is not None:
             try:
-                tutor = Tutor.objects.get(id=tutor_id)
+                tutor = Tutor.objects.get(id=tutorId)
                 usuario.tutorAlumno = tutor
             except Tutor.DoesNotExist:
-                print(f"Error: No se encontró el tutor con ID {tutor_id}")
+                print(f"Error: No se encontró el tutor con ID {tutorId}")
 
-        if hasattr(usuario, 'grupo') and grupo_id is not None:
+        if hasattr(usuario, 'grupo') and grupoId is not None:
             try:
-                grupo = Grupo.objects.get(id=grupo_id)
+                grupo = Grupo.objects.get(id=grupoId)
                 usuario.grupo = grupo
             except Grupo.DoesNotExist:
-                print(f"Error: No se encontró el grupo con ID {grupo_id}")
+                print(f"Error: No se encontró el grupo con ID {grupoId}")
+            
             
     class Meta:
         verbose_name = "AdministradorUsuarios"
@@ -329,9 +347,8 @@ class Profesor(UsuarioEscolar):
     de alumnos. Contiene comportamientos respecto a estos alumnos, como asignación de actividades o pasar
     lista, y mantiene contacto directo con los tutores."""
 
-    grupo = m.ForeignKey(Grupo, on_delete=m.RESTRICT, related_name="grupo_profesor")
+    grupo = m.ForeignKey(Grupo, on_delete=m.RESTRICT, related_name="grupoProfesor")
 
-    #listo
     def asignarActividad(self, actividad: 'Actividad', grupo: Grupo) -> None:
         """Asigna una actividad a un grupo y actualiza la actividad actual de cada alumno del grupo."""
         actividad.grupo = grupo
@@ -341,57 +358,49 @@ class Profesor(UsuarioEscolar):
             alumno.actividadActual = actividad
             alumno.save()
 
-    #listo
-    def pasarLista(self, asistencias: dict[int, bool]) -> None:
-        for alumno_id, asistencia in asistencias.items():
-            alumno = Alumno.objects.get(id=alumno_id)
+    def pasarLista(self, listaAsistencias: dict[int, bool]) -> None:
+        for alumnoId, asistencia in listaAsistencias.items():
+            alumno = Alumno.objects.get(id=alumnoId)
             RegistroAsistencia.objects.update_or_create(
                 alumno=alumno,
                 fecha=date.today(),
                 defaults={'asistencia': asistencia}
             )            
 
-    def asignarCalificacion(self, alumno: 'Alumno', grupo: 'Grupo', calif: int, comentario: str = "") -> None:
-        """
-        Asigna una calificación al comportamiento del día de un alumno
-        y la guarda en el modelo RegistroCalificaciones.
-        """
-        if calif < 1 or calif > 5:
-            raise ValueError("La calificación debe estar entre 1 y 5.")
+    def asignarCalificacion(self, alumno: 'Alumno', grupo: 'Grupo', calificacion: int, comentario: str = "") -> None:
+        """Asigna una calificación al comportamiento del día de un alumno"""
+
+        if calificacion < 1 or calificacion > 5:
+            raise ValueError("Error. Introduzca un valor dentro del rango (1-5)")
         
         # Crear o actualizar el registro de calificación para el alumno
-        registro, created = RegistroCalificaciones.objects.update_or_create(
+        RegistroCalificaciones.objects.update_or_create(
             alumno=alumno,
             grupo=grupo,
             fecha=date.today(),
             defaults={
-                'calificacion': calif,
+                'calificacion': calificacion,
                 'comentario': comentario,
             }
         )
-        if created:
-            print(f"Nuevo registro de calificación creado para {alumno.first_name}")
-        else:
-            print(f"Registro de calificación actualizado para {alumno.first_name}")
-
+        
     class Meta:
             verbose_name = "Profesor"
             verbose_name_plural = "Profesores"
 
 class RegistroCalificaciones(m.Model):
     alumno = m.ForeignKey('Alumno', on_delete=m.CASCADE, related_name='calificaciones')
-    grupo = m.ForeignKey(Grupo, on_delete=m.CASCADE, related_name='calificaciones_grupo')
+    grupo = m.ForeignKey(Grupo, on_delete=m.CASCADE, related_name='calificacionesGrupo')
     calificacion = m.IntegerField(choices=[(i, i) for i in range(1, 6)])
     fecha = m.DateField(default=date.today)
     comentario = m.TextField(blank=True, null=True)
-
-    
 
     class Meta:
         unique_together = ('alumno', 'fecha')
 
     def __str__(self):
-        return f"Calificación de {self.alumno.getNombre()} en {self.grupo.nombre} el {self.fecha}"
+        return f"Calificación de {self.alumno.first_name} {self.alumno.last_name} en {self.grupo.nombre} el {self.fecha}"
+    
     
 class Tutor(UsuarioEscolar):
     """TDA Tutor. Tutor legal del alumno inscrito. Cuenta con acceso al sistema y puede visualizar toda la 
@@ -417,10 +426,6 @@ class Tutor(UsuarioEscolar):
     def verActividadActualTutorado(self, alumno: 'Alumno') -> Actividad:
         return alumno.actividadActual
     
-    def generarReporteTutorado(self, alumno: 'Alumno'):
-        pass
-
-    
     class Meta:
         verbose_name = "Tutor"
         verbose_name_plural = "Tutores"
@@ -430,7 +435,7 @@ class Alumno(UsuarioEscolar):
     """TDA Alumno. Registrado solo para fines logísticos. Representa a cada alumno inscrito en el sistema y
     contiene un registro de su información académica."""
 
-    tutorAlumno = m.ForeignKey(Tutor, on_delete=m.RESTRICT, related_name="tutor_alumno")
+    tutorAlumno = m.ForeignKey(Tutor, on_delete=m.RESTRICT, related_name="tutorAlumno")
     grupo = m.ForeignKey(Grupo, on_delete=m.SET_NULL, related_name="alumnos", null=True, blank=True)
     asistencias = m.IntegerField(default=0)
     faltas = m.IntegerField(default=0)
@@ -473,25 +478,12 @@ class Alumno(UsuarioEscolar):
     
     def getConsideracionesMenu(self) -> m.JSONField:
         return self.consideracionesMenu
-    
-    def getGrupo(self) -> Grupo:
-        return self.grupo
-    
-    def setAsistencias(self, asistencias: int) -> None:
-        self.asistencias = asistencias
-    
-    def setFaltas(self, faltas: int) -> None:
-        self.faltas = faltas
-
-    class Meta:
-        verbose_name = "Alumno"
-        verbose_name_plural = "Alumnos"
 
     def __str__(self):
         return f"{self.getNombreUsuario()}: {self.getNombre()}"
     
 class RegistroAsistencia(m.Model):
-    alumno = m.ForeignKey(Alumno, on_delete=m.CASCADE, related_name="registros_asistencia")
+    alumno = m.ForeignKey(Alumno, on_delete=m.CASCADE, related_name="registrosAsistencia")
     fecha = m.DateField(auto_now_add=True)
     asistencias = m.BooleanField(default=False)
     faltas = m.BooleanField(default=False)
@@ -503,12 +495,76 @@ class RegistroAsistencia(m.Model):
 class Nutricionista(UsuarioEscolar):
     """TDA Nutricionista. Responsable de la administración correcta de las comidas y ajustes al menú."""
 
-    def crearPlatillo(nombre: str, descripcion: str, consideraciones: str):
+    @staticmethod
+    def crearRecomendaciones(nombre: str, descripcion: str, consideraciones: str)->Platillo:
         Platillo.objects.create(
             nombre=nombre, 
             descripcion=descripcion, 
-            consideraciones=consideraciones)
-        
+            consideraciones=consideraciones) 
+
+    @staticmethod 
+    def modificarRecomendaciones(platillo_id: int, nombre: str, descripcion: str, consideraciones: str) -> None:
+        """Método para editar los detalles de una recomendación en un menú"""
+        try:
+            platillo = Platillo.objects.get(id=platillo_id)
+            platillo.nombre = nombre
+            platillo.descripcion = descripcion
+            platillo.consideraciones = consideraciones
+            platillo.save()
+        except Platillo.DoesNotExist:
+            raise ValueError(f"No se encontró el platillo con ID {platillo_id}.")
+
+    @staticmethod
+    def eliminarRecomendaciones(platillo_id: int) -> None:
+        """Elimina un platillo por su ID."""
+        try:
+            platillo = Platillo.objects.get(id=platillo_id)
+            platillo.delete()
+        except Platillo.DoesNotExist:
+            raise ValueError("El platillo no existe y no puede ser eliminado.")
+
     class Meta:
         verbose_name = "Nutricionista"
         verbose_name_plural = "Nutricionistas"
+
+
+class Chef(UsuarioEscolar):
+    
+    @staticmethod
+    def crearMenuSemanal(nombre: str, fecha_inicio: date, fecha_fin:date)->MenuSemanal: 
+        MenuSemanal.objects.create(
+            nombre=nombre, 
+            fecha_inicio=fecha_inicio, 
+            fecha_fin=fecha_fin
+        )
+
+    @staticmethod
+    def eliminarMenuSemanal(menu_id: int) -> None:
+        """Elimina un menú semanal dado su ID."""
+        try:
+            menu = MenuSemanal.objects.get(id=menu_id)
+            menu.delete()
+        except MenuSemanal.DoesNotExist:
+            raise ValueError(f"No se puede eliminar el menú con ID {menu_id}, ya que no existe.")
+
+    @staticmethod
+    def agregarPlatilloAlMenu(menu: MenuSemanal, platillo_id: int, dia: str) -> None:
+        """Agrega un platillo al menú en un día específico."""
+        try:
+            platillo = Platillo.objects.get(id=platillo_id)
+            MenuPlatillo.objects.create(menu=menu, platillo=platillo, dia=dia)
+        except Platillo.DoesNotExist:
+            raise ValueError(f"No se encontró el platillo con ID {platillo_id}.")
+
+    @staticmethod
+    def eliminarPlatilloDelMenu(menu: MenuSemanal, platillo_id: int, dia: str) -> None:
+        """Elimina un platillo del menú en un día específico."""
+        try:
+            relacionMenuPlatillo = MenuPlatillo.objects.get(menu=menu, platillo_id=platillo_id, dia=dia)
+            relacionMenuPlatillo.delete()
+        except MenuPlatillo.DoesNotExist:
+            raise ValueError(f"No existe una relación entre el platillo con ID {platillo_id} y el menú para el día {dia}.")
+
+    def __str__(self):
+        return f"Chef {self.nombre_completo}"
+    

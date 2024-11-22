@@ -151,7 +151,7 @@
                 <td>{{ horario.horaEntrada }}</td>
                 <td>{{ horario.horaSalida }}</td>
                 <td>
-                    <form method="POST" action="{% url 'eliminar_horario' horario.id %}" onsubmit="confirmarEliminacion(event)">
+                    <form method="POST" action="{% url 'eliminarHorario' horario.id %}" onsubmit="confirmarEliminacion(event)">
                         {% csrf_token %}
                         <button type="submit">Eliminar</button>
                     </form>
@@ -166,7 +166,7 @@
     </table>
 
     <div class="enlace">
-        <a href="{% url 'crear_horario' %}" class="boton">Crear Nuevo Horario</a>
+        <a href="{% url 'crearHorario' %}" class="boton">Crear Nuevo Horario</a>
     </div>
 
     <script>

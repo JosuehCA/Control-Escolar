@@ -1,103 +1,156 @@
 from django.shortcuts import render
 from django.shortcuts import redirect
-from django.shortcuts import get_object_or_404
+from django.shortcuts import get_object_or_404 
+from django.contrib import messages
 
-from sistema.models.models import Platillo, MenuSemanal, Nutricionista
+from sistema.models.models import Chef, Platillo, MenuSemanal, Nutricionista, MenuPlatillo
 
 def opcionesMenu(request):
-    return render(request, "sistema/opcionesMenu.html")
+    return render(request, "sistema/Vista_OpcionesMenu.html")
 
-def obtenerInformacionCreacionPlatillo(request): #Pendiente nombre
+def gestionarRecomendaciones(request):
+    platillos = Platillo.objects.all() 
+    return render(request, "sistema/Vista_GestionarRecomendaciones.html", {'platillos': platillos})
+
+def crearRecomendacion(request):
     if request.method == "POST":
+        
         nombre = request.POST.get("nombre")
         descripcion = request.POST.get("descripcion")
         consideraciones = request.POST.get("consideraciones")
-
-        Nutricionista.crearRecomendaciones(nombre, descripcion, consideraciones)
         
-        return redirect("opcionesMenu")
+        try:
+            Platillo.objects.create(
+                nombre=nombre,
+                descripcion=descripcion,
+                consideraciones=consideraciones
+            )
+            
+            messages.success(request, "Recomendación creada con éxito.")
+            return redirect("gestionarRecomendaciones")  
+        except Exception as e:
+            messages.error(request, f"Ocurrió un error: {e}")
+            return redirect("crearRecomendacion")  
     
-    return render(request, "sistema/crearPlatillo.html")
+    return render(request, "sistema/Vista_CrearRecomendacion.html")
 
-def obtenerInformacionCreacionMenu(request): #Pendiente nombre
+def editarRecomendacion(request, platillo_id):
+   
+    platillo = get_object_or_404(Platillo, id=platillo_id) 
+
+    if request.method == "POST":
+        
+        platillo.nombre = request.POST.get("nombre")
+        platillo.descripcion = request.POST.get("descripcion")
+        platillo.consideraciones = request.POST.get("consideraciones")
+        
+        
+        try:
+            platillo.save()
+            messages.success(request, "Recomendación actualizada con éxito.")
+            return redirect("gestionarRecomendaciones")  
+        except Exception as e:
+            messages.error(request, f"Ocurrió un error al actualizar: {e}")
+            return render(request, "sistema/Vista_EditarRecomendacion.html", {"recomendacion": platillo})
+    
+    return render(request, "sistema/Vista_EditarRecomendacion.html", {"recomendacion": platillo})
+
+def eliminarRecomendacion(request, platillo_id):
+    
+    platillo = get_object_or_404(Platillo, id=platillo_id)
+    
+    if request.method == "POST":
+        try:
+            platillo.delete()
+            messages.success(request, "Recomendación eliminada con éxito.")
+            return redirect("gestionarRecomendaciones") 
+        except Exception as e:
+            messages.error(request, f"Ocurrió un error: {e}")
+            return render(request, "sistema/error.html", {"message": str(e)})
+    
+    return render(request, "sistema/Vista_GestionarRecomendaciones.html")
+
+def crearMenu(request):
     if request.method == "POST":
         nombre = request.POST.get("nombre")
         fecha_inicio = request.POST.get("fecha_inicio")
         fecha_fin = request.POST.get("fecha_fin")
         
-        Nutricionista.crearMenuSemanal(nombre, fecha_inicio, fecha_fin)
-
+        try:
+            Chef.crearMenuSemanal(nombre, fecha_inicio, fecha_fin)
+            messages.success(request, "Menú semanal creado con éxito.")
+        except Exception as e:
+            messages.error(request, f"Error al crear el menú: {str(e)}")
         return redirect("opcionesMenu")
     
-    return render(request, "sistema/crearMenuSemanal.html")
+    return render(request, "sistema/Vista_CrearMenuSemanal.html")
+
 
 def seleccionarMenuSemanal(request):
-    # Verificar si se ha pasado el `menu_id` a través de los parámetros GET
     menu_id = request.GET.get('menu_id')
     if menu_id:
-        # Si se ha seleccionado un menú, verificar si se va a 'ver' o 'gestionar'
         if request.GET.get('ver'):
-            return verMenuSemanal(request, menu_id)
+            return vizualizarMenuSemanal(request, menu_id)
         else:
             return gestionarMenuSemanal(request, menu_id)
 
-    # Si no se ha seleccionado un menú, simplemente renderizar el formulario con todos los menús
     menus = MenuSemanal.objects.all()
-    return render(request, "sistema/seleccionarMenuSemanal.html", {
+    return render(request, "sistema/Vista_SeleccionarMenuSemanal.html", {
         'menus': menus
     })
+
         
-def verMenuSemanal(request, menu_id):
+def vizualizarMenuSemanal(request, menu_id):
     try:
-        # Obtener el menú seleccionado
         menu = MenuSemanal.objects.get(id=menu_id)
 
-        # Obtener todos los platillos relacionados con este menú
-        platillos = Platillo.objects.filter(menu=menu)
-        
-        # Organizar los platillos por día de la semana
-        platillos_por_dia = {dia: [] for dia in ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes']}
+        platillosPorDia = {dia: [] for dia in ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes']}
 
-        # Agregar los platillos a los días correspondientes
-        for platillo in platillos:
-            platillos_por_dia[platillo.dia].append(platillo)
+        menu_platillos = MenuPlatillo.objects.filter(menu=menu)
 
-        return render(request, 'sistema/verMenuSemanal.html', {
+        for menu_platillo in menu_platillos:
+            platillosPorDia[menu_platillo.dia].append(menu_platillo.platillo)
+
+        return render(request, 'sistema/Vista_VerMenuSemanal.html', {
             'menu': menu,
-            'platillos_por_dia': platillos_por_dia,
+            'platillos_por_dia': platillosPorDia,
         })
     except MenuSemanal.DoesNotExist:
-        return render(request, 'sistema/error.html', {'message': 'Menú no encontrado.'}) 
+        messages.error(request, "El menú solicitado no existe.")
+        return redirect("seleccionarMenuSemanal")
 
 
-def gestionarMenuSemanal(request, menu_id):
+
+def gestionarMenuSemanal(request, menu_id): 
     menu = get_object_or_404(MenuSemanal, id=menu_id)
-    platillos_por_dia = {}
+    platillosPorDia = {}
 
-    # Obtener los platillos del menú organizados por día
-    dias_de_la_semana = ["Lunes", "Martes", "Miércoles", "Jueves", "Viernes"]
-    for dia in dias_de_la_semana:
-        platillos_por_dia[dia] = Platillo.objects.filter(menu=menu, dia=dia)
+    diasDeLaSemana = ["Lunes", "Martes", "Miércoles", "Jueves", "Viernes"]
+    for dia in diasDeLaSemana:
+        platillosPorDia[dia] = Platillo.objects.filter(platillo_menus__menu=menu, platillo_menus__dia=dia)
 
-    # Pasar el diccionario de platillos por día de manera directa
-    return render(request, 'sistema/gestionarMenuSemanal.html', {
+    return render(request, 'sistema/Vista_GestionarMenuSemanal.html', {
         'menu': menu,
-        'dias': dias_de_la_semana,
-        'platillos_por_dia': platillos_por_dia.items(),  # Pasar como items() de un diccionario
+        'dias': diasDeLaSemana,
+        'platillos_por_dia': platillosPorDia.items(),
     })
 
 
-def obtenerInformacionAgregarPlatillo(request, menu_id): #pendiente nombre (agregarPlatillo)
+def agregarPlatilloDelDia(request, menu_id):
     menu = get_object_or_404(MenuSemanal, id=menu_id)
     dia = request.GET.get('dia')
-    platillos = Platillo.objects.all() 
-    
+    platillos = Platillo.objects.all()
+
     if request.method == "POST":
         platillo_id = request.POST.get('platillo_id')
-        menu.agregarPlatillo(platillo_id, dia)  # Llama al método del modelo para manejar la lógica
+        try:
+            Chef.agregarPlatilloAlMenu(menu, platillo_id, dia)
+            messages.success(request, "Platillo agregado con éxito.")
+        except Exception as e:
+            messages.error(request, f"Error al agregar el platillo: {str(e)}")
         return redirect('gestionarMenuSemanal', menu_id=menu.id)
 
-    return render(request, 'sistema/accionPlatillo.html', {
+    return render(request, 'sistema/Vista_AccionPlatillo.html', {
         'accion': 'add',
         'menu': menu,
         'platillos': platillos,
@@ -105,35 +158,29 @@ def obtenerInformacionAgregarPlatillo(request, menu_id): #pendiente nombre (agre
     })
 
 
-
-def obtenerInformacionModificarPlatillo(request, menu_id): #pendiente nombre y funcionalidad (editarPlatillo)
-    # Obtener el menú
+def modificarPlatilloDelDia(request, menu_id): 
     menu = get_object_or_404(MenuSemanal, id=menu_id)
-    
-    # Obtener el día desde los parámetros GET
     dia = request.GET.get('dia')
-    
-    # Obtener todos los platillos para ese menú y día
-    platillos = Platillo.objects.filter(menu=menu, dia=dia)
-    
-    # Obtener una instancia del Nutricionista
-    nutricionista = Nutricionista.objects.first()  # PENDIENTE
-    
-    # Si es una solicitud POST, actualizar el platillo
+
+    platillos = Platillo.objects.filter(platillo_menus__menu=menu, platillo_menus__dia=dia)
+
     if request.method == 'POST':
         platillo_id = request.POST.get('platillo_id')
-        
-        # Llamar al método editarPlatillo del modelo Nutricionista
-        nutricionista.modificarRecomendaciones(
-            platillo_id=platillo_id,
-            nombre=request.POST.get('nombre'),
-            descripcion=request.POST.get('descripcion'),
-            consideraciones=request.POST.get('consideraciones')
-        )
+        try:
+            Nutricionista.modificarRecomendaciones(
+                menu,
+                platillo_id=platillo_id,
+                nombre=request.POST.get('nombre'),
+                descripcion=request.POST.get('descripcion'),
+                consideraciones=request.POST.get('consideraciones')
+            )
+            messages.success(request, "Recomendación modificada con éxito.")
+            return redirect('gestionarMenuSemanal', menu_id=menu.id)
+        except Exception as e:
+            messages.error(request, f"Error al modificar la recomendación: {str(e)}")
+            return redirect('gestionarMenuSemanal', menu_id=menu.id)
 
-        return redirect('gestionarMenuSemanal', menu_id=menu.id)
-    
-    return render(request, 'sistema/accionPlatillo.html', {
+    return render(request, 'sistema/Vista_AccionPlatillo.html', {
         'accion': 'edit',
         'menu': menu,
         'platillos': platillos,
@@ -141,28 +188,23 @@ def obtenerInformacionModificarPlatillo(request, menu_id): #pendiente nombre y f
     })
 
 
-
-def obtenerInformacionEliminarPlatillo(request, menu_id):  # Pendiente nombre (eliminarPlatillo)
-    # Obtener el menú desde la base de datos
+def eliminarPlatilloDelDia(request, menu_id):  
     menu = get_object_or_404(MenuSemanal, id=menu_id)
-
-    # Obtener el día desde los parámetros GET
     dia = request.GET.get('dia')
-
-    # Obtener todos los platillos asociados al menú y al día
-    platillos = Platillo.objects.filter(menu=menu, dia=dia)
+    platillos = Platillo.objects.filter(platillo_menus__menu=menu, platillo_menus__dia=dia)
 
     if request.method == 'POST':
-        # Obtener el ID del platillo a eliminar desde el formulario
         platillo_id = request.POST.get('platillo_id')
+        try:
+            
+            Chef.eliminarPlatilloDelMenu(menu, platillo_id, dia) 
+            messages.success(request, "Platillo eliminado con éxito.")
+            return redirect('gestionarMenuSemanal', menu_id=menu.id)
+        except Exception as e:
+            messages.error(request, f"Error al eliminar el platillo: {str(e)}")
+            return redirect('gestionarMenuSemanal', menu_id=menu.id)
 
-        # Delegar al modelo la lógica de eliminación
-        menu.eliminarPlatillo(platillo_id, dia)
-
-        return redirect('gestionarMenuSemanal', menu_id=menu.id)
-
-    # Renderizar la página de acción con los datos necesarios
-    return render(request, 'sistema/accionPlatillo.html', {
+    return render(request, 'sistema/Vista_AccionPlatillo.html', {
         'accion': 'delete',
         'menu': menu,
         'platillos': platillos,
@@ -170,10 +212,7 @@ def obtenerInformacionEliminarPlatillo(request, menu_id):  # Pendiente nombre (e
     })
 
 
+def eliminarMenu(request, menu_id): 
+    Chef.eliminarMenuSemanal(menu_id)
 
-def eliminarMenu(request, menu_id): #pendiente nombre
-    # Llamar al método de Nutricionista para eliminar el menú
-    Nutricionista.eliminarMenuSemanal(menu_id)
-    
-    # Redirigir a otra página después de eliminar el menú
     return redirect('seleccionarMenuSemanal')
