@@ -1,5 +1,5 @@
 from django import forms
-from .models_mensajeria import MensajeDirecto, MensajeGrupo, MensajeGeneral
+from .models_mensajeria import MensajeDirecto, MensajeGrupal, MensajeGeneral
 
 # Formulario para enviar un mensaje directo
 class MensajeDirectoForm(forms.ModelForm):
@@ -8,10 +8,10 @@ class MensajeDirectoForm(forms.ModelForm):
         fields = ['receptorUsuario', 'contenidoMensaje']
 
 # Formulario para enviar un mensaje a un grupo
-class MensajeGrupoForm(forms.ModelForm):
+class MensajeGrupalForm(forms.ModelForm):
     class Meta:
-        model = MensajeGrupo
-        fields = ['gruposRelacionados', 'contenidoMensaje']
+        model = MensajeGrupal
+        fields = ['grupoRelacionado', 'contenidoMensaje']
 
 # Formulario para enviar un mensaje general
 class MensajeGeneralForm(forms.ModelForm):

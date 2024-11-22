@@ -2,8 +2,9 @@ from django.shortcuts import redirect
 from django.http import HttpRequest, HttpResponse
 from django.shortcuts import render
 
-from sistema.models.forms_mensajeria import MensajeDirectoForm, MensajeGeneralForm
-from sistema.models.models_mensajeria import MensajeDirecto, ManejadorVistaMensajeria, MensajeGeneral
+from sistema.models.forms_mensajeria import MensajeDirectoForm, MensajeGeneralForm, MensajeGrupalForm
+from sistema.models.models_mensajeria import MensajeDirecto, ManejadorVistaMensajeria, MensajeGeneral, MensajeGrupal
+from sistema.models.models import Grupo
 
 def mostrarVistaConversacionPrivada(request: HttpRequest, nombreDeUsuarioReceptor: str) -> HttpResponse:
     """Vista dinamica para conversaciones individuales, grupales o generales."""
@@ -50,7 +51,15 @@ def mostrarVistaConversacionPrivada(request: HttpRequest, nombreDeUsuarioRecepto
         
 def mostrarVistaConversacionGrupal(request: HttpRequest, grupoReceptor: str) -> HttpResponse:
     """Vista para conversaciones individuales."""
-    return mostrarVistaConversacionPrivada(request, grupoReceptor)
+    mensajeGrupalForm = MensajeGrupalForm()
+    grupoReceptorInstancia = Grupo.objects.get(nombre=grupoReceptor)
+    mensajesGrupales = MensajeGrupal.obtenerMensajesFiltrados(grupoReceptorInstancia)
+    print(mensajesGrupales)
+    return render(request, "sistema/Vista_MensajeriaGrupal.html", {
+        "titulo": "Conversación Grupal",
+        "form": mensajeGrupalForm,
+        "mensajes": mensajesGrupales,
+        "grupoReceptor": grupoReceptor,})
 
 def mostrarVistaConversacionGeneral(request: HttpRequest) -> HttpResponse:
     """Vista para conversaciones generales."""
@@ -58,7 +67,7 @@ def mostrarVistaConversacionGeneral(request: HttpRequest) -> HttpResponse:
     mensajeGeneralForm = MensajeGeneralForm()
     mensajesGenerales = MensajeGeneral.obtenerMensajesFiltrados()
 
-    return render(request, "sistema/Vista_Conversacion.html", {
+    return render(request, "sistema/Vista_MensajeriaGeneral.html", {
         "titulo": "Conversación General",
         "form": mensajeGeneralForm,
         "mensajes": mensajesGenerales,})
