@@ -1,8 +1,9 @@
 from django import forms
-from .models import *
+from sistema.models.models_actividades import *
 from django.core.exceptions import ValidationError  
 from typing import Any, Dict
 from datetime import date, time
+from sistema.models.models import *
 
 
 class CrearActividadForm(forms.ModelForm):
@@ -109,3 +110,22 @@ class CrearHorarioForm(forms.ModelForm):
     def comprobarExistenciaHorario(self, fecha: date) -> None:
         if HorarioEscolar.objects.filter(fecha=fecha).exists():
             raise ValidationError("Ya existe un horario para esta fecha. Por favor, elige otra fecha.")
+        
+
+class PaseDeListaForm(forms.Form):
+    def __init__(self, grupo, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        for alumno in grupo.alumnos.all():
+            self.fields[f'asistencias_{alumno.id}'] = forms.BooleanField(
+                label=f"{alumno.first_name} {alumno.last_name}",
+                required=False
+            )
+
+
+class AsignarCalificacionForm(forms.ModelForm):
+    class Meta:
+        model = RegistroCalificaciones
+        fields = ['alumno', 'calificacion', 'comentario']
+
+    calificacion = forms.ChoiceField(choices=[(i, str(i)) for i in range(1, 6)], label="Calificación")
+    comentario = forms.CharField(required=False, widget=forms.Textarea, label="Comentario")

@@ -1,8 +1,6 @@
 from django.db import models as m
 from django.utils import timezone
 
-
-
 class HorarioEscolar(m.Model):
     fecha = m.DateField(null=True, blank=True, unique=True)  # Opcional para el horario predeterminado
     horaEntrada = m.TimeField()
@@ -47,12 +45,13 @@ class Actividad(m.Model):
     descripcion = m.CharField(max_length=500, default="Actividad sin descripción")
     horaInicio = m.TimeField()
     horaFinal = m.TimeField()
-    fecha = m.DateField(default=timezone.localdate) 
+    fecha = m.DateField(default=timezone.localdate)
     horario = m.ForeignKey(HorarioEscolar, related_name='actividades', on_delete=m.CASCADE, default=GestorHorarios.obtenerHorarioPorDefecto)
+    grupo = m.ForeignKey('Grupo', on_delete=m.CASCADE, related_name='actividades', null=True, blank=True)
 
 class GestorActividades():
     
-    def agregarActividad(self, horario: HorarioEscolar, nombre: str, descripcion: str, horaInicio: m.TimeField, horaFinal: m.TimeField, fecha: m.DateField) -> Actividad:
+    def agregarActividad(self, horario: HorarioEscolar, nombre: str, descripcion: str, horaInicio: m.TimeField, horaFinal: m.TimeField, fecha: m.DateField, grupo: 'Grupo') -> Actividad:
         """Agrega una actividad a un horario, validando rango y conflictos."""
 
         # Validación: horaFinal debe ser mayor que horaInicio
@@ -75,7 +74,8 @@ class GestorActividades():
             horaInicio=horaInicio,
             horaFinal=horaFinal,
             horario=horario,
-            fecha=fecha  
+            fecha=fecha,
+            grupo=grupo
         )
 
     def eliminarActividad(self, actividadId: int) -> bool:
