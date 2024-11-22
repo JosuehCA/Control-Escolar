@@ -3,13 +3,12 @@ from sistema.models.models_actividades import *
 from django.core.exceptions import ValidationError  
 from typing import Any, Dict
 from datetime import date, time
-from sistema.models.models import *
 
 
 class CrearActividadForm(forms.ModelForm):
     class Meta:
         model = Actividad
-        fields = ['nombre', 'descripcion', 'horaInicio', 'horaFinal', 'horario', 'fecha']  
+        fields = ['nombre', 'descripcion', 'horaInicio', 'horaFinal', 'horario', 'fecha', 'grupo']  
 
         labels = {
             'nombre': 'Nombre de la Actividad',
@@ -18,6 +17,8 @@ class CrearActividadForm(forms.ModelForm):
             'horaFinal': 'Hora de Finalización',
             'horario': 'Horario Asociado',
             'fecha': 'Fecha de la Actividad',  
+            'grupo': 'Grupo Asociado',  
+
         }
 
         widgets = {
@@ -25,7 +26,9 @@ class CrearActividadForm(forms.ModelForm):
             'horaFinal': forms.TimeInput(attrs={'type': 'time'}),
             'horario': forms.Select(),
             'fecha': forms.DateInput(attrs={'type': 'date', 'value': timezone.localdate()}),
+            'grupo': forms.Select()  # Usar Select widget para 'grupo'
         }
+
 
 class ActualizarActividadForm(forms.ModelForm):
     class Meta:
@@ -84,7 +87,8 @@ class ActualizarActividadForm(forms.ModelForm):
         )
 
         if not cambiosRealizados:
-            self.add_error(None, "No se realizaron cambios en los datos de la actividad.") 
+            self.add_error(None, "No se realizaron cambios en los datos de la actividad.")
+
 
 class CrearHorarioForm(forms.ModelForm):
     class Meta:
@@ -111,21 +115,3 @@ class CrearHorarioForm(forms.ModelForm):
         if HorarioEscolar.objects.filter(fecha=fecha).exists():
             raise ValidationError("Ya existe un horario para esta fecha. Por favor, elige otra fecha.")
         
-
-class PaseDeListaForm(forms.Form):
-    def __init__(self, grupo, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        for alumno in grupo.alumnos.all():
-            self.fields[f'asistencias_{alumno.id}'] = forms.BooleanField(
-                label=f"{alumno.first_name} {alumno.last_name}",
-                required=False
-            )
-
-
-class AsignarCalificacionForm(forms.ModelForm):
-    class Meta:
-        model = RegistroCalificaciones
-        fields = ['alumno', 'calificacion', 'comentario']
-
-    calificacion = forms.ChoiceField(choices=[(i, str(i)) for i in range(1, 6)], label="Calificación")
-    comentario = forms.CharField(required=False, widget=forms.Textarea, label="Comentario")

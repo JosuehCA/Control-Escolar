@@ -90,36 +90,17 @@ class GestorActividades():
     def actualizarActividad(
         self,
         actividad: Actividad,
-        nombre: str,
-        descripcion: str,
-        horaInicio: m.TimeField,
-        horaFinal: m.TimeField
+        nuevoNombre: str,
+        nuevaDescripcion: str,
+        nuevaHoraInicio: m.TimeField,
+        nuevaHoraFinal: m.TimeField
     ) -> bool:
-        """Actualiza el nombre, descripción y las horas de la actividad. No permite modificar la fecha ni el horario asociado"""
-        # Verificación de cambios en las horas
-        if actividad.horaInicio != horaInicio or actividad.horaFinal != horaFinal:
-            # Validación: horaFinal debe ser mayor que horaInicio
-            if horaFinal <= horaInicio:
-                raise ValueError("La hora de finalización debe ser mayor que la hora de inicio.")
-            
-            # Verificar conflictos de horario, excluyendo la propia actividad
-            listaActividades = actividad.horario.actividades.exclude(id=actividad.id)
-            for otra_actividad in listaActividades:
-                if (horaInicio < otra_actividad.horaFinal and horaFinal > otra_actividad.horaInicio):
-                    raise ValueError("Conflicto de horario con otra actividad.")
-            
-            # Verificar si las horas están dentro del rango permitido por el horario
-            if not self.validarRangoDeActividad(actividad.horario, horaInicio, horaFinal):
-                raise ValueError("La actividad está fuera del horario permitido.")
-
-            # Actualizar las horas si todo es válido
-            actividad.horaInicio = horaInicio
-            actividad.horaFinal = horaFinal
-
-        # Verificación de cambios en el nombre y la descripción
-        if actividad.nombre != nombre or actividad.descripcion != descripcion:
-            actividad.nombre = nombre
-            actividad.descripcion = descripcion
+        """Actualiza los datos de la actividad directamente en la base de datos."""
+        # Asignar los nuevos valores directamente
+        actividad.nombre = nuevoNombre
+        actividad.descripcion = nuevaDescripcion
+        actividad.horaInicio = nuevaHoraInicio
+        actividad.horaFinal = nuevaHoraFinal
 
         # Guardar los cambios en la base de datos
         actividad.save()

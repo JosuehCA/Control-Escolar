@@ -67,8 +67,9 @@
             <p><strong>Hora Final:</strong> {{ actividad.horaFinal }}</p>
             <p><strong>Horario Asociado:</strong> {{ actividad.horario }}</p>
             <p><strong>Fecha:</strong> {{ actividad.fecha }}</p>
+            <p><strong>{{actividad.grupo}}</strong></p>
         </div>
-        <a href="{% url 'lista_actividades' %}">Volver a la lista de actividades</a>
+        <a href="{% url 'listaActividades' %}">Volver a la lista de actividades</a>
     </div>
 </body>
 </html>

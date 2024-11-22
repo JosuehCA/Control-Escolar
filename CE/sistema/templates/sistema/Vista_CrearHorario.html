@@ -127,7 +127,7 @@
             {% endfor %}
         </ul>
 
-        <form method="POST" action="{% url 'crear_horario' %}">
+        <form method="POST" action="{% url 'crearHorario' %}">
             {% csrf_token %}
             {% for field in form %}
                 <div>
@@ -138,7 +138,7 @@
             <button type="submit">Guardar Horario</button>
 
             <button class="enlace">
-                <a href="{% url 'lista_horarios' %}">Ver Lista de Horarios</a>
+                <a href="{% url 'listaHorarios' %}">Ver Lista de Horarios</a>
             </button>
         </form>
     </div>

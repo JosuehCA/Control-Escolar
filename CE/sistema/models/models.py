@@ -49,7 +49,6 @@ class Grupo(m.Model):
     de un profesor."""
 
     nombre = m.CharField(max_length=2000)
-    #alumnos = m.ManyToManyField('Alumno', related_name="alumnosGrupo")
 
     def __str__(self):
         return f'Grupo: {self.nombre}'
@@ -330,9 +329,8 @@ class Profesor(UsuarioEscolar):
     de alumnos. Contiene comportamientos respecto a estos alumnos, como asignación de actividades o pasar
     lista, y mantiene contacto directo con los tutores."""
 
-    grupo = m.ForeignKey(Grupo, on_delete=m.RESTRICT, related_name="grupo_profesor")
+    grupo = m.ForeignKey(Grupo, on_delete=m.RESTRICT, related_name="grupoProfesor")
 
-    #listo
     def asignarActividad(self, actividad: 'Actividad', grupo: Grupo) -> None:
         """Asigna una actividad a un grupo y actualiza la actividad actual de cada alumno del grupo."""
         actividad.grupo = grupo
@@ -342,57 +340,49 @@ class Profesor(UsuarioEscolar):
             alumno.actividadActual = actividad
             alumno.save()
 
-    #listo
-    def pasarLista(self, asistencias: dict[int, bool]) -> None:
-        for alumno_id, asistencia in asistencias.items():
-            alumno = Alumno.objects.get(id=alumno_id)
+    def pasarLista(self, listaAsistencias: dict[int, bool]) -> None:
+        for alumnoId, asistencia in listaAsistencias.items():
+            alumno = Alumno.objects.get(id=alumnoId)
             RegistroAsistencia.objects.update_or_create(
                 alumno=alumno,
                 fecha=date.today(),
                 defaults={'asistencia': asistencia}
             )            
 
-    def asignarCalificacion(self, alumno: 'Alumno', grupo: 'Grupo', calif: int, comentario: str = "") -> None:
-        """
-        Asigna una calificación al comportamiento del día de un alumno
-        y la guarda en el modelo RegistroCalificaciones.
-        """
-        if calif < 1 or calif > 5:
-            raise ValueError("La calificación debe estar entre 1 y 5.")
+    def asignarCalificacion(self, alumno: 'Alumno', grupo: 'Grupo', calificacion: int, comentario: str = "") -> None:
+        """Asigna una calificación al comportamiento del día de un alumno"""
+
+        if calificacion < 1 or calificacion > 5:
+            raise ValueError("Error. Introduzca un valor dentro del rango (1-5)")
         
         # Crear o actualizar el registro de calificación para el alumno
-        registro, created = RegistroCalificaciones.objects.update_or_create(
+        RegistroCalificaciones.objects.update_or_create(
             alumno=alumno,
             grupo=grupo,
             fecha=date.today(),
             defaults={
-                'calificacion': calif,
+                'calificacion': calificacion,
                 'comentario': comentario,
             }
         )
-        if created:
-            print(f"Nuevo registro de calificación creado para {alumno.first_name}")
-        else:
-            print(f"Registro de calificación actualizado para {alumno.first_name}")
-
+        
     class Meta:
             verbose_name = "Profesor"
             verbose_name_plural = "Profesores"
 
 class RegistroCalificaciones(m.Model):
     alumno = m.ForeignKey('Alumno', on_delete=m.CASCADE, related_name='calificaciones')
-    grupo = m.ForeignKey(Grupo, on_delete=m.CASCADE, related_name='calificaciones_grupo')
+    grupo = m.ForeignKey(Grupo, on_delete=m.CASCADE, related_name='calificacionesGrupo')
     calificacion = m.IntegerField(choices=[(i, i) for i in range(1, 6)])
     fecha = m.DateField(default=date.today)
     comentario = m.TextField(blank=True, null=True)
-
-    
 
     class Meta:
         unique_together = ('alumno', 'fecha')
 
     def __str__(self):
-        return f"Calificación de {self.alumno.getNombre()} en {self.grupo.nombre} el {self.fecha}"
+        return f"Calificación de {self.alumno.first_name} {self.alumno.last_name} en {self.grupo.nombre} el {self.fecha}"
+    
     
 class Tutor(UsuarioEscolar):
     """TDA Tutor. Tutor legal del alumno inscrito. Cuenta con acceso al sistema y puede visualizar toda la 
@@ -431,7 +421,7 @@ class Alumno(UsuarioEscolar):
     """TDA Alumno. Registrado solo para fines logísticos. Representa a cada alumno inscrito en el sistema y
     contiene un registro de su información académica."""
 
-    tutorAlumno = m.ForeignKey(Tutor, on_delete=m.RESTRICT, related_name="tutor_alumno")
+    tutorAlumno = m.ForeignKey(Tutor, on_delete=m.RESTRICT, related_name="tutorAlumno")
     grupo = m.ForeignKey(Grupo, on_delete=m.SET_NULL, related_name="alumnos", null=True, blank=True)
     asistencias = m.IntegerField(default=0)
     faltas = m.IntegerField(default=0)
@@ -474,25 +464,12 @@ class Alumno(UsuarioEscolar):
     
     def getConsideracionesMenu(self) -> m.JSONField:
         return self.consideracionesMenu
-    
-    def getGrupo(self) -> Grupo:
-        return self.grupo
-    
-    def setAsistencias(self, asistencias: int) -> None:
-        self.asistencias = asistencias
-    
-    def setFaltas(self, faltas: int) -> None:
-        self.faltas = faltas
-
-    class Meta:
-        verbose_name = "Alumno"
-        verbose_name_plural = "Alumnos"
 
     def __str__(self):
         return f"{self.getNombreUsuario()}: {self.getNombre()}"
     
 class RegistroAsistencia(m.Model):
-    alumno = m.ForeignKey(Alumno, on_delete=m.CASCADE, related_name="registros_asistencia")
+    alumno = m.ForeignKey(Alumno, on_delete=m.CASCADE, related_name="registrosAsistencia")
     fecha = m.DateField(auto_now_add=True)
     asistencias = m.BooleanField(default=False)
     faltas = m.BooleanField(default=False)

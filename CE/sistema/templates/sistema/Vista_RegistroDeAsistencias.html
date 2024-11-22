@@ -82,8 +82,8 @@
 
         <h3>Alumnos con asistencia:</h3>
         <ul>
-            {% for alumno in alumnos_asistieron %}
-                <li>{{ alumno.getNombre }}</li>
+            {% for alumno in alumnosPresentes %}
+                <li>{{ alumno.getNombre}}</li>
             {% empty %}
                 <li class="mensaje">No hay alumnos con asistencia hoy.</li>
             {% endfor %}
@@ -91,14 +91,14 @@
 
         <h3>Alumnos con falta:</h3>
         <ul>
-            {% for alumno in alumnos_faltaron %}
+            {% for alumno in alumnosAusentes %}
                 <li>{{ alumno.getNombre }}</li>
             {% empty %}
                 <li class="mensaje">No hay alumnos con falta hoy.</li>
             {% endfor %}
         </ul>
 
-        <a href="{% url 'pase_de_lista' grupo.id %}" class="boton">Editar Pase de Lista</a>
+        <a href="{% url 'paseDeLista' grupo.id %}" class="boton">Editar Pase de Lista</a>
     </div>
 </body>
 </html>
