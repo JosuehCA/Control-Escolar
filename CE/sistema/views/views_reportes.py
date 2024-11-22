@@ -14,7 +14,6 @@ from sistema.models.models_reportes import *
 
 def obtenerHistograma(request: HttpRequest, tipo_de_datos: str, alcance: str) -> HttpResponse:
     
-
     ManejadorReportes.generarHistogramaEnMemoria(tipo_de_datos, alcance)
     diagramaBase64 = _codificarImagenBase64DesdeMemoria()
 

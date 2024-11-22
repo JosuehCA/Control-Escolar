@@ -51,8 +51,9 @@ class ManejadorReportes:
     @staticmethod
     def generarHistogramaEnMemoria(tipo: str, alcance: str) -> None:
         """
-        Genera un histograma de calificaciones en memoria
+        Genera un histograma de calificaciones en memoria, de acuerdo a una escala del 1 al 5.
         """
+        grupo_nombre = None
 
         if alcance.startswith("grupo:"):
             grupo_nombre = alcance.removeprefix("grupo:").strip()
@@ -62,11 +63,9 @@ class ManejadorReportes:
         else:
             raise ValueError("Alcance inválido. Debe ser 'grupo:nombre_grupo' o 'global'.")
 
-        # Configuración del gráfico
         figura, eje = plt.subplots()
 
         if tipo == "calificaciones":
-            # Generar datos para el histograma de calificaciones
             calificaciones = (
                 RegistroCalificaciones.objects.filter(alumno__in=alumnos)
                 .values_list("calificacion", flat=True)
@@ -80,7 +79,7 @@ class ManejadorReportes:
         
         eje.set_ylabel("Número de Alumnos")
 
-        # Ajustar formato general
+
         plt.tight_layout()
 
 
@@ -115,7 +114,7 @@ class ManejadorReportes:
         resultadoTextual = {etiqueta: f"{porcentaje:.1f}%" for etiqueta, porcentaje in zip(etiquetas_filtradas, porcentajes)}
 
         if alcance.startswith("grupo:"):
-            ManejadorReportes._guardarReporteGrupo(alcance.removeprefix("grupo:").split(), resultadoTextual)
+            ManejadorReportes._guardarReporteGrupo(alcance.removeprefix("grupo:"), resultadoTextual)
         elif alcance == "global":
             ManejadorReportes._guardarReporteGlobal(resultadoTextual)
 
@@ -153,13 +152,12 @@ class ManejadorReportes:
     @staticmethod
     def _guardarReporteGrupo(grupo: str, contenido: str) -> None:
         """Guarda un reporte para un grupo."""
-
         try:
             grupo: Grupo = Grupo.objects.get(nombre=grupo)
 
             ReporteGrupo.objects.create(grupo=grupo, contenido=contenido, fecha=now())
-        except:
-            raise("Grupo no encontrado")
+        except Grupo.DoesNotExist:
+            raise ValueError("Grupo no encontrado")
 
     @staticmethod
     def _guardarReporteGlobal(contenido: str) -> None:

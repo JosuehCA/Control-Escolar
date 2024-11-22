@@ -75,7 +75,7 @@
                 <label for="tipo_reporte">Selecciona el tipo de reporte:</label>
                 <select id="tipo_reporte" required>
                     <option value="" disabled selected>Elige un tipo de reporte</option>
-                    <option class="global" value="calificaciones_grupal_histograma">Histograma de calificaciones grupal</option>
+                    <option class="grupal" value="calificaciones_grupal_histograma">Histograma de calificaciones grupal</option>
                     <option class="global" value="calificaciones_global_histograma">Histograma de calificaciones global</option>
                     <option class="grupal" value="faltas_grupal_pastel">Diagrama de pastel de faltas grupal</option>
                     <option class="global" value="faltas_global_pastel">Diagrama de pastel de faltas global</option>
@@ -102,8 +102,8 @@
             const alumnoId = document.getElementById('alumno');
             const tipoReporte = document.getElementById('tipo_reporte').selectedOptions[0];
 
-            if ((!alumnoId.value || !tipoReporte.value) && tipoReporte.classList[0] != "global") {
-                alert("Por favor, selecciona un alumno y un tipo de reporte.");
+            if (!tipoReporte.value) {
+                alert("Por favor, selecciona un tipo de reporte.");
                 return;
             }
 
