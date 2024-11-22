@@ -23,7 +23,7 @@ admin.site.register(Alumno)
 admin.site.register(Nutricionista)
 
 
-admin.site.register(MensajeDirecto)
+admin.site.register(MensajePrivado)
 admin.site.register(MensajeGrupal)
 admin.site.register(MensajeGeneral)
 admin.site.register(Conversacion)
