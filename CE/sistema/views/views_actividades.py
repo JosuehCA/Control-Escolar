@@ -55,7 +55,6 @@ def creacionActividad(request):
             grupoAsociado = crearActividadForm.cleaned_data['grupo']
 
             try:
-                # Intenta agregar la actividad, la validación se hace dentro de agregarActividad
                 gestorActividades = GestorActividades()
 
                 gestorActividades.agregarActividad(
@@ -127,7 +126,7 @@ def detallesDeActividad(request, actividadId):
             actividadIniciada = True
         
         # Redirigir de nuevo a la página de detalles de la actividad
-        return redirect('detallesDeActividad', id=actividadId)
+        return redirect('detallesDeActividad', actividadId=actividadId)
 
     return render(request, "sistema/Vista_DetallesActividad.html", {
         'actividad': actividad,
@@ -145,19 +144,19 @@ def actualizacionActividad(request, actividadId):
         
         if actualizarActividadForm.is_valid():
             # Obtener los datos del formulario
-            nuevoNombre = actualizarActividadForm.cleaned_data['nombre']
-            nuevaDescripcion = actualizarActividadForm.cleaned_data['descripcion']
-            nuevaHoraInicio = actualizarActividadForm.cleaned_data['horaInicio']
-            nuevaHoraFinal = actualizarActividadForm.cleaned_data['horaFinal']
+            nombre = actualizarActividadForm.cleaned_data['nombre']
+            descripcion = actualizarActividadForm.cleaned_data['descripcion']
+            horaInicio = actualizarActividadForm.cleaned_data['horaInicio']
+            horaFinal = actualizarActividadForm.cleaned_data['horaFinal']
             
             # Intentar actualizar la actividad con los nuevos datos
             try:
                 if gestorActividades.actualizarActividad(
                     actividad=actividad,
-                    nombre=nuevoNombre,
-                    descripcion=nuevaDescripcion,
-                    horaInicio=nuevaHoraInicio,
-                    horaFinal=nuevaHoraFinal
+                    nuevoNombre=nombre,
+                    nuevaDescripcion=descripcion,
+                    nuevaHoraInicio=horaInicio,
+                    nuevaHoraFinal=horaFinal
                 ):
                     # Si se actualizó, redirigir a la lista de actividades
                     messages.success(request, "Actividad actualizada con éxito.")

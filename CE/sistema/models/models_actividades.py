@@ -50,23 +50,15 @@ class Actividad(m.Model):
     grupo = m.ForeignKey('Grupo', on_delete=m.CASCADE, related_name='actividades', null=True, blank=True)
 
 class GestorActividades():
-    
-    def agregarActividad(self, horario: HorarioEscolar, nombre: str, descripcion: str, horaInicio: m.TimeField, horaFinal: m.TimeField, fecha: m.DateField, grupo: 'Grupo') -> Actividad:
-        """Agrega una actividad a un horario, validando rango y conflictos."""
 
-        # Validación: horaFinal debe ser mayor que horaInicio
-        if horaFinal <= horaInicio:
-            raise ValueError("La hora de finalización debe ser mayor que la hora de inicio.")
-        
-        if not self.validarRangoDeActividad(horario, horaInicio, horaFinal):
-            raise ValueError("La actividad está fuera del horario permitido")
+    # models_actividades.py
+    def obtener_grupo():
+        from .models import Grupo
+        return Grupo
+
     
-        actividadConflictiva = self.verificarSolapamientos(horario, horaInicio, horaFinal, fecha)
-        if actividadConflictiva:
-            raise ValueError(
-                f"Conflicto con la actividad '{actividadConflictiva.nombre}' "
-                f"(Inicio: {actividadConflictiva.horaInicio}, Fin: {actividadConflictiva.horaFinal})"
-            )
+    def agregarActividad(self, horario: HorarioEscolar, nombre: str, descripcion: str, horaInicio: m.TimeField, horaFinal: m.TimeField, fecha: m.DateField, grupo: obtener_grupo) -> Actividad:
+        """Agrega una actividad a un horario, validando rango y conflictos."""
     
         return Actividad.objects.create(
             nombre=nombre,
