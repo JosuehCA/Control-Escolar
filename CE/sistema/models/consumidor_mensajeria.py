@@ -1,29 +1,36 @@
 import json
 from channels.generic.websocket import AsyncWebsocketConsumer
 from typing import Any
-from sistema.models.models_mensajeria import MensajePrivado, MensajeGrupal, MensajeGeneral
+from sistema.models.models_mensajeria import MensajePrivado, MensajeGrupal, MensajeGeneral, MensajeBase
 from sistema.models.models import Grupo, UsuarioEscolar
 from datetime import datetime
 from abc import ABC, abstractmethod
 from asgiref.sync import sync_to_async
 
-def obtenerInstanciaDeGrupoSegunNombre(nombreGrupo: str) -> Grupo:
-    """Obtiene una instancia de Grupo según el nombre del grupo."""
-    return Grupo.objects.get(nombre=nombreGrupo)
-
-def obtenerInstanciaDeUsuarioEscolarSegunNombre(nombreUsuario: str) -> UsuarioEscolar:
-    """Obtiene una instancia de UsuarioEscolar según el nombre de usuario."""
-    return UsuarioEscolar.objects.get(username=nombreUsuario)
-
-class ConsumidorBase(ABC):
+class ConsumidorWebSocketBase(ABC, AsyncWebsocketConsumer):
     '''Clase abstracta para consumidores de mensajes WebSocket. Nota: Los consumidores directos deben heredar de AsyncWebsocketConsumer.'''
+    canalWebSocket: str
+    mensaje: MensajeBase
+
     @abstractmethod
-    async def conectarUsuarioACanal(self):
+    def crearInstanciaDeMensaje(self) -> None:
         pass
 
     @abstractmethod
-    async def recibirDeCanal(self, datosJSON: str):
+    async def definirCanalWebSocket(self) -> None:
         pass
+
+    @abstractmethod
+    async def recibirMensajeDeCanal(self, datosJSON: str) -> dict:
+        pass
+
+    @abstractmethod
+    async def manejarEventoMensaje(self, eventoDatos: dict) -> None:
+        pass
+
+    async def guardarMensajeEnBaseDeDatos(self, datosDeMensajeAGuardar: dict) -> None:
+        await sync_to_async(self.mensaje.recibirDatosDeMensajeEnDiccionario)(datosDeMensajeAGuardar)
+        await sync_to_async(self.mensaje.almacenarEnBaseDeDatos)()
 
     async def desconectarUsuarioDeCanal(self) -> None:
         """Desconecta al usuario del grupo WebSocket."""
@@ -34,7 +41,12 @@ class ConsumidorBase(ABC):
 
     async def connect(self) -> None:
         """Conecta al usuario al grupo WebSocket segun la configuracion."""
-        await self.conectarUsuarioACanal()
+        await self.definirCanalWebSocket()
+        await self.channel_layer.group_add(
+            self.canalWebSocket,
+            self.channel_name
+        )
+        await self.accept()
 
     async def disconnect(self, close_code):
         """Desconecta al usuario del grupo WebSocket."""
@@ -42,151 +54,114 @@ class ConsumidorBase(ABC):
 
     async def receive(self, text_data):
         """Recibe un mensaje en formato JSON a través de WebSocket."""
-        await self.recibirDeCanal(text_data)
+        datosDeMensajeRecibido: dict = await self.recibirMensajeDeCanal(text_data)
+        await self.crearInstanciaDeMensaje()
+        await self.guardarMensajeEnBaseDeDatos(datosDeMensajeRecibido)
+        await self.channel_layer.group_send(
+            self.canalWebSocket,
+            {
+                'type': 'manejarEventoMensaje',
+                'mensaje': self.mensaje
+            }
+        )
 
-class MensajePrivadoConsumidor(ConsumidorBase, AsyncWebsocketConsumer):
+class MensajePrivadoConsumidor(ConsumidorWebSocketBase, AsyncWebsocketConsumer):
 
     nombreConexion: str
 
-    async def conectarUsuarioACanal(self) -> None:
+    async def crearInstanciaDeMensaje(self) -> None:
+        """Define el tipo de mensaje a manejar."""
+        self.mensaje = MensajePrivado()
+
+    async def definirCanalWebSocket(self) -> None:
         """Conecta al usuario al grupo WebSocket."""
         self.nombreConexion = self.scope['url_route']['kwargs']['nombreConexion']
         self.canalWebSocket = f'conversacion_privada_{self.nombreConexion}'
 
-        # Unir al grupo WebSocket del usuario
-        await self.channel_layer.group_add(
-            self.canalWebSocket,
-            self.channel_name
-        )
-        await self.accept()
-
-        print(f'Conexión privada establecida: {self.canalWebSocket}')
-
-    async def recibirDeCanal(self, datosJSON: str) -> None:
+    async def recibirMensajeDeCanal(self, datosJSON: str) -> dict:
         """Recibe un mensaje en formato JSON a través de WebSocket."""
         datosDeMensaje: dict = json.loads(datosJSON)
-        usuarioCanal = self.scope['user']
-        receptorUsuario = await sync_to_async(obtenerInstanciaDeUsuarioEscolarSegunNombre)(datosDeMensaje['nombreReceptor'])
-        instanciaMensajePrivado = MensajePrivado()
-        datosDeMensajePrivado = {
+        usuarioCanal:UsuarioEscolar = self.scope['user']
+        receptorUsuario: UsuarioEscolar = await sync_to_async(UsuarioEscolar.obtenerUsuarioSegunNombreDeUsuario)(datosDeMensaje['nombreReceptor'])
+
+        return {
             'emisorUsuario': usuarioCanal,
             'receptorUsuario': receptorUsuario,
             'contenidoMensaje': datosDeMensaje['contenidoMensaje']
         }
-        instanciaMensajePrivado.recibirDatosDeMensajeEnDiccionario(datosDeMensajePrivado)
-        await sync_to_async(instanciaMensajePrivado.almacenarEnBaseDeDatos)()
 
-        # Envía el mensaje al grupo WebSocket
-        await self.channel_layer.group_send(
-            self.canalWebSocket,
-            {
-                'type': 'eventoMensajePrivado',
-                'mensaje': instanciaMensajePrivado
-            }
-        )
-
-    async def eventoMensajePrivado(self, eventoDatos: dict) -> None:
+    async def manejarEventoMensaje(self, eventoDatos: dict) -> None:
         """Envía el mensaje recibido a través de WebSocket."""
-        mensajePrivado = eventoDatos['mensaje']
+        mensajePrivado: MensajePrivado = eventoDatos['mensaje']
+
         await self.send(text_data=json.dumps({
             'emisor': mensajePrivado.emisorUsuario.username,
             'contenido': mensajePrivado.contenidoMensaje,
             'fecha': mensajePrivado.fechaEnviado.strftime('%Y-%m-%d %H:%M:%S')
         }))
 
-class MensajeGrupalConsumidor(ConsumidorBase, AsyncWebsocketConsumer):
+class MensajeGrupalConsumidor(ConsumidorWebSocketBase, AsyncWebsocketConsumer):
 
     grupoReceptor: str
 
-    async def conectarUsuarioACanal(self) -> None:
+    async def crearInstanciaDeMensaje(self) -> None:
+        """Define el tipo de mensaje a manejar."""
+        self.mensaje = MensajeGrupal()
+
+    async def definirCanalWebSocket(self) -> None:
         """Conecta al usuario al grupo WebSocket grupal."""
         self.grupoReceptor = self.scope['url_route']['kwargs']['grupoReceptor']
         self.canalWebSocket = f'conversacion_grupal_'+ self.grupoReceptor
 
-        await self.channel_layer.group_add(
-            self.canalWebSocket,
-            self.channel_name
-        )
-        await self.accept()
-        print(f'Conexión grupal establecida: {self.canalWebSocket}')
-
-    async def recibirDeCanal(self, datosJSON: str) -> None:
+    async def recibirMensajeDeCanal(self, datosJSON: str) -> dict:
         """Recibe un mensaje en formato JSON a través de WebSocket."""
         datosDeMensaje: dict = json.loads(datosJSON)
-        usuarioCanal = self.scope['user']
-        grupo = await sync_to_async(obtenerInstanciaDeGrupoSegunNombre)(self.grupoReceptor)
-        instanciaMensajeGrupal = MensajeGrupal()
-        datosDeMensajeGrupal = {
+        usuarioCanal:UsuarioEscolar = self.scope['user']
+        grupo = await sync_to_async(Grupo.obtenerGrupoSegunNombre)(self.grupoReceptor)
+        return {
             'emisorUsuario': usuarioCanal,
             'contenidoMensaje': datosDeMensaje['contenidoMensaje'],
             'grupoRelacionado': grupo
         }
-        instanciaMensajeGrupal.recibirDatosDeMensajeEnDiccionario(datosDeMensajeGrupal)
-        await sync_to_async(instanciaMensajeGrupal.almacenarEnBaseDeDatos)()
 
-        await self.channel_layer.group_send(
-            self.canalWebSocket,
-            {
-                'type': 'eventoMensajeGrupal',
-                'mensaje': instanciaMensajeGrupal
-            }
-        )
-        print(f'Mensaje recibido: {datosDeMensaje}')
-
-    async def eventoMensajeGrupal(self, eventoDatos: dict) -> None:
+    async def manejarEventoMensaje(self, eventoDatos: dict) -> None:
         """Envía el mensaje recibido a través de WebSocket."""
-        mensajeGrupal = eventoDatos['mensaje']  # Obtener la instancia de MensajeGrupal
+        mensajeGrupal: MensajeGrupal = eventoDatos['mensaje']  # Obtener la instancia de MensajeGrupal
 
         await self.send(text_data=json.dumps({
             'emisor': mensajeGrupal.emisorUsuario.username,
             'contenido': mensajeGrupal.contenidoMensaje,
             'fecha': mensajeGrupal.fechaEnviado.strftime('%Y-%m-%d %H:%M:%S')
         }))
-        print(f'Mensaje enviado: {mensajeGrupal.contenidoMensaje}')
 
 
-class MensajeGeneralConsumidor(ConsumidorBase, AsyncWebsocketConsumer):
+class MensajeGeneralConsumidor(ConsumidorWebSocketBase, AsyncWebsocketConsumer):
 
-    async def conectarUsuarioACanal(self) -> None:
+    async def crearInstanciaDeMensaje(self) -> None:
+        """Define el tipo de mensaje a manejar."""
+        self.mensaje = MensajeGeneral()
+
+    async def definirCanalWebSocket(self) -> None:
         """Conecta al usuario al grupo WebSocket general."""
         print("Conectando usuario al canal general")
         self.canalWebSocket = f'conversacion_general'
 
-        await self.channel_layer.group_add(
-            self.canalWebSocket,
-            self.channel_name
-        )
-        await self.accept()
-
-    async def recibirDeCanal(self, datosJSON: str) -> None:
+    async def recibirMensajeDeCanal(self, datosJSON: str) -> dict:
         """Recibe un mensaje en formato JSON a través de WebSocket."""
         datosDeMensaje: dict = json.loads(datosJSON)
-        usuarioCanal = self.scope['user']
-        instanciaMensajeGeneral = MensajeGeneral()
-        datosDeMensajeGeneral ={
+        usuarioCanal: UsuarioEscolar = self.scope['user']
+
+        return {
             'emisorUsuario': usuarioCanal,
             'contenidoMensaje': datosDeMensaje['contenidoMensaje'],
         }
-        instanciaMensajeGeneral.recibirDatosDeMensajeEnDiccionario(datosDeMensajeGeneral)
-        await sync_to_async(instanciaMensajeGeneral.almacenarEnBaseDeDatos)()
 
-        await self.channel_layer.group_send(
-            self.canalWebSocket,
-            {
-                'type': 'eventoMensajeGeneral',
-                'mensaje': instanciaMensajeGeneral
-            }
-        )
-        print(f'Mensaje general recibido: {datosDeMensaje}')
-
-    async def eventoMensajeGeneral(self, eventoDatos: dict) -> None:
+    async def manejarEventoMensaje(self, eventoDatos: dict) -> None:
         """Envía el mensaje recibido a través de WebSocket."""
-        mensajeGeneral = eventoDatos['mensaje']  # Obtener la instancia de MensajeGeneral
+        mensajeGeneral: MensajeGrupal = eventoDatos['mensaje']  # Obtener la instancia de MensajeGeneral
 
         await self.send(text_data=json.dumps({
             'emisor': mensajeGeneral.emisorUsuario.username,
             'contenido': mensajeGeneral.contenidoMensaje,
             'fecha': mensajeGeneral.fechaEnviado.strftime('%Y-%m-%d %H:%M:%S')
         }))
-
-        print(f'Mensaje enviado: {mensajeGeneral.contenidoMensaje}')

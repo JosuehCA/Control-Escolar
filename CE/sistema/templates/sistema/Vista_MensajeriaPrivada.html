@@ -46,8 +46,9 @@
             const entradaDeMensaje = document.getElementById('id_contenidoMensaje');
             const mensaje = entradaDeMensaje.value;
             socket.send(JSON.stringify({ 
+                'nombreEmisor': nombreUsuarioPrimario,
                 'nombreReceptor': nombreUsuarioSecundario,
-              'contenidoMensaje': mensaje,
+                'contenidoMensaje': mensaje,
             }));
             entradaDeMensaje.value = '';
             console.log('Mensaje enviado:', mensaje);
