@@ -1,24 +1,48 @@
+from datetime import date
 from abc import ABC, abstractmethod
+
 from typing import List
 from django.db import models as m
 from django.conf import settings
 from django.contrib.auth.models import AbstractUser
-from datetime import date
 
+from django.shortcuts import get_object_or_404
+
+from datetime import date
 
 from .models_actividades import Actividad
 
 
-class MenuSemanal(m.Model):
-    """TDA Menu. Define un Menú de comidas personalizable de acuerdo al administrador, y tomando en cuenta
-    ciertas indicaciones que los tutores manifiesten."""
 
+class MenuSemanal(m.Model):
     nombre = m.CharField(max_length=100)
     fecha_inicio = m.DateField()
     fecha_fin = m.DateField()
+    platillos = m.ManyToManyField('Platillo', through='MenuPlatillo', related_name='menus')
 
     def __str__(self):
         return self.nombre
+
+class MenuPlatillo(m.Model):
+    menu = m.ForeignKey('MenuSemanal', on_delete=m.CASCADE, related_name='menu_platillos')
+    platillo = m.ForeignKey('Platillo', on_delete=m.CASCADE, related_name='platillo_menus')
+    dia = m.CharField(
+        max_length=10,
+        choices=[
+            ('Lunes', 'Lunes'),
+            ('Martes', 'Martes'),
+            ('Miércoles', 'Miércoles'),
+            ('Jueves', 'Jueves'),
+            ('Viernes', 'Viernes'),
+        ],
+    )
+
+    class Meta:
+        unique_together = ('menu', 'platillo', 'dia')  # Evita duplicados en el mismo menú y día. Excepcion error platillo mismo dia
+
+    def __str__(self):
+        return f"{self.platillo.nombre} - {self.dia} ({self.menu.nombre})"
+
 
 class Grupo(m.Model):
     """TDA Salón. Define aquellos grupos a los que pertenece un conjunto de estudiantes bajo la dirección 
@@ -36,35 +60,12 @@ class Grupo(m.Model):
 
 
 class Platillo(m.Model):
-    DIAS_SEMANA = [
-        ('Lunes', 'Lunes'),
-        ('Martes', 'Martes'),
-        ('Miércoles', 'Miércoles'),
-        ('Jueves', 'Jueves'),
-        ('Viernes', 'Viernes'),
-    ]
-    
     nombre = m.CharField(max_length=200)
     descripcion = m.TextField()
     consideraciones = m.TextField(blank=True, null=True)
-    dia = m.CharField(
-        max_length=10,
-        choices=DIAS_SEMANA,
-        blank=True,  
-        null=True,
-        help_text="Día de la semana al que pertenece este platillo."
-    )
-    menu = m.ForeignKey(
-        'MenuSemanal',
-        on_delete=m.CASCADE,
-        related_name='platillos',
-        null=True,
-        blank=True,
-        help_text="Menú al que pertenece este platillo."
-    )
 
     def __str__(self):
-        return f"{self.nombre} ({self.dia or 'Sin Día'})"
+        return self.nombre
 
 
 
@@ -245,12 +246,14 @@ class GestorDeUsuarios(UsuarioEscolar):
             print(e)
         
     @classmethod
-    def eliminarUsuarioEscolar(cls, usuarioId : int) -> None:
+    def eliminarUsuarioEscolar(cls, usuarioId : int) -> bool:
         try:
             usuario = UsuarioEscolar.objects.get(id=usuarioId)
             usuario.delete()
+            return True
         except Exception as e:
             print(f"Error al eliminar usuarios: {e}")
+            return False
             
     @classmethod
     def modificarUsuarioEscolar(cls, usuarioId: int, nombre, apellido, username, contrasena, rol, **kwargs) -> bool:
@@ -501,12 +504,76 @@ class RegistroAsistencia(m.Model):
 class Nutricionista(UsuarioEscolar):
     """TDA Nutricionista. Responsable de la administración correcta de las comidas y ajustes al menú."""
 
-    def crearPlatillo(nombre: str, descripcion: str, consideraciones: str):
+    @staticmethod
+    def crearRecomendaciones(nombre: str, descripcion: str, consideraciones: str)->Platillo:
         Platillo.objects.create(
             nombre=nombre, 
             descripcion=descripcion, 
-            consideraciones=consideraciones)
-        
+            consideraciones=consideraciones) 
+
+    @staticmethod 
+    def modificarRecomendaciones(platillo_id: int, nombre: str, descripcion: str, consideraciones: str) -> None:
+        """Método para editar los detalles de una recomendación en un menú"""
+        try:
+            platillo = Platillo.objects.get(id=platillo_id)
+            platillo.nombre = nombre
+            platillo.descripcion = descripcion
+            platillo.consideraciones = consideraciones
+            platillo.save()
+        except Platillo.DoesNotExist:
+            raise ValueError(f"No se encontró el platillo con ID {platillo_id}.")
+
+    @staticmethod
+    def eliminarRecomendaciones(platillo_id: int) -> None:
+        """Elimina un platillo por su ID."""
+        try:
+            platillo = Platillo.objects.get(id=platillo_id)
+            platillo.delete()
+        except Platillo.DoesNotExist:
+            raise ValueError("El platillo no existe y no puede ser eliminado.")
+
     class Meta:
         verbose_name = "Nutricionista"
         verbose_name_plural = "Nutricionistas"
+
+
+class Chef(UsuarioEscolar):
+    
+    @staticmethod
+    def crearMenuSemanal(nombre: str, fecha_inicio: date, fecha_fin:date)->MenuSemanal: 
+        MenuSemanal.objects.create(
+            nombre=nombre, 
+            fecha_inicio=fecha_inicio, 
+            fecha_fin=fecha_fin
+        )
+
+    @staticmethod
+    def eliminarMenuSemanal(menu_id: int) -> None:
+        """Elimina un menú semanal dado su ID."""
+        try:
+            menu = MenuSemanal.objects.get(id=menu_id)
+            menu.delete()
+        except MenuSemanal.DoesNotExist:
+            raise ValueError(f"No se puede eliminar el menú con ID {menu_id}, ya que no existe.")
+
+    @staticmethod
+    def agregarPlatilloAlMenu(menu: MenuSemanal, platillo_id: int, dia: str) -> None:
+        """Agrega un platillo al menú en un día específico."""
+        try:
+            platillo = Platillo.objects.get(id=platillo_id)
+            MenuPlatillo.objects.create(menu=menu, platillo=platillo, dia=dia)
+        except Platillo.DoesNotExist:
+            raise ValueError(f"No se encontró el platillo con ID {platillo_id}.")
+
+    @staticmethod
+    def eliminarPlatilloDelMenu(menu: MenuSemanal, platillo_id: int, dia: str) -> None:
+        """Elimina un platillo del menú en un día específico."""
+        try:
+            relacionMenuPlatillo = MenuPlatillo.objects.get(menu=menu, platillo_id=platillo_id, dia=dia)
+            relacionMenuPlatillo.delete()
+        except MenuPlatillo.DoesNotExist:
+            raise ValueError(f"No existe una relación entre el platillo con ID {platillo_id} y el menú para el día {dia}.")
+
+    def __str__(self):
+        return f"Chef {self.nombre_completo}"
+    

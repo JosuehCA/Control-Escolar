@@ -48,15 +48,25 @@
     </style>
 </head>
 <body>
-
     <h1>{{ menu.nombre }} - Menú Semanal</h1>
 
-    {% if platillos_por_dia %}
-        <table>
+    <!-- Mensajes de éxito o error -->
+    {% if messages %}
+    <div class="messages">
+        {% for message in messages %}
+        <p>{{ message }}</p>
+        {% endfor %}
+    </div>
+    {% endif %}
+
+    <table>
+        <thead>
             <tr>
                 <th>Día</th>
                 <th>Platillos</th>
             </tr>
+        </thead>
+        <tbody>
             {% for dia, platillos in platillos_por_dia.items %}
                 <tr>
                     <td>{{ dia }}</td>
@@ -64,19 +74,18 @@
                         {% if platillos %}
                             <ul>
                                 {% for platillo in platillos %}
-                                    <li class="platillo">{{ platillo.nombre }}</li>
+                                    <li>{{ platillo.nombre }}</li>
                                 {% endfor %}
                             </ul>
                         {% else %}
-                            <span class="no-platillo">No asignado</span>
+                            <span>No asignado</span>
                         {% endif %}
                     </td>
                 </tr>
             {% endfor %}
-        </table>
-    {% else %}
-        <p>No hay platillos asignados a este menú semanal.</p>
-    {% endif %}
+        </tbody>
+    </table>
+
 
 </body>
 </html>

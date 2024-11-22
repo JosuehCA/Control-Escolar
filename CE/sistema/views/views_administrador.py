@@ -125,27 +125,12 @@ def eliminarUsuario(request, usuarioId):
     profesores = Profesor.objects.all()
     tutores = Tutor.objects.all()
     
-    if GestorDeUsuarios.eliminarUsuarioEscolar(usuarioId):
+    if (GestorDeUsuarios.eliminarUsuarioEscolar(usuarioId)):
+        messages.success(request, "Usuario eliminado con éxito.")
         return redirect("listaUsuarios")
-    messages.error(request, "Formulario inválido. Intenta de nuevo.")
-    return render(request, "sistema/Vista_ListaUsuarios.html", {'alumnos': alumnos, 'profesores': profesores, 'tutores': tutores})
-    #if request.method == 'POST':
-    #    form = EliminarUsuarioForm(request.POST)
-     #   if form.is_valid():
-      #      usuarios = form.cleaned_data['usuarios']  # Lista de objetos UsuarioEscolar
-       #     try:
-        #        # Pasar solo los IDs de los usuarios al método
-         #       Administrador.eliminarUsuarioEscolar([usuario.id for usuario in usuarios])
-          #      messages.success(request, "Usuarios eliminados con éxito.")
-           # except Exception as e:
-            #    messages.error(request, f"Error al eliminar: {str(e)}")
-        #else:
-         #   messages.error(request, "Formulario inválido. Intenta de nuevo.")
-       # return redirect('eliminarUsuario')
-    #else:
-     #   form = EliminarUsuarioForm()
-    
-    #return render(request, "sistema/Vista_EliminarUsuario.html", {'form': form})
+    else:
+        messages.error(request, "Formulario inválido. Intenta de nuevo.")
+        return render(request, "sistema/Vista_ListaUsuarios.html", {'alumnos': alumnos, 'profesores': profesores, 'tutores': tutores})
 
 
 def modificarUsuario(request, usuarioId, rol):

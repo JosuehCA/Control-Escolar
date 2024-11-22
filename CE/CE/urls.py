@@ -7,6 +7,7 @@ urlpatterns = [
     path('mensajeria/', include("sistema.urls.urls_mensajeria")),
     path('reportes/', include("sistema.urls.urls_reportes")),
     path('grupos/', include("sistema.urls.urls_grupos")),
+    path('usuarios/', include("sistema.urls.urls_usuarios")),
     path('cocina/', include("sistema.urls.urls_cocina")),
     path('actividades/', include("sistema.urls.urls_actividades"))
 ]
