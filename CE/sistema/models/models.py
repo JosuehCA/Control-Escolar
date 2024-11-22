@@ -426,10 +426,6 @@ class Tutor(UsuarioEscolar):
     def verActividadActualTutorado(self, alumno: 'Alumno') -> Actividad:
         return alumno.actividadActual
     
-    def generarReporteTutorado(self, alumno: 'Alumno'):
-        pass
-
-    
     class Meta:
         verbose_name = "Tutor"
         verbose_name_plural = "Tutores"
