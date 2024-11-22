@@ -2,7 +2,7 @@ import json
 from channels.generic.websocket import AsyncWebsocketConsumer
 from typing import Any
 from sistema.models.models_mensajeria import MensajePrivado, MensajeGrupal, MensajeGeneral
-from sistema.models.models import Grupo
+from sistema.models.models import Grupo, UsuarioEscolar
 from datetime import datetime
 from abc import ABC, abstractmethod
 from asgiref.sync import sync_to_async
@@ -11,6 +11,10 @@ def obtenerInstanciaDeGrupoSegunNombre(nombreGrupo: str) -> Grupo:
     """Obtiene una instancia de Grupo según el nombre del grupo."""
     return Grupo.objects.get(nombre=nombreGrupo)
 
+def obtenerInstanciaDeUsuarioEscolarSegunNombre(nombreUsuario: str) -> UsuarioEscolar:
+    """Obtiene una instancia de UsuarioEscolar según el nombre de usuario."""
+    return UsuarioEscolar.objects.get(username=nombreUsuario)
+
 class ConsumidorBase(ABC):
     '''Clase abstracta para consumidores de mensajes WebSocket. Nota: Los consumidores directos deben heredar de AsyncWebsocketConsumer.'''
     @abstractmethod
@@ -18,7 +22,7 @@ class ConsumidorBase(ABC):
         pass
 
     @abstractmethod
-    async def recibirDeCanal(self, text_data):
+    async def recibirDeCanal(self, datosJSON: str):
         pass
 
     async def desconectarUsuarioDeCanal(self) -> None:
@@ -58,35 +62,37 @@ class MensajePrivadoConsumidor(ConsumidorBase, AsyncWebsocketConsumer):
 
         print(f'Conexión privada establecida: {self.canalWebSocket}')
 
-    async def recibirDeCanal(self, text_data: str) -> None:
+    async def recibirDeCanal(self, datosJSON: str) -> None:
         """Recibe un mensaje en formato JSON a través de WebSocket."""
-        datosJson: dict = json.loads(text_data)
-        emisorUsuario = datosJson['emisor']
-        contenidoMensaje = datosJson['contenido']
-        fechaEnviado = datosJson['fecha']
-
-        # Guarda el mensaje en la base de datos
-        mensaje = Mensaje(emisor=emisor, contenido=contenido, fecha=fecha)
-        mensaje.save()
-        print(f'Mensaje recibido: {contenidoMensaje}')
+        datosDeMensaje: dict = json.loads(datosJSON)
+        usuarioCanal = self.scope['user']
+        receptorUsuario = await sync_to_async(obtenerInstanciaDeUsuarioEscolarSegunNombre)(datosDeMensaje['nombreReceptor'])
+        instanciaMensajePrivado = MensajePrivado()
+        datosDeMensajePrivado = {
+            'emisorUsuario': usuarioCanal,
+            'receptorUsuario': receptorUsuario,
+            'contenidoMensaje': datosDeMensaje['contenidoMensaje']
+        }
+        instanciaMensajePrivado.recibirDatosDeMensajeEnDiccionario(datosDeMensajePrivado)
+        await sync_to_async(instanciaMensajePrivado.almacenarEnBaseDeDatos)()
 
         # Envía el mensaje al grupo WebSocket
         await self.channel_layer.group_send(
             self.canalWebSocket,
             {
-                'type': 'eventoMensajeGrupo',
-                'mensaje': datosJson
+                'type': 'eventoMensajePrivado',
+                'mensaje': instanciaMensajePrivado
             }
         )
 
     async def eventoMensajePrivado(self, eventoDatos: dict) -> None:
         """Envía el mensaje recibido a través de WebSocket."""
-        mensajeJSON: str = eventoDatos['mensaje']
+        mensajePrivado = eventoDatos['mensaje']
         await self.send(text_data=json.dumps({
-            'mensaje': mensajeJSON
+            'emisor': mensajePrivado.emisorUsuario.username,
+            'contenido': mensajePrivado.contenidoMensaje,
+            'fecha': mensajePrivado.fechaEnviado.strftime('%Y-%m-%d %H:%M:%S')
         }))
-
-        print(f'Mensaje enviado: {mensajeJSON}')
 
 class MensajeGrupalConsumidor(ConsumidorBase, AsyncWebsocketConsumer):
 
@@ -116,7 +122,6 @@ class MensajeGrupalConsumidor(ConsumidorBase, AsyncWebsocketConsumer):
             'grupoRelacionado': grupo
         }
         instanciaMensajeGrupal.recibirDatosDeMensajeEnDiccionario(datosDeMensajeGrupal)
-        print(instanciaMensajeGrupal)
         await sync_to_async(instanciaMensajeGrupal.almacenarEnBaseDeDatos)()
 
         await self.channel_layer.group_send(

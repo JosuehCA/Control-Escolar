@@ -51,6 +51,12 @@ class MensajePrivado(Mensaje):
         """Representación en cadena de un mensaje directo."""
         return f"Mensaje directo de {self.emisorUsuario} a {self.receptorUsuario}"
     
+    def recibirDatosDeMensajeEnDiccionario(self, datosDeMensaje: dict) -> None:
+        """Recibe los datos de un mensaje privado en formato JSON."""
+        self.emisorUsuario = datosDeMensaje['emisorUsuario']
+        self.receptorUsuario = datosDeMensaje['receptorUsuario']
+        self.contenidoMensaje = datosDeMensaje['contenidoMensaje']
+    
     class Meta:
         verbose_name = "Mensaje Directo"
         verbose_name_plural = "Mensajes: Directos"
