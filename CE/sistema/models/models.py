@@ -53,6 +53,12 @@ class Grupo(m.Model):
     def __str__(self):
         return f'Grupo: {self.nombre}'
     
+    def obtenerGrupoSegunNombre(nombreDeGrupo: str) -> 'Grupo':
+        if(Grupo.objects.filter(nombre=nombreDeGrupo).exists()):
+            return Grupo.objects.get(nombre=nombreDeGrupo)
+        else:
+            return None
+    
     class Meta:
         verbose_name = "Grupo"
         verbose_name_plural = "Grupos"
@@ -75,6 +81,12 @@ class UsuarioEscolar(AbstractUser):
     u otra manera (profesores, admnistrador, tutores, alumnos y nutricionista). Proporciona actividades 
     comunes dentro de estos roles."""
 
+    def obtenerUsuarioSegunNombreDeUsuario(nombreDeUsuario: str ) -> 'UsuarioEscolar':
+        if UsuarioEscolar.objects.filter(username=nombreDeUsuario).exists():
+            return UsuarioEscolar.objects.get(username= nombreDeUsuario)
+        else:
+            return None
+        
     def getNombreUsuario(self) -> str:
         return self.username
 

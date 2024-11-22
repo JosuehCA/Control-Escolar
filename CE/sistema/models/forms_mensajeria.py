@@ -1,7 +1,7 @@
 from django import forms
 from .models_mensajeria import MensajePrivado, MensajeGrupal, MensajeGeneral
 
-# Formulario para enviar un mensaje directo
+# Formulario para enviar un mensaje privado
 class MensajePrivadoForm(forms.ModelForm):
     class Meta:
         model = MensajePrivado
