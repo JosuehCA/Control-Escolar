@@ -84,6 +84,7 @@ class UsuarioEscolar(AbstractUser):
         verbose_name = "Usuario Escolar"
         verbose_name_plural = "Usuarios Escolares"
 
+# Factories -----------------------------------------------------------------------------------
 class CreadorDeUsuariosEscolares(ABC):
     @abstractmethod
     def crearUsuarioEscolar(self, **kwargs) -> UsuarioEscolar:    
@@ -149,7 +150,7 @@ FACTORIES = {
     'Nutricionista': CreadorDeNutricionistas(),
 }
 
-class AdministradorGrupos(UsuarioEscolar):
+class GestorDeGrupos(UsuarioEscolar):
     
     @classmethod
     def crearGrupo(cls, nombre: str, alumnos: List['Alumno']) -> bool:
@@ -157,7 +158,7 @@ class AdministradorGrupos(UsuarioEscolar):
         if Grupo.objects.filter(nombre=nombre).exists():
             return False
         
-        alumnosSinGrupo = cls.obetenerAlumnosSinGrupo(alumnos)
+        alumnosSinGrupo = cls.obtenerAlumnosSinGrupo(alumnos)
         if not alumnosSinGrupo:
             return False
         
@@ -168,7 +169,7 @@ class AdministradorGrupos(UsuarioEscolar):
         return True
       
     @classmethod      
-    def obetenerAlumnosSinGrupo(cls, alumnos: List['Alumno']) -> List['Alumno']:
+    def obtenerAlumnosSinGrupo(cls, alumnos: List['Alumno']) -> List['Alumno']:
         alumnosSinGrupo = [] 
         for alumno in alumnos:
             if not Grupo.objects.filter(alumnos=alumno).exists():
@@ -176,15 +177,17 @@ class AdministradorGrupos(UsuarioEscolar):
         return alumnosSinGrupo
 
     @classmethod
-    def eliminarGrupo(cls, grupoId) -> None:
+    def eliminarGrupo(cls, grupoId) -> bool:
         try:
             grupo = Grupo.objects.get(id=grupoId)
             grupo.delete()
+            return True
         except Exception as e:
             print(f"Error al eliminar grupo: {e}")
+            return False
 
     @classmethod
-    def actualizarGrupo(cls, grupo_id: int, nombre: str, alumnos: List['Alumno']) -> bool:
+    def modificarGrupo(cls, grupo_id: int, nombre: str, alumnos: List['Alumno']) -> bool:
         try:
             cls.eliminarGruposAlumnosSeleccionados(alumnos)
             grupo = Grupo.objects.get(id=grupo_id)
@@ -199,22 +202,19 @@ class AdministradorGrupos(UsuarioEscolar):
     @classmethod
     def eliminarGruposAlumnosSeleccionados(cls, alumnos: List['Alumno']) -> None:
         for alumno in alumnos:
-            grupos = Grupo.objects.filter(alumnos=alumno)
-            for grupo in grupos:
-                grupo.alumnos.remove(alumno)
-                grupo.save()
+            Grupo.objects.filter(alumnos=alumno).update(alumnos=None)
     
     class Meta:
         verbose_name = "AdministradorGrupos"
         verbose_name_plural = "AdministradoresGrupos"
     
 
-class AdministradorUsuarios(UsuarioEscolar):
+class GestorDeUsuarios(UsuarioEscolar):
     """TDA Administrador. Rol especial dentro del plantel cuyos permisos permiten controlar todo cuanto
     sea necesario. Tiene acceso a todos los apartados."""    
 
     @classmethod
-    def crearUsuarioEscolar(cls, nombre, apellido, username, contrasena, rol, **kwargs):
+    def crearUsuarioEscolar(cls, nombre, apellido, username, contrasena, rol, **kwargs) -> None:
         if UsuarioEscolar.objects.filter(username=username).exists():
             raise ValueError("Error: El usuario ya existe.")
 
@@ -242,47 +242,69 @@ class AdministradorUsuarios(UsuarioEscolar):
             print(f"Error al eliminar usuarios: {e}")
             
     @classmethod
-    def actualizarUsuarioEscolar(cls, usuario_id: int, nombre, apellido, username, contrasena, rol, **kwargs) -> None:
+    def modificarUsuarioEscolar(cls, usuarioId: int, nombre, apellido, username, contrasena, rol, **kwargs) -> bool:
+        
         try:
             if rol == 'Profesor':
                 grupo_id = kwargs.get('grupo')
                 try:
-                    grupo = Grupo.objects.get(id=grupo_id)
-                    profesor = Profesor.objects.get(id=usuario_id)
-                    profesor.username = username
-                    profesor.first_name = nombre
-                    profesor.last_name = apellido
-                    profesor.password = contrasena
-                    profesor.grupo = grupo
+                    profesor = Profesor.objects.get(id=usuarioId)
+                    GestorDeGrupos._actualizarAtributos(profesor, nombre, apellido, username, contrasena)
                     profesor.save()
+                    return True
                 except Grupo.DoesNotExist:
                     print(f"Error: No se encontró el grupo con ID {grupo_id}")  
+                    return False
             elif rol == 'Alumno':
                 tutorId = kwargs.get('tutor')
                 try:
-                    tutor = Tutor.objects.get(id=tutorId) 
-                    Alumno.objects.create(
-                    username=username,
-                    first_name=nombre,
-                    last_name=apellido,
-                    password=contrasena,
-                    tutorAlumno=tutor  
-                    )
+                    alumno = Alumno.objects.get(id=usuarioId)
+                    GestorDeGrupos._actualizarAtributos(alumno, nombre, apellido, username, contrasena)
+                    alumno.save() 
+                    return True
                 except Grupo.DoesNotExist:
-                    print(f"Error: No se encontró el tutor con ID {grupo_id}")
+                    print(f"Error: No se encontró el tutor con ID {tutorId}")
+                    return False
             else:
-                usuario = UsuarioEscolar.objects.get(id=usuario_id)
-                usuario.username = username
-                usuario.first_name = nombre
-                usuario.last_name = apellido
-                usuario.password = contrasena
+                usuario = UsuarioEscolar.objects.get(id=usuarioId)
+                GestorDeGrupos._actualizarAtributos(usuario, nombre, apellido, username, contrasena)
                 usuario.save()
-                
+                return True
                 
         except UsuarioEscolar.DoesNotExist:
             print("El usuario no existe.")
+            return False
+    
+    @staticmethod
+    def _actualizarAtributos(usuario, nombre, apellido, username, contrasena, **kwargs):
+        """
+        Actualiza los atributos básicos del usuario si se proporcionan valores.
+        """
+        tutor_id = kwargs.get('tutor')
+        grupo_id = kwargs.get('grupo')
+        
+        if nombre is not None:
+            usuario.first_name = nombre
+        if apellido is not None:
+            usuario.last_name = apellido
+        if username is not None:
+            usuario.username = username
+        if contrasena is not None:
+            usuario.password = contrasena
+        
+        if hasattr(usuario, 'tutorAlumno') and tutor_id is not None:
+            try:
+                tutor = Tutor.objects.get(id=tutor_id)
+                usuario.tutorAlumno = tutor
+            except Tutor.DoesNotExist:
+                print(f"Error: No se encontró el tutor con ID {tutor_id}")
 
-            
+        if hasattr(usuario, 'grupo') and grupo_id is not None:
+            try:
+                grupo = Grupo.objects.get(id=grupo_id)
+                usuario.grupo = grupo
+            except Grupo.DoesNotExist:
+                print(f"Error: No se encontró el grupo con ID {grupo_id}")
             
     class Meta:
         verbose_name = "AdministradorUsuarios"

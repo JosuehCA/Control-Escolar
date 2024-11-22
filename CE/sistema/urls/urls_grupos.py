@@ -7,9 +7,9 @@ urlpatterns = [
     path('crearGrupo/', views_administrador.crearGrupo, name='crearGrupo'),
     path('listaGrupos/', views_administrador.listar_grupos, name='listaGrupos'),
     path('eliminarGrupo/<int:grupoId>/', views_administrador.eliminarGrupo, name='eliminarGrupo'),
-    path('actualizar/<int:grupoId>/', views_administrador.modificarGrupo, name='modificarGrupo'),
+    path('actualizarGrupo/<int:grupoId>/', views_administrador.modificarGrupo, name='modificarGrupo'),
     path('crearUsuario/', views_administrador.crearUsuario, name='crearUsuario'),
     path('listaUsuarios/', views_administrador.listarUsuarios, name='listaUsuarios'),
     path('eliminarUsuario/<int:usuarioId>/', views_administrador.eliminarUsuario, name='eliminarUsuario'),
-    path('modificarUsuario', views_administrador.modificarUsuario, name='modificarUsuario')
+    path('modificarUsuario/<int:usuarioId>/ <str:rol>', views_administrador.modificarUsuario, name='modificarUsuario')
 ]
