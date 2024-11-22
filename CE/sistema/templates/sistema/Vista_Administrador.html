@@ -130,7 +130,7 @@
                     <div class="card-body">
                         <h5 class="card-title">Gestion de Horarios</h5>
                         <p class="card-text">Crea, elimina y edita horarios escolares.</p>
-                        <a href="{% url 'crear_horario' %}" class="btn btn-warning">Ir a Horarios</a>
+                        <a href="{% url 'crearHorario' %}" class="btn btn-warning">Ir a Horarios</a>
                     </div>
                 </div>
             </div>
@@ -140,7 +140,7 @@
                     <div class="card-body">
                         <h5 class="card-title">Menú Escolar</h5>
                         <p class="card-text">Visualiza el menú escolar</p>
-                        <a href="#" class="btn btn-warning">Ir a Horarios</a>
+                        <a href="{% url 'seleccionarMenuSemanal' %}" class="btn btn-warning">Ir a Menú</a>
                     </div>
                 </div>
             </div>
@@ -150,7 +150,7 @@
                     <div class="card-body">
                         <h5 class="card-title">Reportes</h5>
                         <p class="card-text">Accede a reportes de asistencia de todos los grupos.</p>
-                        <a href="#" class="btn btn-warning">Ir a Horarios</a>
+                        <a href="{% url 'reportes_disponibles' %}" class="btn btn-warning">Ir a Reportes</a>
                     </div>
                 </div>
             </div>

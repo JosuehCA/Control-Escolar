@@ -101,7 +101,17 @@
         }
 
         .enlace {
+            margin-top: 20px;
+            padding: 15px;
+            color: #ffffff;
+            border: none;
+            border-radius: 8px;
+            font-size: 18px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: background-color 0.3s ease-in-out, transform 0.2s ease-in-out;
             background-color: #16a085;
+            width: 100%;
         }
 
         .enlace a{
@@ -112,7 +122,7 @@
         .enlace:hover {
             background-color: #12816e;
         }
-
+        
     </style>
 </head>
 <body>
@@ -133,12 +143,11 @@
             {% csrf_token %}
             {{ form.as_p }} <!-- Renderiza el formulario automáticamente -->
             <button type="submit">Guardar Grupo</button>
-        
+        </form>
+
         <button class="enlace">
             <a href="{% url 'listaGrupos' %}">Ver Lista de Grupos</a>
         </button>
-        </form>
-
 
     </div>
 </body>

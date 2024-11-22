@@ -255,32 +255,16 @@ class GestorDeUsuarios(UsuarioEscolar):
             return False
             
     @classmethod
-    def modificarUsuarioEscolar(cls, usuarioId: int, nombre, apellido, username, contrasena, rol, **kwargs) -> bool:
+    def modificarUsuarioEscolar(cls, usuarioId: int, nombre, apellido, nombreUsuario, contrasena, rol, **kwargs) -> bool:
         
         try:
+            usuario = UsuarioEscolar.objects.get(id=usuarioId)
             if rol == 'Profesor':
-                grupo_id = kwargs.get('grupo')
-                try:
-                    profesor = Profesor.objects.get(id=usuarioId)
-                    GestorDeUsuarios._actualizarAtributos(profesor, nombre, apellido, username, contrasena)
-                    profesor.save()
-                    return True
-                except Grupo.DoesNotExist:
-                    print(f"Error: No se encontró el grupo con ID {grupo_id}")  
-                    return False
+                return cls.__modificarProfesor(usuario, nombre, apellido, nombreUsuario, contrasena, **kwargs)
             elif rol == 'Alumno':
-                tutorId = kwargs.get('tutor')
-                try:
-                    alumno = Alumno.objects.get(id=usuarioId)
-                    GestorDeUsuarios._actualizarAtributos(alumno, nombre, apellido, username, contrasena)
-                    alumno.save() 
-                    return True
-                except Grupo.DoesNotExist:
-                    print(f"Error: No se encontró el tutor con ID {tutorId}")
-                    return False
+                return cls.__modificarAlumno(usuario, nombre, apellido, nombreUsuario, contrasena, **kwargs)
             else:
-                usuario = UsuarioEscolar.objects.get(id=usuarioId)
-                GestorDeUsuarios._actualizarAtributos(usuario, nombre, apellido, username, contrasena)
+                cls.__actualizarAtributos(usuario, nombre, apellido, nombreUsuario, contrasena)
                 usuario.save()
                 return True
                 
@@ -289,35 +273,57 @@ class GestorDeUsuarios(UsuarioEscolar):
             return False
     
     @staticmethod
-    def _actualizarAtributos(usuario, nombre, apellido, username, contrasena, **kwargs):
-        """
-        Actualiza los atributos básicos del usuario si se proporcionan valores.
-        """
-        tutor_id = kwargs.get('tutor')
+    def __modificarProfesor(profesor, nombre, apellido, nombreUsuario, contrasena, **kwargs) -> bool:
         grupo_id = kwargs.get('grupo')
+        try:
+            GestorDeUsuarios.__actualizarAtributos(profesor, nombre, apellido, nombreUsuario, contrasena, grupo=grupo_id)
+            profesor.save()
+            return True
+        except Grupo.DoesNotExist:
+            print(f"Error: No se encontró el grupo con ID {grupo_id}")
+            return False
+
+    @staticmethod
+    def __modificarAlumno(alumno, nombre, apellido, nombreUsuario, contrasena, **kwargs) -> bool:
+        tutor_id = kwargs.get('tutor')
+        try:
+            GestorDeUsuarios.__actualizarAtributos(alumno, nombre, apellido, nombreUsuario, contrasena, tutor=tutor_id)
+            alumno.save()
+            return True
+        except Tutor.DoesNotExist:
+            print(f"Error: No se encontró el tutor con ID {tutor_id}")
+            return False
+    
+    
+    @staticmethod
+    def __actualizarAtributos(usuario, nombre, apellido, nombreUsuario, contrasena, **kwargs) -> None:
+
+        tutorId = kwargs.get('tutor')
+        grupoId = kwargs.get('grupo')
         
         if nombre is not None:
             usuario.first_name = nombre
         if apellido is not None:
             usuario.last_name = apellido
-        if username is not None:
-            usuario.username = username
+        if nombreUsuario is not None:
+            usuario.username = nombreUsuario
         if contrasena is not None:
             usuario.password = contrasena
         
-        if hasattr(usuario, 'tutorAlumno') and tutor_id is not None:
+        if hasattr(usuario, 'tutorAlumno') and tutorId is not None:
             try:
-                tutor = Tutor.objects.get(id=tutor_id)
+                tutor = Tutor.objects.get(id=tutorId)
                 usuario.tutorAlumno = tutor
             except Tutor.DoesNotExist:
-                print(f"Error: No se encontró el tutor con ID {tutor_id}")
+                print(f"Error: No se encontró el tutor con ID {tutorId}")
 
-        if hasattr(usuario, 'grupo') and grupo_id is not None:
+        if hasattr(usuario, 'grupo') and grupoId is not None:
             try:
-                grupo = Grupo.objects.get(id=grupo_id)
+                grupo = Grupo.objects.get(id=grupoId)
                 usuario.grupo = grupo
             except Grupo.DoesNotExist:
-                print(f"Error: No se encontró el grupo con ID {grupo_id}")
+                print(f"Error: No se encontró el grupo con ID {grupoId}")
+            
             
     class Meta:
         verbose_name = "AdministradorUsuarios"
