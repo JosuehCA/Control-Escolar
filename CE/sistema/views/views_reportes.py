@@ -5,15 +5,23 @@ matplotlib.use('Agg')
 from django.template.loader import render_to_string
 from io import BytesIO
 from django.shortcuts import render, redirect
-from sistema.models.forms_lista import *
 import base64
 
 
 from sistema.models.models import Alumno
 from sistema.models.models_reportes import *
 
-def obtenerHistograma(request: HttpRequest, tipo_de_datos: str, alcance: str) -> HttpResponse:
-    
+def obtenerHistogramaPDF(request: HttpRequest, tipo_de_datos: str, alcance: str) -> HttpResponse:
+    """
+    Proveniente de una solicitud, devuelve una respuesta HTTP de un documento PDF con el tipo de histograma solicitado.
+
+    Argumentos:
+
+        tipo_de_datos: (faltas/calificaciones). Tipo de datos sobre los cuales queremos trabajar.
+
+        alcance: (global/grupo:nombre_de_grupo). Área sobre la cual queremos obtener los datos.
+    """
+
     ManejadorReportes.generarHistogramaEnMemoria(tipo_de_datos, alcance)
     diagramaBase64 = _codificarImagenBase64DesdeMemoria()
 
@@ -30,7 +38,16 @@ def obtenerHistograma(request: HttpRequest, tipo_de_datos: str, alcance: str) ->
 
     return _generarPDF(contenidoHTML)
 
-def obtenerDiagramaPastel(request: HttpRequest, tipo_de_datos: str, alcance: str) -> HttpResponse:
+def obtenerDiagramaPastelPDF(request: HttpRequest, tipo_de_datos: str, alcance: str) -> HttpResponse:
+    """
+    Proveniente de una solicitud, devuelve respuesta HTTP de un documento PDF con el tipo de diagrama de pastel solicitado.
+
+    Argumentos:
+    
+        tipo_de_datos: (faltas/calificaciones). Tipo de datos sobre los cuales queremos trabajar.
+
+        alcance: (global/grupo:nombre_de_grupo). Área sobre la cual queremos obtener los datos.
+    """
 
     colores = ["#FF0000", "#FF7F00", "#FFFF00", "#00FF00"]
 
@@ -45,46 +62,38 @@ def obtenerDiagramaPastel(request: HttpRequest, tipo_de_datos: str, alcance: str
 
     return _generarPDF(contenidoHTML)
 
-def actualizarAsistencias(request: HttpRequest) -> HttpResponse:
-    if request.method == "POST":
-        form = AsistenciaForm(request.POST)
-        if form.is_valid():
-            
-            _obtenerYGuardarAsistenciasYFaltasEnBD(form)
-
-            return redirect('reportes_disponibles')  # Redirigir a la página de reportes
-
-    else:
-        form = AsistenciaForm()
-
-    return render(request, "sistema/Vista_ActualizarAsistencias.html", {"form": form})
-
 
 def obtenerReportesDisponibles(request: HttpRequest) -> HttpResponse:
+    """
+    Proveniente de una solicitud, devuelve una respuesta HTTP con los tipos de reportes disponibles.
+    """
+
     alumnos = Alumno.objects.all()
     return render(request, "sistema/Vista_ReportesDisponibles.html", {"alumnos": alumnos})
 
 
 # Métodos privados ----------------------------------------------------------------------
 
-def _obtenerYGuardarAsistenciasYFaltasEnBD(form: AsistenciaForm) -> None:
-    alumno: Alumno = form.cleaned_data['alumno']
-    asistencias = form.cleaned_data['asistencias']
-    faltas = form.cleaned_data['faltas']
-
-    alumno.setAsistencias(asistencias)
-    alumno.setFaltas(faltas)
-    alumno.save()
-
 def _codificarImagenBase64DesdeMemoria() -> str:
-        """Codifica en base64 la imagen actual de Matplotlib."""
-        imagenBinaria = BytesIO()
-        plt.savefig(imagenBinaria, format='png')
-        imagenBinaria.seek(0)
-        plt.close()
-        return base64.b64encode(imagenBinaria.getvalue()).decode('utf-8')
+    """
+    Codifica en base64 la imagen actual guardada en memoria y la devuelve.
+    """
+
+    imagenBinaria = BytesIO()
+    plt.savefig(imagenBinaria, format='png')
+    imagenBinaria.seek(0)
+    plt.close()
+    return base64.b64encode(imagenBinaria.getvalue()).decode('utf-8')
 
 def _generarPDF(contenidoHTML: str) -> HttpResponse:
+    """
+    Renderiza contenido HTML para devolverlo a manera de documento PDF.
+
+    Argumentos:
+
+        contenidoHTML: Texto en HTML sobre el cual queremos renderizar como documento PDF.
+    """
+
     archivoPDFBinario = BytesIO()
     HTML(string=contenidoHTML).write_pdf(archivoPDFBinario)
     archivoPDFBinario.seek(0)

@@ -45,16 +45,25 @@ class ReporteGlobal(Reporte):
 
 
 class ManejadorReportes:
-    """Clase para manejar la generación y almacenamiento de reportes en el sistema."""
+    """
+    Clase para manejar la generación y almacenamiento de reportes en el sistema.
+    """
 
     # Generar distintos tipos de reporte
     @staticmethod
     def generarHistogramaEnMemoria(tipo: str, alcance: str) -> None:
         """
         Genera un histograma de calificaciones en memoria, de acuerdo a una escala del 1 al 5.
+
+        Argumentos:
+
+            tipo_de_datos: (faltas/calificaciones). Tipo de datos sobre los cuales queremos trabajar.
+
+            alcance: (global/grupo:nombre_de_grupo). Área sobre la cual queremos obtener los datos.
         """
         grupo_nombre = None
 
+        # Obtenemos el tipo de alcance para delimitar la población de alumnos
         if alcance.startswith("grupo:"):
             grupo_nombre = alcance.removeprefix("grupo:").strip()
             alumnos = Alumno.objects.filter(grupo__nombre=grupo_nombre)
@@ -66,10 +75,13 @@ class ManejadorReportes:
         figura, eje = plt.subplots()
 
         if tipo == "calificaciones":
+            # Obtener calificaciones de los alumnos
             calificaciones = (
                 RegistroCalificaciones.objects.filter(alumno__in=alumnos)
                 .values_list("calificacion", flat=True)
             )
+
+            # Construir histograma con MatPlot
             eje.hist(calificaciones, bins=range(1, 7), color="#00FF00", edgecolor="black", align="left", rwidth=0.8)
             eje.set_title(f"Histograma de Calificaciones ({f'Grupo: {grupo_nombre}' if grupo_nombre else 'Global'})")
             eje.set_xlabel("Calificaciones (1-5)")
@@ -78,15 +90,21 @@ class ManejadorReportes:
             raise ValueError("Tipo inválido. Debe ser 'faltas' o 'calificaciones'.")
         
         eje.set_ylabel("Número de Alumnos")
-
-
         plt.tight_layout()
 
 
     @staticmethod
     def generarDiagramaPastelEnMemoria(tipo_de_datos: str, alcance: str, colores: list) -> None:
         """
-        Genera un diagrama de pastel de faltas en memoria, de acuerdo a <1, 2, 3 o >4 faltas
+        Genera un diagrama de pastel de faltas en memoria, de acuerdo a <1, 2, 3 o >4 faltas.
+
+        Argumentos:
+
+            tipo_de_datos: (faltas/calificaciones). Tipo de datos sobre los cuales queremos trabajar.
+
+            alcance: (global/grupo:nombre_de_grupo). Área sobre la cual queremos obtener los datos.
+
+            colores: Lista de colores con los cuales deseamos trabajar.
         """
 
         etiquetas: list[str]
@@ -105,7 +123,7 @@ class ManejadorReportes:
         total = sum(valores_filtrados)
         porcentajes = [(v / total) * 100 for v in valores_filtrados]
 
-        
+        # Construir diagrama con MatPlot
         figura, eje = plt.subplots()
         eje.pie(valores_filtrados, labels=etiquetas_filtradas, autopct='%1.1f%%', startangle=90, 
                 colors=colores_filtrados)
@@ -123,7 +141,13 @@ class ManejadorReportes:
 
     @staticmethod
     def _obtenerDispersionFaltasAlumnado(alcance: str) -> tuple[int]:
-        """Devuelve estadísticas de faltas del alumnado de acuerdo al alcance definido"""
+        """
+        Devuelve estadísticas de faltas del alumnado de acuerdo a la población definida.
+
+        Argumentos:
+
+            alcance: (global/grupo:nombre_de_grupo). Área sobre la cual queremos obtener los datos.
+        """
         faltas_1_o_menos = 0
         faltas_2 = 0
         faltas_3 = 0
@@ -151,7 +175,15 @@ class ManejadorReportes:
     # Guardar tipos de reportes en la base de datos
     @staticmethod
     def _guardarReporteGrupo(grupo: str, contenido: str) -> None:
-        """Guarda un reporte para un grupo."""
+        """
+        Guarda un reporte generado de un grupo específico.
+
+        Argumentos:
+
+            grupo: Nombre del grupo solicitado.
+
+            contenido: Contenido en texto plano del reporte.
+        """
         try:
             grupo: Grupo = Grupo.objects.get(nombre=grupo)
 
@@ -161,5 +193,11 @@ class ManejadorReportes:
 
     @staticmethod
     def _guardarReporteGlobal(contenido: str) -> None:
-        """Guarda un reporte global."""
+        """
+        Guarda un reporte generado de todo el alumnado.
+
+        Argumentos:
+
+            contenido: Contenido en texto plano del reporte.
+        """
         ReporteGlobal.objects.create(contenido=contenido, fecha=now())
