@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Enviar Mensaje</title>
+
+  <script>
+    const nombreUsuarioPrimario = '{{ request.user }}';
+    const nombreUsuarioSecundario = '{{ nombreDeUsuarioReceptor }}';
+
+    const nombreConexion = [nombreUsuarioPrimario, nombreUsuarioSecundario].sort().join('_');
+    console.log(window.location.host);
+    const socket = new WebSocket('ws://' + window.location.host + '/ws/mensajeria/privada/' + nombreConexion);
+
+    socket.onopen = function() {
+      console.log('Conexión al WebSocket establecida');
+    };
+
+    socket.onmessage = function(event) {
+      const datosDelMensaje = JSON.parse(event.data);
+      console.log('Mensaje recibido:', datosDelMensaje);
+
+      const listaDeMensajes = document.querySelector('.mensajes-lista');
+      const elementoDeLista = document.createElement('li');
+      elementoDeLista.classList.add('elemento-de-mensaje');
+
+      // Formatea el mensaje con el remitente, contenido y fecha
+      const mensajeFormateado = `<strong>De: ${datosDelMensaje.emisor}</strong><br> ${datosDelMensaje.contenido} <br> <small>${datosDelMensaje.fecha}</small>`;
+      elementoDeLista.innerHTML = mensajeFormateado;
+
+      listaDeMensajes.appendChild(elementoDeLista);
+
+      // Desplaza la lista de mensajes hacia abajo
+      listaDeMensajes.scrollTop = listaDeMensajes.scrollHeight;
+    };
+
+    socket.onclose = function() {
+      console.log('Conexión WebSocket cerrada');
+    };
+
+    document.addEventListener('DOMContentLoaded', () => {
+      const formulario = document.getElementById('formulario');
+      formulario.addEventListener('submit',(event) => {
+            event.preventDefault();
+            const entradaDeMensaje = document.getElementById('id_contenidoMensaje');
+            const mensaje = entradaDeMensaje.value;
+            socket.send(JSON.stringify({ 
+                'nombreReceptor': nombreUsuarioSecundario,
+              'contenidoMensaje': mensaje,
+            }));
+            entradaDeMensaje.value = '';
+            console.log('Mensaje enviado:', mensaje);
+          }
+        );
+      }
+    );
+  </script>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 20px;
+    }
+
+    form {
+      margin-top: 20px;
+    }
+
+    input, textarea, select {
+      width: 100%;
+      padding: 10px;
+      margin: 5px 0;
+    }
+
+    button {
+      padding: 10px 20px;
+      background-color: #007bff;
+      color: white;
+      border: none;
+      cursor: pointer;
+    }
+
+    button:hover {
+      background-color: #0056b3;
+    }
+
+    .mensajes-lista {
+      margin-top: 30px;
+    }
+
+    .mensaje-item {
+      border-bottom: 1px solid #ddd;
+      padding: 10px;
+    }
+  </style>
+</head>
+<body>
+  <h1>Enviar Mensaje</h1>
+  <div class="mensajes-lista">
+    <h2>Mensajes Recientes</h2>
+    {% if mensajes %}
+      <ul>
+        {% for mensaje in mensajes %}
+          <li class="mensaje-item">
+            <strong>De: {{ mensaje.emisorUsuario.username }}</strong><br>
+            {{ mensaje.contenidoMensaje }}<br>
+            <small>{{ mensaje.fechaEnviado }}</small>
+          </li>
+        {% endfor %}
+      </ul>
+    {% else %}
+      <p>No hay mensajes recientes.</p>
+    {% endif %}
+  </div>
+  <form id="formulario" method="post">
+    {% csrf_token %}
+    {{ form.as_p }}
+    <button type="submit">Enviar Mensaje</button>
+  </form>
+</body>
+</html>

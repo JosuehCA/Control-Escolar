@@ -25,7 +25,7 @@ SECRET_KEY = 'django-insecure-q!mdyid-^=8_hglks^2&2ua#5q9$gg-^fvs9sa612t7vjifg=c
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['127.0.0.1', 'localhost']
 
 
 # Application definition
@@ -39,7 +39,6 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'sistema',
-    'channels'
 ]
 
 ASGI_APPLICATION = 'CE.asgi.application'
@@ -72,7 +71,7 @@ TEMPLATES = [
     },
 ]
 
-WSGI_APPLICATION = 'CE.wsgi.application'
+#WSGI_APPLICATION = 'CE.wsgi.application'
 
 
 # Database
@@ -109,11 +108,8 @@ AUTH_PASSWORD_VALIDATORS = [
 
 CHANNEL_LAYERS = {
     'default': {
-        'BACKEND': 'channels_redis.core.RedisChannelLayer',
-        'CONFIG': {
-            "hosts": [('127.0.0.1', 6379)],  # Configura la IP de tu servidor Redis
-        },
-    },
+        'BACKEND': 'channels.layers.InMemoryChannelLayer'
+    }
 }
 
 

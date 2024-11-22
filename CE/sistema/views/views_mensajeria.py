@@ -1,33 +1,39 @@
 from django.shortcuts import redirect
 from django.http import HttpRequest, HttpResponse
-from django.contrib.auth.decorators import login_required
 from django.shortcuts import render
 
-from sistema.forms_msj import MensajeDirectoForm
-from sistema.models.models_msj import MensajeDirecto
+from sistema.models.forms_mensajeria import MensajePrivadoForm, MensajeGeneralForm, MensajeGrupalForm
+from sistema.models.models_mensajeria import MensajePrivado, MensajeGeneral, MensajeGrupal
+from sistema.models.models import Grupo, UsuarioEscolar
 
-@login_required
-def enviarMensajeDirecto(request: HttpRequest) -> HttpResponse:
-    """Vista para enviar un mensaje directo."""
-
-    if request.method == 'POST':
-        mensajeDirectoForm = MensajeDirectoForm(request.POST)
-        
-        if mensajeDirectoForm.is_valid():
-            mensajeDirectoInstancia = mensajeDirectoForm.save(commit=False)
-            receptorUsuario = mensajeDirectoForm.cleaned_data.get('receptorUsuario')
-            
-            if mensajeDirectoInstancia.enviar(request.user, receptorUsuario):
-                return redirect('mensaje_directo')
-            else:
-                mensajeDirectoForm.add_error(None, "No puedes enviarte mensajes a ti mismo.")
+def mostrarVistaConversacionPrivada(request: HttpRequest, nombreDeUsuarioReceptor: str) -> HttpResponse:
+    """Vista dinamica para conversaciones individuales, grupales o generales."""
+    mensajePrivadoForm = MensajePrivadoForm()
+    usuarioReceptor = UsuarioEscolar.objects.get(username=nombreDeUsuarioReceptor)
+    mensajesPrivados = MensajePrivado.obtenerMensajesFiltrados(request.user, usuarioReceptor)
+    return render(request, "sistema/Vista_MensajeriaPrivada.html", {
+        "form": mensajePrivadoForm,
+        "mensajes": mensajesPrivados,
+        "nombreDeUsuarioReceptor": nombreDeUsuarioReceptor,})
     
-    else:
-        mensajeDirectoForm = MensajeDirectoForm()
+        
+def mostrarVistaConversacionGrupal(request: HttpRequest, grupoReceptor: str) -> HttpResponse:
+    """Vista para conversaciones individuales."""
+    mensajeGrupalForm = MensajeGrupalForm()
+    grupoReceptorInstancia = Grupo.objects.get(nombre=grupoReceptor)
+    mensajesGrupales = MensajeGrupal.obtenerMensajesFiltrados(grupoReceptorInstancia)
+    print(mensajesGrupales)
+    return render(request, "sistema/Vista_MensajeriaGrupal.html", {
+        "form": mensajeGrupalForm,
+        "mensajes": mensajesGrupales,
+        "grupoReceptor": grupoReceptor,})
 
-    mensajesUsuario = MensajeDirecto.obtenerMensajesFiltrados(request.user)
+def mostrarVistaConversacionGeneral(request: HttpRequest) -> HttpResponse:
+    """Vista para conversaciones generales."""
 
-    return render(request, 'sistema/testMensajeria.html', {
-        'form': mensajeDirectoForm,
-        'mensajes': mensajesUsuario,
-    })
+    mensajeGeneralForm = MensajeGeneralForm()
+    mensajesGenerales = MensajeGeneral.obtenerMensajesFiltrados()
+
+    return render(request, "sistema/Vista_MensajeriaGeneral.html", {
+        "form": mensajeGeneralForm,
+        "mensajes": mensajesGenerales,})

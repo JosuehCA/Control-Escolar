@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Modificar Grupo</title>
+    <style>
+        body {
+            font-family: 'Poppins', sans-serif; 
+            background-color: #f4f6f9;
+            margin: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+
+        .contenedor {
+            width: 90%;
+            max-width: 750px;
+            background-color: #ffffff;
+            padding: 50px;
+            border-radius: 12px;
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
+            text-align: center;
+        }
+
+        h1 {
+            font-size: 32px;
+            color: #333;
+            margin-bottom: 30px;
+            font-weight: bold;
+        }
+
+        .mensajes {
+            margin-bottom: 20px;
+            text-align: left;
+        }
+
+        .mensajes li {
+            padding: 12px;
+            border-radius: 6px;
+            margin-bottom: 10px;
+            font-size: 14px;
+        }
+
+        .mensajes .error {
+            background-color: #fdecea;
+            color: #c0392b;
+            border: 1px solid #f5b7b1;
+        }
+
+        .mensajes .exito {
+            background-color: #eafaf1;
+            color: #27ae60;
+            border: 1px solid #a3e4d7;
+        }
+
+        form {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        form label {
+            font-weight: 500;
+            text-align: left;
+            margin-bottom: 5px;
+            font-size: 16px;
+            color: #555;
+        }
+
+        form input, form select {
+            padding: 15px;
+            font-size: 16px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            transition: border-color 0.3s ease-in-out, box-shadow 0.3s ease-in-out;
+        }
+
+        form input:focus, form select:focus {
+            border-color: #007BFF;
+            outline: none;
+            box-shadow: 0 0 5px rgba(0, 123, 255, 0.5);
+        }
+
+        form button {
+            padding: 15px;
+            background-color: #3498db;
+            color: #ffffff;
+            border: none;
+            border-radius: 8px;
+            font-size: 18px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: background-color 0.3s ease-in-out, transform 0.2s ease-in-out;
+        }
+
+        form button:hover {
+            background-color: #2980b9;
+        }
+
+        .enlace {
+            background-color: #16a085;
+        }
+
+        .enlace a{
+            color: #ffffff;
+            text-decoration: none;
+        }
+
+        .enlace:hover {
+            background-color: #12816e;
+        }
+
+    </style>
+</head>
+<body>
+    <div class="contenedor">
+        <h1>Actualizar Grupo</h1>
+
+        <!-- Mostrar mensajes de éxito o error -->
+        {% if messages %}
+            <ul class="mensajes">
+                {% for message in messages %}
+                    <li class="mensaje {% if message.level == DEFAULT_MESSAGE_LEVELS.SUCCESS %}exito{% elif message.level == DEFAULT_MESSAGE_LEVELS.ERROR %}error{% endif %}">
+                        {{ message }}
+                    </li>
+                {% endfor %}
+            </ul>
+        {% endif %}
+
+        <div class="mensajes">
+            <!-- Errores globales -->
+            {% if form.non_field_errors %}
+                {% for error in form.non_field_errors %}
+                    <li class="error">{{ error }}</li>
+                {% endfor %}
+            {% endif %}
+
+            
+            <!-- Errores específicos de cada campo -->
+            {% for field in form %}
+                {% for error in field.errors %}
+                    <li class="error">{{ error }}</li>
+                {% endfor %}
+            {% endfor %}
+        </div>
+
+
+        <form method="POST">
+            {% csrf_token %}
+            
+            <!-- Mostrar los campos sin los errores automáticos -->
+            {% for field in form %}
+                <div>
+                    {{ field.label_tag }}
+                    {{ field }}
+                </div>
+            {% endfor %}
+
+            <button type="submit">Actualizar</button>
+
+            <a href="{% url 'listaGrupos' %}" class="boton-regresar">Regresar a la lista
+            </a>
+        </form>
+    </div>
+
+    {% if redirect %}
+    <script>
+        // Mostrar el mensaje por 1 segundo antes de redirigir
+        setTimeout(function() {
+            window.location.href = "{% url 'listaGrupos' %}";
+        }, 1000); 
+    </script>
+    {% endif %}
+
+</body>
+</html>

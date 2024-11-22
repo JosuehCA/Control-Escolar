@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lista de Grupos</title>
+    <style>
+        /* Reutilizamos el estilo existente */
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f0f4f8;
+        }
+        h1 {
+            background-color: #3a7bd5;
+            color: white;
+            text-align: center;
+            padding: 20px 0;
+            margin: 0;
+            font-size: 2em;
+        }
+        ul {
+            list-style: none;
+            padding: 0;
+            margin: 20px auto;
+            max-width: 700px;
+        }
+        li {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px;
+            margin-bottom: 10px;
+            background-color: white;
+            border-left: 5px solid #3a7bd5;
+            border-radius: 5px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+        li a {
+            color: #3a7bd5;
+            font-weight: bold;
+            text-decoration: none;
+            font-size: 1.1rem;
+        }
+        li a:hover {
+            text-decoration: underline;
+        }
+        .acciones-grupo {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+        .boton-eliminar {
+            background-color: #e74c3c;
+            color: white;
+            padding: 8px 12px;
+            border: none;
+            border-radius: 5px;
+            font-size: 0.9rem;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+        .boton-eliminar:hover {
+            background-color: #c0392b;
+        }
+        .boton-agregar-grupo {
+            margin: 20px auto;
+            display: block;
+            text-align: center;
+        }
+        .boton-agregar-grupo a {
+            padding: 12px 20px;
+            background-color: #3a7bd5;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: bold;
+            text-decoration: none;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+        .boton-agregar-grupo a:hover {
+            background-color: #2f6aba;
+        }
+        .no-grupos {
+            text-align: center;
+            color: #777;
+            font-style: italic;
+            padding: 15px;
+            background-color: #f4f4f4;
+            border-radius: 5px;
+        }
+
+        .alumnos h3{
+            color: blue;
+        }
+    </style>
+    <script>
+        function confirmarEliminacion(event) {
+            if (!confirm("¿Estás seguro de que deseas eliminar este grupo?")) {
+                event.preventDefault(); // Prevenir la acción de eliminar si no se confirma
+            }
+        }
+    </script>
+</head>
+<body>
+    <h1>Lista de Grupos</h1>
+
+    <div>
+        {% if messages %}
+            <ul class="mensajes">
+                {% for message in messages %}
+                    <li class="{% if message.tags %}{{ message.tags }}{% endif %}">
+                        {{ message }}
+                    </li>
+                {% endfor %}
+            </ul>
+        {% endif %}
+    </div>
+
+    <div class="boton-agregar-grupo">
+        <a href="{% url 'crearGrupo' %}">Agregar Grupo</a>
+    </div>
+
+    <ul>
+        {% if grupos %}
+            {% for grupo in grupos %}
+            <li>
+                <a href="#">
+                    {{ grupo.nombre }}
+                </a>
+
+                <div class="acciones-actividad">
+                    <form action="{% url 'eliminarGrupo' grupo.id %}" method="POST" style="margin: 0;" onsubmit="confirmarEliminacion(event)">
+                        {% csrf_token %}
+                        <button type="submit" class="boton-eliminar">Eliminar</button>
+                    </form>
+                    <a href="{% url 'modificarGrupo' grupo.id%}" class="boton-editar">
+                        <button class="boton-eliminar" style="background-color: #3498db;">Editar</button>
+                    </a>
+                </div>
+            </li>
+
+            <div class="alumnos">
+
+                <h3>Lista Alumnos</h3>
+
+                <ul>
+                    {% for alumno in grupo.alumnos.all %}
+                        <li>{{ alumno.first_name }}</li>
+                    {% endfor %}
+                </ul>
+
+            </div>
+
+            {% endfor %}
+        {% else %}
+            <li class="no-grupos">No hay grupos registrados.</li>
+        {% endif %}
+    </ul>
+</body>
+
+
+</html>
