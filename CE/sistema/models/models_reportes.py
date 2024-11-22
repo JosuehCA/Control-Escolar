@@ -72,7 +72,7 @@ class ManejadorReportes:
                 .values_list("calificacion", flat=True)
             )
             eje.hist(calificaciones, bins=range(1, 7), color="#00FF00", edgecolor="black", align="left", rwidth=0.8)
-            eje.set_title(f"Histograma de Calificaciones ({'Grupo: {grupo_nombre}' if 'grupo' in alcance else 'Global'})")
+            eje.set_title(f"Histograma de Calificaciones ({f'Grupo: {grupo_nombre}' if grupo_nombre else 'Global'})")
             eje.set_xlabel("Calificaciones (1-5)")
             eje.set_xticks(range(1, 6))
         else:
